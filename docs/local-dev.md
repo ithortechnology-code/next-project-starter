@@ -24,6 +24,8 @@ COMPOSE_PROFILES=seaweedfs docker compose up -d --wait
 - OpenTelemetry Collector OTLP/HTTP at `localhost:${OTEL_HTTP_PORT:-4318}` and OTLP/gRPC at `localhost:${OTEL_GRPC_PORT:-4317}` (`observability` profile)
 - SeaweedFS S3 at `http://localhost:${S3_PORT:-8333}` (`seaweedfs` profile)
 
+These are protocol endpoints, not browser pages. A `GET /` to the Collector's OTLP/HTTP port can return `404 page not found`; OTLP/HTTP exporters send `POST` requests to `/v1/traces`, `/v1/metrics`, and `/v1/logs`. This starter's Node SDK uses OTLP/HTTP exporters, so keep `OTEL_EXPORTER_OTLP_ENDPOINT` set to the Collector base URL (for example `http://127.0.0.1:4318`) and do not set `OTEL_EXPORTER_OTLP_PROTOCOL=grpc`. The Collector also listens for OTLP/gRPC on port 4317, but switching the app to gRPC requires gRPC exporters in the Node SDK; the port alone does not make the current HTTP exporters use gRPC. From the host, check that the Collector is running with `docker compose ps otel-collector` and inspect its logs with `docker compose logs --tail=100 otel-collector`. If an exporter reports 404, confirm the configured endpoint is the Collector port, not the OpenObserve UI port, and that Compose is using the checked-in Collector config.
+
 OpenObserve credentials are `ZO_ROOT_USER_EMAIL` and `ZO_ROOT_USER_PASSWORD` in `.env`. API and worker traces, metrics, and Pino logs are sent through the local Collector. Collector and OpenObserve ports bind to loopback; they are not exposed to the LAN. OpenObserve keeps its data in the `openobserve_data` Docker volume. The API process remains on the host, where local file storage is easy to inspect under `.data/files`.
 
 The API records RED metrics as `starter.http.server.request.count` and `starter.http.server.request.duration`, grouped by method, route template, and status class. Profile-image storage calls also record `starter.file_storage.operation.count` and `starter.file_storage.operation.duration`, grouped by storage driver, operation, and outcome. It emits structured `http.request.failed` and `http.request.slow` events with the Fastify request ID; profile-image uploads emit `profile_image.uploaded` and storage failures emit `profile_image.storage_failed`. The worker records `starter.worker.job.count` and `starter.worker.job.duration`, creates a span for each pg-boss job, and logs `job.processed` or `job.failed` with `entryPoint` and the job ID as its correlation ID. Metric dimensions use fixed queue, route, driver, and operation names; request and job IDs appear only in logs. Tokens, request bodies, and user identifiers are not included.
@@ -52,7 +54,16 @@ By default the API uses the filesystem adapter while SeaweedFS is available as a
 docker compose up -d --wait
 ```
 
-The local S3 endpoint and development credentials are in `.env.example` and `deploy/vps/seaweedfs-s3-config.local.json`. They are for local development only. Restart the API after changing `.env`. The API talks to SeaweedFS at `S3_ENDPOINT` (`http://127.0.0.1:8333` by default); SeaweedFS data persists in the `seaweedfs_local_data` volume. Switch back to `STORAGE_DRIVER=filesystem` and restart the API to use local files again.
+The local S3 endpoint and development credentials are in `.env.example` and `deploy/vps/seaweedfs-s3-config.local.json`. They are for local development only. Restart the API after changing `.env`. The API talks to SeaweedFS at `S3_ENDPOINT` (`http://127.0.0.1:8333` by default); SeaweedFS data persists in the `seaweedfs_local_data` volume. The S3 root URL is not a web console or bucket browser. Opening it in a browser issues an unsigned `GET /` and may return an XML `AccessDenied`; that alone does not show whether authenticated bucket/object operations work. Check the bucket using the configured S3 credentials, for example:
+
+```sh
+AWS_ACCESS_KEY_ID="$(sed -n 's/^S3_ACCESS_KEY_ID=//p' .env)" \
+AWS_SECRET_ACCESS_KEY="$(sed -n 's/^S3_SECRET_ACCESS_KEY=//p' .env)" \
+aws --endpoint-url "$(sed -n 's/^S3_ENDPOINT=//p' .env)" \
+  s3api head-bucket --bucket "$(sed -n 's/^S3_BUCKET=//p' .env)"
+```
+
+If authenticated requests return `AccessDenied`, verify that the running SeaweedFS container loaded `deploy/vps/seaweedfs-s3-config.local.json` and that its credentials exactly match `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` in `.env`. Restart the SeaweedFS service after changing its mounted config (`docker compose up -d --force-recreate seaweedfs`). The local identity has `Admin` actions; for a restricted identity, ensure its policy also allows object deletion. Switch back to `STORAGE_DRIVER=filesystem` and restart the API to use local files again.
 
 ## Agent workspaces
 
