@@ -16,7 +16,7 @@ processors:
   batch: {}
 
 exporters:
-  otlphttp/openobserve:
+  otlp_http/openobserve:
     endpoint: http://openobserve:5080/api/default
     auth:
       authenticator: basicauth/openobserve
@@ -27,12 +27,12 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlphttp/openobserve]
+      exporters: [otlp_http/openobserve]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlphttp/openobserve]
+      exporters: [otlp_http/openobserve]
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlphttp/openobserve]
+      exporters: [otlp_http/openobserve]

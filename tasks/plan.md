@@ -8,8 +8,8 @@ Complete the starter architecture chosen in the project discussion: npm/TypeScri
 
 ### Completed baseline
 
-- [x] npm workspace with TypeScript API, web, Expo app, shared contracts, local PostgreSQL, and Mailpit.
-- [x] Isolated agent worktrees, Compose projects, service ports, and database volumes.
+- [x] npm workspace with TypeScript API, web, Expo app, shared contracts, local PostgreSQL, Mailpit, OpenObserve, and Collector.
+- [x] Isolated agent worktrees, Compose projects, ten service ports, and independent database/telemetry volumes.
 - [x] API/web images, GitHub CI, GHCR, staging deployment, and manual production promotion.
 - [x] SMTP mailer; OpenTelemetry API/worker instrumentation, Collector, and per-VPS OpenObserve.
 - [x] Cloudflare Origin CA certificates served by Caddy in Full (strict) mode.
@@ -22,6 +22,8 @@ Complete the starter architecture chosen in the project discussion: npm/TypeScri
 - [x] PostgreSQL-backed pg-boss producer and separate worker entrypoint, graceful shutdown, and idempotency-key example.
 - [x] Typed `@starter/storage` interface with filesystem and S3-compatible adapters, configured from environment variables.
 - [x] Private persistent SeaweedFS S3 service in VPS Compose; staging and production use separate credentials and volumes.
+- [x] Optional local SeaweedFS profile and signed, short-lived profile-image upload/download URLs across filesystem and S3 adapters.
+- [x] OpenObserve API request and worker job signals: correlated structured events, bounded RED/outcome metrics, and a trace span per worker job.
 - [x] README, SPEC, CAPABILITIES, deployment guide, and this checklist reflect the implemented stack.
 
 ## Verification completed
@@ -37,4 +39,5 @@ Complete the starter architecture chosen in the project discussion: npm/TypeScri
 - Use additive/backward-compatible migrations so old app images tolerate the deployed schema during rollback.
 - Treat pg-boss jobs as at-least-once; make real handlers idempotent and keep secrets/needless personal data out of payloads.
 - Keep filesystem/S3 keys provider-neutral and storage credentials outside Git.
+- Example signed-file routes are disabled in production unless explicitly enabled; add product authentication, ownership checks, and rate limits before enabling them for real users.
 - Bound PostgreSQL pools across API and worker processes to fit the VPS connection budget.

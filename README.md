@@ -1,6 +1,6 @@
 # Reusable Project Starter
 
-An npm-workspaces monorepo with a TypeScript API, web app, Expo mobile app, shared contracts, and local PostgreSQL. The default local stack runs app processes on your machine and PostgreSQL plus Mailpit in Docker.
+An npm-workspaces monorepo with a TypeScript API, web app, Expo mobile app, shared contracts, and local PostgreSQL. The default local stack runs app processes on your machine and PostgreSQL, Mailpit, OpenTelemetry Collector, and OpenObserve in Docker. SeaweedFS is an optional local S3 service.
 
 ## Stack
 
@@ -27,7 +27,7 @@ Prerequisites: Node.js, npm, Docker Desktop/Engine with Compose v2.
 ./scripts/setup.sh --start
 ```
 
-This creates `.env` if needed, installs packages, starts PostgreSQL and Mailpit, applies database migrations, then launches the API, web, Expo dev server, and job worker together. Open `http://localhost:3000`; the API health route is at `http://localhost:4000/health`; locally captured email appears at `http://localhost:8025`. To start services in separate terminals, run `./scripts/setup.sh`, then use `npm run dev`, `npm run dev:worker`, and `npm run dev:mobile` in separate terminals.
+This creates `.env` if needed (and adds newly introduced defaults without replacing existing values), installs packages, starts PostgreSQL, Mailpit, OpenObserve, and the OpenTelemetry Collector, applies database migrations, then launches the API, web, Expo dev server, and job worker together. Open `http://localhost:3000` for web, `http://localhost:4000/health` for API health, `http://localhost:8025` for captured email, and `http://localhost:5080` for OpenObserve (credentials are in `.env`). The API and worker send telemetry through the Collector to OpenObserve. See [local development](docs/local-dev.md) for logs, SeaweedFS, and signed profile-image URLs. To start app processes in separate terminals, run `./scripts/setup.sh`, then use `npm run dev`, `npm run dev:worker`, and `npm run dev:mobile` in separate terminals.
 
 For a physical phone, set `EXPO_PUBLIC_API_URL` in `.env` to your computer's LAN IP (for example `http://192.168.1.20:4000`). Android emulator users can use `http://10.0.2.2:4000`.
 
@@ -41,13 +41,13 @@ npm run dev:mobile
 npm run typecheck
 npm run lint
 npm run build
-docker compose down       # Stop services; keeps the database volume
-docker compose down -v    # Destructive: also deletes local database data
+docker compose down       # Stop services; keeps named data volumes
+docker compose down -v    # Destructive: deletes database, telemetry, and optional SeaweedFS data
 ```
 
 ## Multiple agents
 
-Each agent should get its own git worktree and Compose project. That gives it a separate source tree, `.env`, PostgreSQL container, and named database volume. First commit the starter baseline, then run from the cloned or initialized git repository:
+Each agent should get its own git worktree and Compose project. That gives it a separate source tree, `.env`, PostgreSQL and OpenObserve containers, and named data volumes. Its ten-port block includes app services, PostgreSQL, Mailpit, OpenObserve, OTLP, and optional SeaweedFS, allowing agents to run the telemetry and storage services in parallel. First commit the starter baseline, then run from the cloned or initialized git repository:
 
 ```sh
 ./scripts/agent-env.sh create agent-a
@@ -55,7 +55,7 @@ Each agent should get its own git worktree and Compose project. That gives it a 
 ./scripts/agent-env.sh list
 ```
 
-Use lowercase names with letters, numbers, hyphens, or underscores. The script deterministically maps each name to a block of six host ports and checks that all six are available before creating the worktree. Each block assigns API at the base, web at base + 1, PostgreSQL at base + 2, Expo/Metro at base + 3, SMTP at base + 4, and the Mailpit UI at base + 5. Exact numbers are printed and saved in that worktree's `.env`; a workspace fails clearly if a port is busy. Edit `.env` to customize a mapping.
+Use lowercase names with letters, numbers, hyphens, or underscores. The script deterministically maps each name to a block of ten host ports and checks that they are available before creating the worktree. The block assigns API, web, PostgreSQL, Expo/Metro, SMTP, Mailpit UI, OpenObserve, OTLP gRPC, OTLP HTTP, and SeaweedFS S3 in that order. Exact numbers are printed and saved in that worktree's `.env`; a workspace fails clearly if a port is busy. Edit `.env` to customize a mapping.
 
 Then in that worktree:
 

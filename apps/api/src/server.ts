@@ -1,5 +1,6 @@
 import { startTelemetry } from "./telemetry.js";
 
+process.env.OTEL_SERVICE_NAME ??= "starter-api";
 const shutdownTelemetry = await startTelemetry();
 const { createApp } = await import("./app.js");
 const app = createApp();

@@ -8,15 +8,15 @@ Create a root-level, reusable starter repository that can be copied or generated
 
 - Use npm workspaces and TypeScript throughout; npm is the package manager for install, scripts, and CI.
 - Use Node.js with Fastify for the API, Next.js for web, Expo/React Native for mobile, and a shared TypeScript package.
-- Use PostgreSQL in Docker Compose for local development; each agent workspace gets a unique compose project, port range, and database volume/name.
+- Use PostgreSQL, OpenObserve, and an OpenTelemetry Collector in Docker Compose for local development; Mailpit is also local. Each agent workspace gets a unique Compose project, port block, and isolated data volumes. SeaweedFS is an optional local S3 profile.
 - Use Kysely as the PostgreSQL query layer. Keep one ordered, append-only Kysely migration history per application/database; deployment must run migrations once before starting the new application version.
 - Use REST APIs with OpenAPI generated from the Fastify route schemas; do not maintain a separate hand-written API schema.
 - Use pg-boss for PostgreSQL-backed durable jobs. Run job handlers in a separate Node.js worker process/container; do not introduce Redis as a requirement by default.
-- Operate file storage in the project: local filesystem for developer environments and a SeaweedFS S3-compatible adapter for self-hosted deployments, behind one application storage interface.
+- Operate file storage in the project: local filesystem for developer environments and a SeaweedFS S3-compatible adapter for local use or self-hosted deployments, behind one application storage interface. Example profile-image routes issue short-lived API-signed upload/download URLs and work with either adapter.
 - Use provider-neutral SMTP configuration for sending email. Local and agent environments route mail to Mailpit; each product chooses its own real SMTP provider for staging and production.
 - Target Docker Desktop/Engine with Compose v2 on macOS/Linux; the shell setup scripts target macOS/Linux.
 - GitHub Actions hosted runners provide CI and build versioned Docker images in GHCR. VPS release procedures are documented in the deployment guide.
-- API traces, metrics, and Pino logs use OpenTelemetry and an environment-local Collector; each Collector authenticates to its own OpenObserve instance. Collector ports stay on a private Docker network.
+- API request rate/duration/error events and worker job outcomes use structured logs, bounded-cardinality metrics, and OpenTelemetry traces through an environment-local Collector; local and VPS Collectors authenticate to their own OpenObserve instance. Collector ports are private in VPS deployments and bind to loopback for local host processes.
 - The starter includes functional health/status flows and a minimal connected web-to-API example, not a full product or authentication system.
 - Local one-click means a setup script that checks prerequisites, creates environment files, starts dependencies, installs packages, and provides clear next commands.
 
@@ -55,12 +55,12 @@ Create a root-level, reusable starter repository that can be copied or generated
 ## Project Structure
 
 ```text
-apps/api/              Fastify API and health endpoint
+apps/api/              Fastify API, health endpoint, and example signed file routes
 apps/web/              Next.js web app consuming the API
 apps/mobile/           Expo starter app
 apps/api/src/migrations/  Coordinated application migration history
 packages/shared/       Shared schemas and types
-compose.yaml           Local PostgreSQL service
+compose.yaml           Local PostgreSQL, Mailpit, OpenObserve, Collector, optional SeaweedFS
 scripts/               Setup and isolated-agent environment scripts
 .github/workflows/     CI and deployment workflow templates
 deploy/vps/            VPS Compose, Caddy, Collector, and deployment scripts
@@ -68,6 +68,7 @@ docs/deploy-vps.md    VPS CI/CD, Cloudflare DNS/TLS, SSH, and operations guide
 packages/storage/      Storage interface and filesystem/S3-compatible adapters
 docs/                  Architecture, local development, agents, and VPS deployment
 docs/email.md          SMTP configuration and Mailpit local capture
+docs/local-dev.md      Local telemetry, storage profile, and signed profile-image flow
 ```
 
 ## Code Style
@@ -87,7 +88,7 @@ export const healthResponseSchema = z.object({
 ## Verification Strategy
 
 - CI runs dependency installation, lint, typecheck, and production builds.
-- Docker Compose health checks validate local PostgreSQL readiness.
+- Docker Compose health checks validate local PostgreSQL readiness; local telemetry is routed through the Collector to OpenObserve.
 - Local verification includes launching API/web against PostgreSQL and confirming health/status endpoints.
 - Expo is bundled in CI; simulator/device execution remains a developer workflow.
 
@@ -104,14 +105,14 @@ export const healthResponseSchema = z.object({
 - API and web starter apps run and demonstrate an end-to-end web-to-API request; Expo app launches with starter UI.
 - PostgreSQL access uses Kysely and one migration history; a deployment runs migrations once before application rollout.
 - REST route schemas generate the OpenAPI document.
-- File-storage callers use one interface with a local filesystem adapter and a SeaweedFS S3-compatible deployment adapter.
+- File-storage callers use one interface with local filesystem and SeaweedFS S3-compatible adapters. Example profile-image routes validate image type, size, signature, and short-lived signed URL scope.
 - pg-boss is the selected PostgreSQL-backed durable-job integration; handlers use idempotency because jobs may be delivered more than once.
 - Local and agent email sends are captured by Mailpit; staging and production use product-selected SMTP providers configured outside source control.
 - The API exposes a provider-neutral SMTP mailer configured only from environment variables; no provider credentials are committed.
 - Two named agent environments can run at the same time without port, database, or volume collisions.
 - GitHub Actions CI checks all workspaces and publishes commit-tagged API/web images after quality checks pass.
 - Staging and production use separate VPSes and databases; staging deploys after CI and production manually promotes the same image tag using protected environment secrets.
-- Staging and production keep independent OpenObserve data volumes and credentials; API traces, metrics, and Pino logs flow through the private Collector.
+- Local, staging, and production OpenObserve instances have independent data volumes and credentials; API request and worker job traces, metrics, and structured logs flow through their environment's Collector with correlation IDs.
 - README documents prerequisites, local setup, agent isolation, GitHub push/CI, links to deployment guidance, and template reuse.
 
 ## Open Questions

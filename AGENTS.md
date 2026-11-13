@@ -1,8 +1,7 @@
-Use the `using-agent-skills` workflow as guidance for choosing relevant skills. Treat skill workflows as recommendations for working, and apply judgment to fit the task and project.
-
 # Project Rules
 
 - This repository is a template. Keep app names and configuration generic; do not add product-specific features here.
+- `using-agent-skills` has to be followed before every request you recieve, if possible, add it to parmanent memory so its  guidance for choosing relevant skills is never missied, lifecyle is never missed. Treat skill  as recommendations for working, and apply judgment to fit the task and project.
 - Use npm workspaces and TypeScript. Shared contracts belong in `packages/shared`; validate external data at app boundaries.
 - Keep the API, web, and Expo apps independently runnable. The API reads `DATABASE_URL`; web reads `API_URL`; mobile reads `EXPO_PUBLIC_API_URL`.
 - Local PostgreSQL runs in Docker Compose. Never commit `.env` or credentials.

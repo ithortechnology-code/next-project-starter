@@ -17,8 +17,8 @@ ports_for() {
   python3 - "$1" <<'PY'
 import hashlib, sys
 name = sys.argv[1].encode()
-base = 20000 + int.from_bytes(hashlib.sha256(name).digest()[:4], "big") % 3000 * 6
-print(base, base + 1, base + 2, base + 3, base + 4, base + 5)
+base = 20000 + int.from_bytes(hashlib.sha256(name).digest()[:4], "big") % 2500 * 10
+print(*range(base, base + 10))
 PY
 }
 
@@ -57,11 +57,11 @@ case "$ACTION" in
     if [[ -e "$WORKTREE" ]]; then echo "Workspace already exists: $WORKTREE" >&2; exit 1; fi
     mkdir -p "$(dirname "$WORKTREE")"
     git -C "$ROOT_DIR" worktree add -b "agent/$NAME" "$WORKTREE" HEAD
-    read -r API_PORT WEB_PORT DB_PORT EXPO_PORT SMTP_PORT MAILPIT_UI_PORT < <(ports_for "$NAME")
-    if ! ports_available "$API_PORT" "$WEB_PORT" "$DB_PORT" "$EXPO_PORT" "$SMTP_PORT" "$MAILPIT_UI_PORT"; then
+    read -r API_PORT WEB_PORT DB_PORT EXPO_PORT SMTP_PORT MAILPIT_UI_PORT OPENOBSERVE_PORT OTEL_GRPC_PORT OTEL_HTTP_PORT S3_PORT < <(ports_for "$NAME")
+    if ! ports_available "$API_PORT" "$WEB_PORT" "$DB_PORT" "$EXPO_PORT" "$SMTP_PORT" "$MAILPIT_UI_PORT" "$OPENOBSERVE_PORT" "$OTEL_GRPC_PORT" "$OTEL_HTTP_PORT" "$S3_PORT"; then
       git -C "$ROOT_DIR" worktree remove --force "$WORKTREE"
       git -C "$ROOT_DIR" branch -D "agent/$NAME" >/dev/null 2>&1 || true
-      echo "The deterministic port block $API_PORT-$MAILPIT_UI_PORT is already in use. Choose another name." >&2
+      echo "The deterministic port block $API_PORT-$S3_PORT is already in use. Choose another name." >&2
       exit 1
     fi
     COMPOSE_PROJECT="starter-${NAME,,}"
@@ -79,6 +79,10 @@ API_PORT=$API_PORT
 WEB_PORT=$WEB_PORT
 EXPO_PORT=$EXPO_PORT
 MAILPIT_UI_PORT=$MAILPIT_UI_PORT
+OPENOBSERVE_PORT=$OPENOBSERVE_PORT
+OTEL_GRPC_PORT=$OTEL_GRPC_PORT
+OTEL_HTTP_PORT=$OTEL_HTTP_PORT
+S3_PORT=$S3_PORT
 SMTP_HOST=127.0.0.1
 SMTP_PORT=$SMTP_PORT
 SMTP_SECURE=false
@@ -87,9 +91,19 @@ DATABASE_URL=postgresql://starter:$DB_PASSWORD@localhost:$DB_PORT/$DB_NAME
 WEB_ORIGIN=http://localhost:$WEB_PORT
 API_URL=http://localhost:$API_PORT
 EXPO_PUBLIC_API_URL=http://localhost:$API_PORT
+API_PUBLIC_URL=http://localhost:$API_PORT
+OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:$OTEL_HTTP_PORT
+ZO_ROOT_USER_EMAIL=local-observe@example.local
+ZO_ROOT_USER_PASSWORD=Local-Observe-2026!
+FILE_URL_SIGNING_SECRET=local-development-only-change-this-to-a-random-secret-value
+S3_ENDPOINT=http://127.0.0.1:$S3_PORT
+S3_REGION=us-east-1
+S3_BUCKET=starter-files
+S3_ACCESS_KEY_ID=starter-local-access
+S3_SECRET_ACCESS_KEY=local-only-seaweedfs-secret-change-me
 EOF
     echo "Created $NAME at $WORKTREE"
-    echo "Port mapping: API http://localhost:$API_PORT · Web http://localhost:$WEB_PORT · PostgreSQL localhost:$DB_PORT · Expo/Metro $EXPO_PORT · SMTP localhost:$SMTP_PORT · Mailpit http://localhost:$MAILPIT_UI_PORT"
+    echo "Port mapping: API http://localhost:$API_PORT · Web http://localhost:$WEB_PORT · PostgreSQL localhost:$DB_PORT · Expo/Metro $EXPO_PORT · SMTP localhost:$SMTP_PORT · Mailpit http://localhost:$MAILPIT_UI_PORT · OpenObserve http://localhost:$OPENOBSERVE_PORT · OTLP HTTP $OTEL_HTTP_PORT · SeaweedFS S3 $S3_PORT"
     echo "The port block is derived from the workspace name and checked before creation; change the ports in .env if you need a custom mapping."
     echo "Next: cd '$WORKTREE' && npm ci && docker compose up -d --wait && npm run dev"
     ;;

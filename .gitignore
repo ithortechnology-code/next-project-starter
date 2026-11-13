@@ -41,3 +41,4 @@ deploy/vps/seaweedfs-s3-config.json
 .vscode/
 .idea/
 .DS_Store
+node_modules

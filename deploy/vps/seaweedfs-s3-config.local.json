@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "starter-local-dev",
+      "credentials": [
+        {
+          "accessKey": "starter-local-access",
+          "secretKey": "local-only-seaweedfs-secret-change-me"
+        }
+      ],
+      "actions": ["Admin"]
+    }
+  ]
+}

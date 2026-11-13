@@ -17,7 +17,13 @@ export async function startTelemetry(): Promise<(() => Promise<void>) | undefine
       }),
     ],
     logRecordProcessors: [new BatchLogRecordProcessor({ exporter: new OTLPLogExporter() })],
-    instrumentations: [getNodeAutoInstrumentations()],
+    instrumentations: [
+      getNodeAutoInstrumentations({
+        "@opentelemetry/instrumentation-http": {
+          redactedQueryParamsServer: ["token"],
+        },
+      }),
+    ],
   });
 
   sdk.start();

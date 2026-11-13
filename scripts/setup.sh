@@ -16,6 +16,14 @@ fi
 if [[ ! -f .env ]]; then
   cp .env.example .env
   echo "Created .env from .env.example. Change the local password before use outside a dev machine."
+else
+  # Add new starter defaults on upgrades without replacing developer-specific values.
+  while IFS='=' read -r key value; do
+    [[ -z "$key" || "$key" == \\#* ]] && continue
+    if ! grep -q "^${key}=" .env; then
+      printf '%s=%s\n' "$key" "$value" >> .env
+    fi
+  done < .env.example
 fi
 
 npm ci
