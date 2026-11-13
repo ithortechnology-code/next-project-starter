@@ -11,6 +11,7 @@ let stopping = false;
 
 try {
   await boss.start();
+  await boss.createQueue(EXAMPLE_JOB);
   await boss.work<{ idempotencyKey: string }>(EXAMPLE_JOB, async (jobs) => {
     // This example deliberately has no external side effects. Real handlers must be idempotent.
     for (const job of jobs) {
