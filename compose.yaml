@@ -1,5 +1,12 @@
 name: ${COMPOSE_PROJECT_NAME:-starter}
 services:
+  mailpit:
+    image: axllent/mailpit:v1.33.1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped

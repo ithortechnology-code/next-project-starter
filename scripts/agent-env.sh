@@ -17,8 +17,8 @@ ports_for() {
   python3 - "$1" <<'PY'
 import hashlib, sys
 name = sys.argv[1].encode()
-base = 20000 + int.from_bytes(hashlib.sha256(name).digest()[:4], "big") % 3000 * 5
-print(base, base + 1, base + 2, base + 3)
+base = 20000 + int.from_bytes(hashlib.sha256(name).digest()[:4], "big") % 3000 * 6
+print(base, base + 1, base + 2, base + 3, base + 4, base + 5)
 PY
 }
 
@@ -57,11 +57,11 @@ case "$ACTION" in
     if [[ -e "$WORKTREE" ]]; then echo "Workspace already exists: $WORKTREE" >&2; exit 1; fi
     mkdir -p "$(dirname "$WORKTREE")"
     git -C "$ROOT_DIR" worktree add -b "agent/$NAME" "$WORKTREE" HEAD
-    read -r API_PORT WEB_PORT DB_PORT EXPO_PORT < <(ports_for "$NAME")
-    if ! ports_available "$API_PORT" "$WEB_PORT" "$DB_PORT" "$EXPO_PORT"; then
+    read -r API_PORT WEB_PORT DB_PORT EXPO_PORT SMTP_PORT MAILPIT_UI_PORT < <(ports_for "$NAME")
+    if ! ports_available "$API_PORT" "$WEB_PORT" "$DB_PORT" "$EXPO_PORT" "$SMTP_PORT" "$MAILPIT_UI_PORT"; then
       git -C "$ROOT_DIR" worktree remove --force "$WORKTREE"
       git -C "$ROOT_DIR" branch -D "agent/$NAME" >/dev/null 2>&1 || true
-      echo "The deterministic port block $API_PORT-$EXPO_PORT is already in use. Choose another name." >&2
+      echo "The deterministic port block $API_PORT-$MAILPIT_UI_PORT is already in use. Choose another name." >&2
       exit 1
     fi
     COMPOSE_PROJECT="starter-${NAME,,}"
@@ -78,13 +78,18 @@ DB_PORT=$DB_PORT
 API_PORT=$API_PORT
 WEB_PORT=$WEB_PORT
 EXPO_PORT=$EXPO_PORT
+MAILPIT_UI_PORT=$MAILPIT_UI_PORT
+SMTP_HOST=127.0.0.1
+SMTP_PORT=$SMTP_PORT
+SMTP_SECURE=false
+EMAIL_FROM=no-reply@example.local
 DATABASE_URL=postgresql://starter:$DB_PASSWORD@localhost:$DB_PORT/$DB_NAME
 WEB_ORIGIN=http://localhost:$WEB_PORT
 API_URL=http://localhost:$API_PORT
 EXPO_PUBLIC_API_URL=http://localhost:$API_PORT
 EOF
     echo "Created $NAME at $WORKTREE"
-    echo "Port mapping: API http://localhost:$API_PORT · Web http://localhost:$WEB_PORT · PostgreSQL localhost:$DB_PORT · Expo/Metro $EXPO_PORT"
+    echo "Port mapping: API http://localhost:$API_PORT · Web http://localhost:$WEB_PORT · PostgreSQL localhost:$DB_PORT · Expo/Metro $EXPO_PORT · SMTP localhost:$SMTP_PORT · Mailpit http://localhost:$MAILPIT_UI_PORT"
     echo "The port block is derived from the workspace name and checked before creation; change the ports in .env if you need a custom mapping."
     echo "Next: cd '$WORKTREE' && npm ci && docker compose up -d --wait && npm run dev"
     ;;

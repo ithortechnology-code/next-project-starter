@@ -18,8 +18,10 @@ if [[ "$PREVIOUS_TAG" == "sha-0000000000000000000000000000000000000000" ]]; then
 fi
 WEB_DOMAIN="$(sed -n 's/^WEB_DOMAIN=//p' .env | head -n 1)"
 API_DOMAIN="$(sed -n 's/^API_DOMAIN=//p' .env | head -n 1)"
+OBSERVE_DOMAIN="$(sed -n 's/^OBSERVE_DOMAIN=//p' .env | head -n 1)"
 [[ "$WEB_DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || { echo "WEB_DOMAIN must be a DNS hostname." >&2; exit 1; }
 [[ "$API_DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || { echo "API_DOMAIN must be a DNS hostname." >&2; exit 1; }
+[[ "$OBSERVE_DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]] || { echo "OBSERVE_DOMAIN must be a DNS hostname." >&2; exit 1; }
 compose() {
   IMAGE_TAG="$1" docker compose --env-file .env -f compose.yaml "${@:2}"
 }
@@ -47,9 +49,15 @@ curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-connrefused
 API_STATUS=$?
 curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-connrefused "https://${WEB_DOMAIN}/" >/dev/null
 WEB_STATUS=$?
+OBSERVE_STATUS="$(curl --silent --show-error --retry 12 --retry-delay 5 --retry-connrefused --output /dev/null --write-out '%{http_code}' "https://${OBSERVE_DOMAIN}/" || printf '000')"
 set -e
 
-if [[ "$API_STATUS" -ne 0 || "$WEB_STATUS" -ne 0 ]]; then
+OBSERVE_OK=false
+if [[ "$OBSERVE_STATUS" == 2?? || "$OBSERVE_STATUS" == 3?? || "$OBSERVE_STATUS" == 401 ]]; then
+  OBSERVE_OK=true
+fi
+
+if [[ "$API_STATUS" -ne 0 || "$WEB_STATUS" -ne 0 || "$OBSERVE_OK" != true ]]; then
   rollback
   echo "Public HTTPS health checks failed; deployment was rolled back when a prior image existed." >&2
   exit 1
@@ -63,4 +71,4 @@ else
 fi
 mv .env.tmp .env
 
-echo "Deployed $DEPLOY_TAG successfully to https://${WEB_DOMAIN} and https://${API_DOMAIN}."
+echo "Deployed $DEPLOY_TAG successfully to https://${WEB_DOMAIN}, https://${API_DOMAIN}, and https://${OBSERVE_DOMAIN}."

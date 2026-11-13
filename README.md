@@ -1,6 +1,6 @@
 # Reusable Project Starter
 
-An npm-workspaces monorepo with a TypeScript API, web app, Expo mobile app, shared contracts, and local PostgreSQL. The default local stack runs app processes on your machine and PostgreSQL in Docker.
+An npm-workspaces monorepo with a TypeScript API, web app, Expo mobile app, shared contracts, and local PostgreSQL. The default local stack runs app processes on your machine and PostgreSQL plus Mailpit in Docker.
 
 ## Stack
 
@@ -9,8 +9,15 @@ An npm-workspaces monorepo with a TypeScript API, web app, Expo mobile app, shar
 - Next.js web (`apps/web`)
 - Expo / React Native mobile (`apps/mobile`)
 - Shared TypeScript + Zod contracts (`packages/shared`)
-- PostgreSQL 17 in Docker Compose
+- PostgreSQL 17 + Kysely, with a coordinated application migration history
+- REST API with OpenAPI generated from route schemas
+- Project-operated files: local filesystem for development; SeaweedFS S3-compatible adapter for self-hosted deployments
+- Provider-neutral SMTP mailer, with Mailpit capture in local and isolated agent environments
+- PostgreSQL-backed durable jobs with pg-boss and a separate Node.js worker
+- OpenTelemetry API signals (traces, metrics, and Pino logs) via a private Collector to self-hosted OpenObserve on staging/production
 - GitHub Actions CI/CD to separate self-hosted staging and production VPSes
+
+The target defaults for Kysely migrations, generated OpenAPI, file-storage adapters, and durable jobs are recorded in [SPEC.md](SPEC.md). Those application integrations are still to be implemented. See [email setup](docs/email.md) for the SMTP mailer and Mailpit.
 
 ## Quick start
 
@@ -22,7 +29,7 @@ Prerequisites: Node.js, npm, Docker Desktop/Engine with Compose v2.
 ./scripts/setup.sh --start
 ```
 
-This creates `.env` if needed, installs packages, starts PostgreSQL, then launches the API, web, and Expo dev server together. Open `http://localhost:3000`; the API health route is at `http://localhost:4000/health`. To start services in separate terminals, run `./scripts/setup.sh`, then use `npm run dev` and `npm run dev:mobile`.
+This creates `.env` if needed, installs packages, starts PostgreSQL and Mailpit, then launches the API, web, and Expo dev server together. Open `http://localhost:3000`; the API health route is at `http://localhost:4000/health`; locally captured email appears at `http://localhost:8025`. To start services in separate terminals, run `./scripts/setup.sh`, then use `npm run dev` and `npm run dev:mobile`.
 
 For a physical phone, set `EXPO_PUBLIC_API_URL` in `.env` to your computer's LAN IP (for example `http://192.168.1.20:4000`). Android emulator users can use `http://10.0.2.2:4000`.
 
@@ -49,7 +56,7 @@ Each agent should get its own git worktree and Compose project. That gives it a 
 ./scripts/agent-env.sh list
 ```
 
-Use lowercase names with letters, numbers, hyphens, or underscores. The script deterministically maps each name to a block of four host ports and checks that all four are available before creating the worktree. Each block assigns API at the base, web at base + 1, PostgreSQL at base + 2, and Expo/Metro at base + 3. Expo and Metro share the same dev-server port. Exact numbers are printed and saved in that worktree's `.env`; a workspace fails clearly if a port is busy. Edit `.env` to customize a mapping.
+Use lowercase names with letters, numbers, hyphens, or underscores. The script deterministically maps each name to a block of six host ports and checks that all six are available before creating the worktree. Each block assigns API at the base, web at base + 1, PostgreSQL at base + 2, Expo/Metro at base + 3, SMTP at base + 4, and the Mailpit UI at base + 5. Exact numbers are printed and saved in that worktree's `.env`; a workspace fails clearly if a port is busy. Edit `.env` to customize a mapping.
 
 Then in that worktree:
 
@@ -77,7 +84,7 @@ Pull requests and pushes to `main` run `npm ci`, lint, typecheck, and builds in 
 
 ## Staging and production VPSes
 
-See [the VPS deployment guide](docs/deploy-vps.md). CI builds API/web Docker images and publishes them to GHCR using the passing commit SHA. A successful `main` build deploys that exact image to the staging VPS. Production uses a manual workflow to promote the same image tag to its separate VPS. Both environments use independent databases, volumes, domains, and GitHub Environment secrets.
+See [the VPS deployment guide](docs/deploy-vps.md). CI builds API/web Docker images and publishes them to GHCR using the passing commit SHA. A successful `main` build deploys that exact image to the staging VPS. Production uses a manual workflow to promote the same image tag to its separate VPS. Both environments use independent databases, volumes, domains, and GitHub Environment secrets. Cloudflare proxying is recommended for public hostnames; Cloudflare Universal SSL handles visitor TLS, while Caddy uses a Cloudflare Origin CA certificate and accepts origin TLS only from Cloudflare IP ranges. The simple initial deployment retains key-only SSH-based CI deployment; Cloudflare Tunnel can remove public inbound SSH later if its Access setup is worthwhile.
 
 ## Reuse this starter
 
@@ -92,5 +99,6 @@ See [SPEC.md](SPEC.md) and [CAPABILITIES.md](CAPABILITIES.md) for the starter co
 - [Expo monorepo support](https://docs.expo.dev/guides/monorepos/)
 - [Docker Compose health checks and startup order](https://docs.docker.com/compose/how-tos/startup-order/)
 - [Docker Compose in production](https://docs.docker.com/compose/how-tos/production/)
-- [Caddy automatic HTTPS](https://caddyserver.com/docs/automatic-https)
+- [Cloudflare Origin CA certificates](https://developers.cloudflare.com/ssl/origin-configuration/origin-ca/)
+- [Cloudflare proxy status](https://developers.cloudflare.com/dns/proxy-status/)
 - [GitHub Actions with GHCR](https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions)
