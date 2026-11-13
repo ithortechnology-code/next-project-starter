@@ -1,4 +1,4 @@
-All work follows the `using-agent-skills` workflow. Read the relevant skill before making changes.
+All agents follow the `using-agent-skills` workflow. Read the relevant skill before making changes.
 
 # Project Rules
 
