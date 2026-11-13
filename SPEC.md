@@ -8,11 +8,11 @@ Create a root-level, reusable starter repository that can be copied or generated
 
 - Use npm workspaces and TypeScript throughout; npm is the package manager for install, scripts, and CI.
 - Use Node.js with Fastify for the API, Next.js for web, Expo/React Native for mobile, and a shared TypeScript package.
-- Use PostgreSQL, OpenObserve, and an OpenTelemetry Collector in Docker Compose for local development; Mailpit is also local. Each agent workspace gets a unique Compose project, port block, and isolated data volumes. SeaweedFS is an optional local S3 profile.
+- Use PostgreSQL as the always-on local database. Docker Compose profiles control optional local Mailpit, OpenObserve/Collector, and SeaweedFS services; the default profile list enables all three. Each agent workspace gets a unique Compose project, port block, and isolated data volumes.
 - Use Kysely as the PostgreSQL query layer. Keep one ordered, append-only Kysely migration history per application/database; deployment must run migrations once before starting the new application version.
 - Use REST APIs with OpenAPI generated from the Fastify route schemas; do not maintain a separate hand-written API schema.
 - Use pg-boss for PostgreSQL-backed durable jobs. Run job handlers in a separate Node.js worker process/container; do not introduce Redis as a requirement by default.
-- Operate file storage in the project: local filesystem for developer environments and a SeaweedFS S3-compatible adapter for local use or self-hosted deployments, behind one application storage interface. Example profile-image routes issue short-lived API-signed upload/download URLs and work with either adapter.
+- Operate file storage in the project: the filesystem adapter is always available locally and SeaweedFS S3-compatible storage runs by default for local use or self-hosted deployments, behind one application storage interface. `STORAGE_DRIVER` selects the adapter used by one API process. Example profile-image routes issue short-lived API-signed upload/download URLs and work with either adapter.
 - Use provider-neutral SMTP configuration for sending email. Local and agent environments route mail to Mailpit; each product chooses its own real SMTP provider for staging and production.
 - Target Docker Desktop/Engine with Compose v2 on macOS/Linux; the shell setup scripts target macOS/Linux.
 - GitHub Actions hosted runners provide CI and build versioned Docker images in GHCR. VPS release procedures are documented in the deployment guide.
@@ -100,12 +100,12 @@ export const healthResponseSchema = z.object({
 
 ## Success Criteria
 
-- A fresh checkout can be configured with one setup command and started using documented commands.
-- Docker runs PostgreSQL and any required local services with health checks.
+- A fresh checkout can be configured with one setup command and started using documented commands; `COMPOSE_PROFILES` selects optional local service groups.
+- Docker runs PostgreSQL and selected local services with health checks where supported.
 - API and web starter apps run and demonstrate an end-to-end web-to-API request; Expo app launches with starter UI.
 - PostgreSQL access uses Kysely and one migration history; a deployment runs migrations once before application rollout.
 - REST route schemas generate the OpenAPI document.
-- File-storage callers use one interface with local filesystem and SeaweedFS S3-compatible adapters. Example profile-image routes validate image type, size, signature, and short-lived signed URL scope.
+- File-storage callers use one interface with local filesystem and SeaweedFS S3-compatible adapters, both available in the default local setup. `STORAGE_DRIVER` selects which adapter the API uses. Example profile-image routes validate image type, size, signature, and short-lived signed URL scope.
 - pg-boss is the selected PostgreSQL-backed durable-job integration; handlers use idempotency because jobs may be delivered more than once.
 - Local and agent email sends are captured by Mailpit; staging and production use product-selected SMTP providers configured outside source control.
 - The API exposes a provider-neutral SMTP mailer configured only from environment variables; no provider credentials are committed.

@@ -1,11 +1,28 @@
 # Local development services
 
-`./scripts/setup.sh` starts the default local dependencies in Docker Compose:
+`./scripts/setup.sh` starts PostgreSQL and the optional Docker services listed in `COMPOSE_PROFILES` in `.env`. The default `.env.example` enables all three profiles:
+
+- `email`: Mailpit SMTP capture and inbox
+- `observability`: OpenObserve and the OpenTelemetry Collector
+- `seaweedfs`: local S3-compatible storage
+
+Edit `COMPOSE_PROFILES` in `.env` to remove services a project does not use, then rerun `./scripts/setup.sh`; the script stops old optional containers before starting the selected profiles. For example, `COMPOSE_PROFILES=observability` keeps telemetry but skips Mailpit and SeaweedFS. PostgreSQL remains part of the default core stack. If observability is disabled, clear `OTEL_EXPORTER_OTLP_ENDPOINT` as well so the API and worker do not retry a missing Collector. If SeaweedFS is disabled, use `STORAGE_DRIVER=filesystem` unless `S3_ENDPOINT` points to another reachable S3 service.
+
+After migrations, setup prints a URL table and a credentials table. The printed username/password/key values come from `.env.example` and are local examples; if `.env` overrides them, use the values from `.env` instead.
+
+The `filesystem` adapter is always available to the API and stores data under `.data/files` by default. SeaweedFS runs alongside it by default, so both adapters are available locally at once. One API process uses the adapter selected by `STORAGE_DRIVER`; change that setting and restart the API to switch between them. This keeps stored objects in one selected backend instead of silently writing two copies.
+
+To override profiles for a one-off Compose command without editing `.env`, set `COMPOSE_PROFILES` for that command, for example:
+
+```sh
+COMPOSE_PROFILES=seaweedfs docker compose up -d --wait
+```
 
 - PostgreSQL at `localhost:${DB_PORT:-5432}`
-- Mailpit SMTP at `localhost:${SMTP_PORT:-1025}` and inbox at `http://localhost:${MAILPIT_UI_PORT:-8025}`
-- OpenObserve at `http://localhost:${OPENOBSERVE_PORT:-5080}`
-- OpenTelemetry Collector OTLP/HTTP at `localhost:${OTEL_HTTP_PORT:-4318}` and OTLP/gRPC at `localhost:${OTEL_GRPC_PORT:-4317}`
+- Mailpit SMTP at `localhost:${SMTP_PORT:-1025}` and inbox at `http://localhost:${MAILPIT_UI_PORT:-8025}` (`email` profile)
+- OpenObserve at `http://localhost:${OPENOBSERVE_PORT:-5080}` (`observability` profile)
+- OpenTelemetry Collector OTLP/HTTP at `localhost:${OTEL_HTTP_PORT:-4318}` and OTLP/gRPC at `localhost:${OTEL_GRPC_PORT:-4317}` (`observability` profile)
+- SeaweedFS S3 at `http://localhost:${S3_PORT:-8333}` (`seaweedfs` profile)
 
 OpenObserve credentials are `ZO_ROOT_USER_EMAIL` and `ZO_ROOT_USER_PASSWORD` in `.env`. API and worker traces, metrics, and Pino logs are sent through the local Collector. Collector and OpenObserve ports bind to loopback; they are not exposed to the LAN. OpenObserve keeps its data in the `openobserve_data` Docker volume. The API process remains on the host, where local file storage is easy to inspect under `.data/files`.
 
@@ -27,16 +44,16 @@ curl -s http://localhost:4000/files/upload-url \
 
 The response contains `fileId`, `uploadUrl`, `downloadUrl`, `expiresAt`, and `maxBytes`. Send image bytes to `uploadUrl` with the matching `Content-Type` using `PUT`; then open `downloadUrl` in a browser or fetch it with `curl`. Call `POST /files/{fileId}/download-url` to issue a fresh download URL later. The current starter has no user authentication or file ownership model, so these example routes are disabled in production by default. Before enabling them in a product, require authentication and ownership checks on URL issuance, and add suitable rate limits and lifecycle cleanup.
 
-## Optional SeaweedFS S3 storage
+## SeaweedFS S3 storage
 
-By default the API uses the filesystem adapter. To try the S3-compatible adapter locally, start the optional SeaweedFS container and set `STORAGE_DRIVER=s3` in `.env`:
+By default the API uses the filesystem adapter while SeaweedFS is available as a local service. To use the S3-compatible adapter, set `STORAGE_DRIVER=s3` in `.env` and ensure Compose is running:
 
 ```sh
-docker compose --profile seaweedfs up -d --wait seaweedfs
+docker compose up -d --wait
 ```
 
 The local S3 endpoint and development credentials are in `.env.example` and `deploy/vps/seaweedfs-s3-config.local.json`. They are for local development only. Restart the API after changing `.env`. The API talks to SeaweedFS at `S3_ENDPOINT` (`http://127.0.0.1:8333` by default); SeaweedFS data persists in the `seaweedfs_local_data` volume. Switch back to `STORAGE_DRIVER=filesystem` and restart the API to use local files again.
 
 ## Agent workspaces
 
-`./scripts/agent-env.sh create <name>` allocates ten deterministic ports per worktree: API, web, PostgreSQL, Expo, SMTP, Mailpit, OpenObserve, Collector gRPC, Collector HTTP, and SeaweedFS. Each Compose project has separate database and OpenObserve volumes; SeaweedFS starts only when its profile is enabled. Agent workspace credentials are local examples and must not be reused in deployed environments.
+`./scripts/agent-env.sh create <name>` allocates ten deterministic ports per worktree: API, web, PostgreSQL, Expo, SMTP, Mailpit, OpenObserve, Collector gRPC, Collector HTTP, and SeaweedFS. Generated workspaces enable all three optional profiles by default and have separate database, OpenObserve, and SeaweedFS volumes. Remove unused entries from that worktree's `COMPOSE_PROFILES` to reduce its services. Agent workspace credentials are local examples and must not be reused in deployed environments.

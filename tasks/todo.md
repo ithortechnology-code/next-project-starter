@@ -12,6 +12,7 @@
 - [x] Private persistent SeaweedFS S3 service with separate environment credentials and backup guidance.
 - [x] Local OpenObserve/Collector stack, optional SeaweedFS profile, and signed profile-image URL flow for both storage adapters.
 - [x] Correlated API/worker events, bounded request/job metrics, per-job spans, and local OpenObserve ingestion verification.
+- [x] Default local filesystem and SeaweedFS availability; Compose profiles configure optional local service groups.
 - [x] GitHub CI, GHCR images, staging deploy, protected production promotion, SMTP/Mailpit, OTel Collector/OpenObserve, and Cloudflare Origin CA Caddy configuration.
 - [x] README, SPEC, CAPABILITIES, VPS guide, implementation plan, and task checklist reconciled.
 

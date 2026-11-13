@@ -23,6 +23,7 @@ Complete the starter architecture chosen in the project discussion: npm/TypeScri
 - [x] Typed `@starter/storage` interface with filesystem and S3-compatible adapters, configured from environment variables.
 - [x] Private persistent SeaweedFS S3 service in VPS Compose; staging and production use separate credentials and volumes.
 - [x] Optional local SeaweedFS profile and signed, short-lived profile-image upload/download URLs across filesystem and S3 adapters.
+- [x] Default local SeaweedFS alongside filesystem storage; `COMPOSE_PROFILES` selects optional email, observability, and S3 services.
 - [x] OpenObserve API request and worker job signals: correlated structured events, bounded RED/outcome metrics, and a trace span per worker job.
 - [x] README, SPEC, CAPABILITIES, deployment guide, and this checklist reflect the implemented stack.
 

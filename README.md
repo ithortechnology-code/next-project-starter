@@ -27,7 +27,7 @@ Prerequisites: Node.js, npm, Docker Desktop/Engine with Compose v2.
 ./scripts/setup.sh --start
 ```
 
-This creates `.env` if needed (and adds newly introduced defaults without replacing existing values), installs packages, starts PostgreSQL, Mailpit, OpenObserve, and the OpenTelemetry Collector, applies database migrations, then launches the API, web, Expo dev server, and job worker together. Open `http://localhost:3000` for web, `http://localhost:4000/health` for API health, `http://localhost:8025` for captured email, and `http://localhost:5080` for OpenObserve (credentials are in `.env`). The API and worker send telemetry through the Collector to OpenObserve. See [local development](docs/local-dev.md) for logs, SeaweedFS, and signed profile-image URLs. To start app processes in separate terminals, run `./scripts/setup.sh`, then use `npm run dev`, `npm run dev:worker`, and `npm run dev:mobile` in separate terminals.
+This creates `.env` if needed (and adds newly introduced defaults without replacing existing values), installs packages, starts PostgreSQL and the optional services selected by `COMPOSE_PROFILES` (Mailpit, OpenObserve/Collector, and SeaweedFS by default), applies database migrations, then launches the API, web, Expo dev server, and job worker together. The setup script prints a table of service URLs and local example credentials from `.env.example`. Open `http://localhost:3000` for web, `http://localhost:4000/health` for API health, `http://localhost:8025` for captured email, `http://localhost:5080` for OpenObserve, and `http://localhost:8333` for the local S3 endpoint. The API and worker send telemetry through the Collector to OpenObserve. See [local development](docs/local-dev.md) for profile selection, logs, SeaweedFS, and signed profile-image URLs. To start app processes in separate terminals, run `./scripts/setup.sh`, then use `npm run dev`, `npm run dev:worker`, and `npm run dev:mobile` in separate terminals.
 
 For a physical phone, set `EXPO_PUBLIC_API_URL` in `.env` to your computer's LAN IP (for example `http://192.168.1.20:4000`). Android emulator users can use `http://10.0.2.2:4000`.
 
@@ -47,7 +47,7 @@ docker compose down -v    # Destructive: deletes database, telemetry, and option
 
 ## Multiple agents
 
-Each agent should get its own git worktree and Compose project. That gives it a separate source tree, `.env`, PostgreSQL and OpenObserve containers, and named data volumes. Its ten-port block includes app services, PostgreSQL, Mailpit, OpenObserve, OTLP, and optional SeaweedFS, allowing agents to run the telemetry and storage services in parallel. First commit the starter baseline, then run from the cloned or initialized git repository:
+Each agent should get its own git worktree and Compose project. That gives it a separate source tree, `.env`, PostgreSQL, and isolated named data volumes. Generated workspaces enable Mailpit, OpenObserve/Collector, and SeaweedFS by default; remove unused entries from `COMPOSE_PROFILES` to reduce services. Its ten-port block includes app services, PostgreSQL, Mailpit, OpenObserve, OTLP, and SeaweedFS so agents can run the selected services in parallel. First commit the starter baseline, then run from the cloned or initialized git repository:
 
 ```sh
 ./scripts/agent-env.sh create agent-a

@@ -71,6 +71,7 @@ case "$ACTION" in
     DB_PASSWORD="local-${NAME//[^a-zA-Z0-9]/x}-change-me"
     cat > "$WORKTREE/.env" <<EOF
 COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT
+COMPOSE_PROFILES=email,observability,seaweedfs
 POSTGRES_DB=$DB_NAME
 POSTGRES_USER=starter
 POSTGRES_PASSWORD=$DB_PASSWORD
@@ -117,7 +118,7 @@ EOF
     COMPOSE_PROJECT="starter-${NAME,,}"
     COMPOSE_PROJECT="${COMPOSE_PROJECT//_/-}"
     COMPOSE_PROJECT="${COMPOSE_PROJECT//[^a-z0-9-]/-}"
-    docker compose -p "$COMPOSE_PROJECT" --env-file "$WORKTREE/.env" -f "$WORKTREE/compose.yaml" down
+    docker compose -p "$COMPOSE_PROJECT" --env-file "$WORKTREE/.env" -f "$WORKTREE/compose.yaml" --profile email --profile observability --profile seaweedfs down
     git -C "$ROOT_DIR" worktree remove "$WORKTREE"
     echo "Stopped services and removed worktree $NAME. The agent branch is preserved."
     ;;

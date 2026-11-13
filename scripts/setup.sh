@@ -26,9 +26,94 @@ else
   done < .env.example
 fi
 
+read_setting() {
+  local file="$1"
+  local name="$2"
+  local default_value="${3:-}"
+  local value
+  if ! value="$(awk -F= -v name="$name" '$1 == name { sub(/^[^=]*=/, ""); print; found=1; exit } END { if (!found) exit 1 }' "$file")"; then
+    value="$default_value"
+  fi
+  printf '%s' "$value"
+}
+
+profile_enabled() {
+  printf '%s\n' "$ACTIVE_PROFILES" | tr ',' '\n' | grep -Fxq "$1"
+}
+
+profile_state() {
+  if profile_enabled "$1"; then printf 'enabled'; else printf 'disabled'; fi
+}
+
+print_url_row() {
+  printf '  %-20s | %-20s | %s\n' "$1" "$2" "$3"
+}
+
+print_credential_row() {
+  printf '  %-25s | %-38s | %s\n' "$1" "$2" "$3"
+}
+
+print_local_services() {
+  local api_state="not started by this command"
+  if [[ "${1:-}" == "--start" ]]; then api_state="starting via dev:all"; fi
+
+  local api_port web_port expo_port db_port smtp_port mailpit_ui_port observe_port otel_http_port otel_grpc_port s3_port
+  local api_url mobile_api_url db_name storage_driver file_directory profiles s3_endpoint
+  api_port="$(read_setting .env API_PORT 4000)"
+  web_port="$(read_setting .env WEB_PORT 3000)"
+  expo_port="$(read_setting .env EXPO_PORT 8081)"
+  db_port="$(read_setting .env DB_PORT 5432)"
+  smtp_port="$(read_setting .env SMTP_PORT 1025)"
+  mailpit_ui_port="$(read_setting .env MAILPIT_UI_PORT 8025)"
+  observe_port="$(read_setting .env OPENOBSERVE_PORT 5080)"
+  otel_http_port="$(read_setting .env OTEL_HTTP_PORT 4318)"
+  otel_grpc_port="$(read_setting .env OTEL_GRPC_PORT 4317)"
+  s3_port="$(read_setting .env S3_PORT 8333)"
+  api_url="$(read_setting .env API_PUBLIC_URL "http://localhost:$api_port")"
+  api_url="${api_url%/}"
+  mobile_api_url="$(read_setting .env EXPO_PUBLIC_API_URL "$api_url")"
+  db_name="$(read_setting .env POSTGRES_DB starter_dev)"
+  storage_driver="$(read_setting .env STORAGE_DRIVER filesystem)"
+  file_directory="$(read_setting .env FILE_STORAGE_DIRECTORY ../../.data/files)"
+  s3_endpoint="$(read_setting .env S3_ENDPOINT "http://127.0.0.1:$s3_port")"
+  profiles="$(read_setting .env COMPOSE_PROFILES '')"
+  ACTIVE_PROFILES="$profiles"
+
+  printf '\nLocal service URLs (profiles: %s)\n' "${profiles:-none}"
+  printf '  %-20s | %-20s | %s\n' 'Service' 'State' 'URL / endpoint'
+  printf '  %s\n' '---------------------+----------------------+------------------------------------------------------------'
+  print_url_row 'Web app' "$api_state" "http://localhost:$web_port"
+  print_url_row 'API health' "$api_state" "$api_url/health"
+  print_url_row 'API OpenAPI' "$api_state" "$api_url/openapi.json"
+  print_url_row 'Expo / Metro' "$api_state" "http://localhost:$expo_port (scan terminal QR for device)"
+  print_url_row 'Worker' "$api_state" 'background process; logs in terminal'
+  print_url_row 'PostgreSQL' 'core service' "postgresql://localhost:$db_port/$db_name"
+  print_url_row 'Mailpit SMTP' "$(profile_state email)" "smtp://localhost:$smtp_port"
+  print_url_row 'Mailpit inbox' "$(profile_state email)" "http://localhost:$mailpit_ui_port"
+  print_url_row 'OpenObserve' "$(profile_state observability)" "http://localhost:$observe_port"
+  print_url_row 'OTLP HTTP' "$(profile_state observability)" "http://localhost:$otel_http_port"
+  print_url_row 'OTLP gRPC' "$(profile_state observability)" "localhost:$otel_grpc_port"
+  print_url_row 'SeaweedFS S3' "$(profile_state seaweedfs)" "$s3_endpoint (bucket: $(read_setting .env S3_BUCKET starter-files))"
+  print_url_row 'Filesystem store' 'always available' "$file_directory (relative to apps/api)"
+  print_url_row 'Active file driver' "${storage_driver}" "example default: $(read_setting .env.example STORAGE_DRIVER filesystem)"
+
+  printf '\nLocal example credentials (read from .env.example; .env overrides may differ)\n'
+  printf '  %-25s | %-38s | %s\n' 'Service' 'Username / access key' 'Password / secret'
+  printf '  %s\n' '--------------------------+----------------------------------------+------------------------------------------'
+  print_credential_row 'PostgreSQL' "$(read_setting .env.example POSTGRES_USER starter)" "$(read_setting .env.example POSTGRES_PASSWORD '(not set)')"
+  print_credential_row 'OpenObserve' "$(read_setting .env.example ZO_ROOT_USER_EMAIL '(not set)')" "$(read_setting .env.example ZO_ROOT_USER_PASSWORD '(not set)')"
+  print_credential_row 'SeaweedFS S3' "$(read_setting .env.example S3_ACCESS_KEY_ID '(not set)')" "$(read_setting .env.example S3_SECRET_ACCESS_KEY '(not set)')"
+  print_credential_row 'File URL signing' '—' "$(read_setting .env.example FILE_URL_SIGNING_SECRET '(not set)')"
+  print_credential_row 'Mailpit SMTP' 'no authentication' 'no authentication'
+}
+
 npm ci
+# Reconcile optional profiles so a disabled service from an earlier setup does not keep running.
+docker compose --profile email --profile observability --profile seaweedfs stop mailpit openobserve otel-collector seaweedfs
 docker compose up -d --wait
 npm run db:migrate --workspace=@starter/api
+
+print_local_services "${1:-}"
 
 if [[ "${1:-}" == "--start" ]]; then
   npm run dev:all
