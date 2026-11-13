@@ -1,13 +1,12 @@
 # Self-hosted VPS deployment
 
-
-The starter deploys the API and web app to two independent Ubuntu 24.04 VPSes. PostgreSQL, Caddy, the API, the web app, OpenTelemetry Collector, and OpenObserve run in Docker Compose on each host. The mobile app is built for iOS/Android by CI; mobile store submission is a separate step. Cloudflare hosts public DNS and proxies the web hostnames. Cloudflare Universal SSL serves visitor-facing certificates; each VPS uses a Cloudflare Origin CA certificate in Caddy for Full (strict) origin TLS. The initial deployment retains direct SSH from GitHub Actions; Cloudflare Tunnel remains an option if you later want to remove public inbound SSH.
+The starter deploys the API and web app to two independent Ubuntu 24.04 VPSes. PostgreSQL, Caddy, the API, a separate pg-boss worker, SeaweedFS S3 storage, the web app, OpenTelemetry Collector, and OpenObserve run in Docker Compose on each host. The mobile app is built for iOS/Android by CI; mobile store submission is a separate step. Cloudflare hosts public DNS and proxies the web hostnames. Cloudflare Universal SSL serves visitor-facing certificates; each VPS uses a Cloudflare Origin CA certificate in Caddy for Full (strict) origin TLS. The initial deployment retains direct SSH from GitHub Actions; Cloudflare Tunnel remains an option if you later want to remove public inbound SSH.
 
 ## Release flow
 
 1. A pull request runs `npm ci`, lint, typecheck, and production builds.
-2. A successful push to `main` builds API and web images and pushes immutable `sha-<commit>` tags to GHCR.
-3. The staging workflow deploys that exact tag to the staging VPS over SSH. Compose waits for service health, then the deploy script checks the public HTTPS endpoints. On failure, it restores the previously recorded image tag when one exists.
+2. A successful push to `main` builds API and web images and pushes immutable `sha-<commit>` tags to GHCR. The API image contains the API, worker, and migration runner.
+3. The staging workflow deploys that exact tag to the staging VPS over SSH. The deploy starts PostgreSQL, runs the versioned Kysely migrations once, then starts API, worker, and web. Migration failure stops rollout. Compose waits for service health, then public HTTPS checks run; on failure, the previous application image is restored when one exists. Migrations must remain backward-compatible.
 4. After staging review, run **Promote image to production VPS** manually and supply the same 40-character commit SHA (the suffix of the `sha-<commit>` image tag). The workflow checks out that commit's deployment script and deploys its already-published image. Configure the GitHub `production` Environment with required reviewers before using this workflow.
 
 The two VPSes do not share databases, volumes, or deploy secrets. CI runs on GitHub-hosted runners; no Actions runner is installed on either server.
@@ -34,9 +33,30 @@ For each environment:
    - Staging template: `deploy/vps/.env.staging.example`
    - Production template: `deploy/vps/.env.production.example`
 
+6. Configure SeaweedFS on each VPS before the first release because Compose mounts this file. Copy the example template to each server, then create its private config file:
+
+   ```sh
+   scp deploy/vps/seaweedfs-s3-config.example.json deploy@STAGING_HOST:/home/deploy/starter/deploy/
+   ssh deploy@STAGING_HOST 'cd /home/deploy/starter/deploy && cp seaweedfs-s3-config.example.json seaweedfs-s3-config.json && chmod 600 seaweedfs-s3-config.json'
+   ```
+
+   Repeat with the production host/path. Replace every placeholder in each private file with separate random admin and app credentials; keep the config file mode `600`. Put only the app identity credentials in that VPS's `.env` (`S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`); keep those secrets mode `600` too. The app identity is limited to read, write, and list access for `starter-files`; use the admin identity only to create the bucket. After first deployment, create the bucket once from the VPS with an AWS CLI container on the Compose storage network. Read the admin credentials interactively so they are not placed in the command history:
+
+   ```sh
+   read -r -p "S3 admin access key: " AWS_ACCESS_KEY_ID
+   read -r -s -p "S3 admin secret: " AWS_SECRET_ACCESS_KEY
+   export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+   docker run --rm --network starter-staging_storage -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY amazon/aws-cli s3api create-bucket --bucket starter-files --endpoint-url http://seaweedfs:8333
+   unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+   ```
+
+   Use `starter-production_storage` on production. SeaweedFS has no published host port and its data lives in a named volume; include it in encrypted off-server backups. Coordinate database and object backups if database rows reference stored objects.
+
 Keep each server's `.env`, PostgreSQL volume, and OpenObserve volume separate. Use distinct long random alphanumeric passwords for PostgreSQL and OpenObserve in each environment. The deploy workflow updates `IMAGE_TAG` in that server's `.env` only after health checks pass. Use separate DNS records such as `staging-observe.example.com` and `observe.example.com`; OpenObserve's own login protects the UI. Set a data-retention period in OpenObserve for each environment and include its volume in off-server backups if telemetry history must survive VPS loss. This single-node local-disk setup is not highly available.
 
-The API's OpenTelemetry SDK sends traces, metrics, and Pino logs to the private Collector over OTLP/HTTP. The Collector authenticates to OpenObserve; its receiver ports are only exposed on the private Docker network. Browser and Expo client telemetry are not enabled in this starter yet.
+The API and worker send traces, metrics, and logs to the private Collector over OTLP/HTTP. The Collector authenticates to OpenObserve; its receiver ports are only exposed on the private Docker network. Browser and Expo client telemetry are not enabled in this starter yet.
+
+Local API development uses `STORAGE_DRIVER=filesystem` and `FILE_STORAGE_DIRECTORY=../../.data/files` (the API command runs from `apps/api`). Start PostgreSQL with `docker compose up -d postgres`, apply migrations with `npm run db:migrate --workspace=@starter/api`, then start the API and worker using `npm run dev:api` and `npm run dev:worker`. The generated OpenAPI document is at `/openapi.json`; in development, `POST /jobs/example` queues an example job using an `idempotencyKey`. The example enqueue endpoint is disabled in production unless `ENABLE_EXAMPLE_JOB_ENDPOINT=true`; protect it with the product's authentication and rate limits before enabling it.
 
 Email uses generic SMTP settings (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and `EMAIL_FROM`). Choose an SMTP provider for each product and environment, then store its credentials only in that VPS's mode-600 `.env`. Mailpit is only in the local development Compose stack and does not send mail to real recipients.
 
@@ -44,15 +64,15 @@ Email uses generic SMTP settings (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP
 
 Create GitHub Environments named `staging` and `production`. Add the following secrets to each environment, using that environment's own VPS values:
 
-| Secret | Value |
-|---|---|
-| `VPS_HOST` | VPS IP address (stored only as a GitHub Environment secret); do not create a DNS-only SSH record pointing to it |
-| `VPS_USER` | SSH deploy account |
-| `VPS_DEPLOY_PATH` | Absolute writable directory, e.g. `/home/deploy/starter` |
-| `VPS_SSH_PRIVATE_KEY` | Private key accepted by that VPS deploy account |
-| `VPS_SSH_KNOWN_HOSTS` | Pinned SSH host-key line for the VPS |
-| `GHCR_PULL_USERNAME` | GitHub username or machine account with package read access |
-| `GHCR_PULL_TOKEN` | Read-only GHCR token for the API/web packages |
+| Secret                | Value                                                                                                           |
+| --------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `VPS_HOST`            | VPS IP address (stored only as a GitHub Environment secret); do not create a DNS-only SSH record pointing to it |
+| `VPS_USER`            | SSH deploy account                                                                                              |
+| `VPS_DEPLOY_PATH`     | Absolute writable directory, e.g. `/home/deploy/starter`                                                        |
+| `VPS_SSH_PRIVATE_KEY` | Private key accepted by that VPS deploy account                                                                 |
+| `VPS_SSH_KNOWN_HOSTS` | Pinned SSH host-key line for the VPS                                                                            |
+| `GHCR_PULL_USERNAME`  | GitHub username or machine account with package read access                                                     |
+| `GHCR_PULL_TOKEN`     | Read-only GHCR token for the API/web packages                                                                   |
 
 GitHub-hosted Actions connects directly to the IP in `VPS_HOST`; the web hostnames remain proxied through Cloudflare. Set `IMAGE_PREFIX` in each server `.env` to `ghcr.io/<lowercase-owner>/<lowercase-repository>`. CI publishes `-api` and `-web` packages beneath that prefix. The deploy workflow logs in to GHCR only for the pull and logs out afterward. The VPS token needs only `read:packages`; see [GitHub Container Registry authentication](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry). Keep the production environment protected with required reviewers and restrict deployment branches to `main`.
 
@@ -67,7 +87,7 @@ Each PostgreSQL volume is local to its VPS and survives container replacement, b
 ## Important files
 
 - `apps/api/Dockerfile` and `apps/web/Dockerfile`: production images
-- `deploy/vps/compose.yaml`: Caddy, API, web, PostgreSQL, OpenObserve, Collector, private networks, and health checks
+- `deploy/vps/compose.yaml`: Caddy, API, worker, migration runner, web, PostgreSQL, SeaweedFS, OpenObserve, Collector, private networks, and health checks
 - `deploy/vps/Caddyfile`: HTTPS host routing with mounted Cloudflare Origin CA certificate paths
 - `deploy/vps/otel-collector.yaml`: OTLP receiver and authenticated OpenObserve exporter
 - `deploy/vps/deploy.sh`: pull, health check, record tag, and rollback

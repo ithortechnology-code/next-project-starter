@@ -11,12 +11,12 @@ export async function startTelemetry(): Promise<(() => Promise<void>) | undefine
 
   const sdk = new NodeSDK({
     traceExporter: new OTLPTraceExporter(),
-    metricReader: new PeriodicExportingMetricReader({
-      exporter: new OTLPMetricExporter(),
-    }),
-    logRecordProcessors: [
-      new BatchLogRecordProcessor({ exporter: new OTLPLogExporter() }),
+    metricReaders: [
+      new PeriodicExportingMetricReader({
+        exporter: new OTLPMetricExporter(),
+      }),
     ],
+    logRecordProcessors: [new BatchLogRecordProcessor({ exporter: new OTLPLogExporter() })],
     instrumentations: [getNodeAutoInstrumentations()],
   });
 

@@ -1,0 +1,24 @@
+{
+  "identities": [
+    {
+      "name": "starter-bucket-admin",
+      "credentials": [
+        {
+          "accessKey": "replace-with-a-separate-admin-access-key",
+          "secretKey": "replace-with-a-separate-long-random-admin-secret"
+        }
+      ],
+      "actions": ["Admin"]
+    },
+    {
+      "name": "starter-app",
+      "credentials": [
+        {
+          "accessKey": "replace-with-a-random-access-key",
+          "secretKey": "replace-with-a-long-random-secret"
+        }
+      ],
+      "actions": ["Read:starter-files", "Write:starter-files", "List:starter-files"]
+    }
+  ]
+}

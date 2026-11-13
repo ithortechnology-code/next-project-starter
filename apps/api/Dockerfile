@@ -6,10 +6,12 @@ COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY apps/mobile/package.json apps/mobile/package.json
 COPY packages/shared/package.json packages/shared/package.json
+COPY packages/storage/package.json packages/storage/package.json
 RUN npm ci
 
 COPY apps/api apps/api
 COPY packages/shared packages/shared
+COPY packages/storage packages/storage
 RUN npm run build --workspace=@starter/api
 
 FROM node:22-alpine AS runtime-dependencies
@@ -19,7 +21,8 @@ COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY apps/mobile/package.json apps/mobile/package.json
 COPY packages/shared/package.json packages/shared/package.json
-RUN npm ci --omit=dev --workspace=@starter/api --workspace=@starter/shared --include-workspace-root=false
+COPY packages/storage/package.json packages/storage/package.json
+RUN npm ci --omit=dev --workspace=@starter/api --workspace=@starter/shared --workspace=@starter/storage --include-workspace-root=false
 
 FROM node:22-alpine AS runtime
 WORKDIR /app

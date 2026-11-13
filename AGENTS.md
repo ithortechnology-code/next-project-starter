@@ -1,4 +1,4 @@
-All agents follow the `using-agent-skills` workflow. Read the relevant skill before making changes.
+Use the `using-agent-skills` workflow as guidance for choosing relevant skills. Treat skill workflows as recommendations for working, and apply judgment to fit the task and project.
 
 # Project Rules
 

@@ -4,18 +4,18 @@ An npm-workspaces monorepo with a TypeScript API, web app, Expo mobile app, shar
 
 ## Stack
 
-- Node.js 22+ and npm workspaces; TypeScript throughout
+- Node.js 22.12+ and npm workspaces; TypeScript throughout
 - Fastify API, Next.js web app, Expo / React Native mobile app, and shared Zod contracts
 - PostgreSQL 17 with Kysely and one coordinated application migration history
 - REST API with OpenAPI generated from route schemas
 - pg-boss for PostgreSQL-backed durable jobs, processed by a separate Node.js worker
-- Local filesystem storage; SeaweedFS S3-compatible adapter for self-hosted deployments
+- `@starter/storage`: local filesystem and SeaweedFS S3-compatible adapters
 - Provider-neutral SMTP with Mailpit for local email capture
-- OpenTelemetry Collector and OpenObserve for API traces, metrics, and logs
+- OpenTelemetry Collector and OpenObserve for API/worker traces, metrics, and Pino logs
 - GitHub Actions and GHCR; separate staging and production VPSes
 - Cloudflare Universal SSL at the edge; Caddy uses a Cloudflare Origin CA certificate in Full (strict) mode
 
-Kysely migrations, OpenAPI generation, storage adapters, and the pg-boss worker remain to be implemented. SMTP/Mailpit and API/VPS telemetry have starter integrations. See [SPEC.md](SPEC.md) for the starter contract, [CAPABILITIES.md](CAPABILITIES.md) for implementation status, [email setup](docs/email.md), and the [VPS deployment guide](docs/deploy-vps.md).
+See [SPEC.md](SPEC.md) for the starter contract, [CAPABILITIES.md](CAPABILITIES.md) for implementation status, [email setup](docs/email.md), and the [VPS deployment guide](docs/deploy-vps.md).
 
 ## Quick start
 
@@ -27,7 +27,7 @@ Prerequisites: Node.js, npm, Docker Desktop/Engine with Compose v2.
 ./scripts/setup.sh --start
 ```
 
-This creates `.env` if needed, installs packages, starts PostgreSQL and Mailpit, then launches the API, web, and Expo dev server together. Open `http://localhost:3000`; the API health route is at `http://localhost:4000/health`; locally captured email appears at `http://localhost:8025`. To start services in separate terminals, run `./scripts/setup.sh`, then use `npm run dev` and `npm run dev:mobile`.
+This creates `.env` if needed, installs packages, starts PostgreSQL and Mailpit, applies database migrations, then launches the API, web, Expo dev server, and job worker together. Open `http://localhost:3000`; the API health route is at `http://localhost:4000/health`; locally captured email appears at `http://localhost:8025`. To start services in separate terminals, run `./scripts/setup.sh`, then use `npm run dev`, `npm run dev:worker`, and `npm run dev:mobile` in separate terminals.
 
 For a physical phone, set `EXPO_PUBLIC_API_URL` in `.env` to your computer's LAN IP (for example `http://192.168.1.20:4000`). Android emulator users can use `http://10.0.2.2:4000`.
 
@@ -35,6 +35,7 @@ Common commands:
 
 ```sh
 npm run dev:api
+npm run dev:worker
 npm run dev:web
 npm run dev:mobile
 npm run typecheck
@@ -61,7 +62,9 @@ Then in that worktree:
 ```sh
 npm ci
 docker compose up -d --wait
+npm run db:migrate --workspace=@starter/api
 npm run dev
+npm run dev:worker
 ```
 
 `./scripts/agent-env.sh remove agent-a` stops only that Compose project and removes its worktree; its agent branch remains. Database volumes are retained. To delete an agent's database, explicitly run `docker compose -p starter-agent-a --env-file .agent-env/worktrees/agent-a/.env -f .agent-env/worktrees/agent-a/compose.yaml down -v` before removing the worktree.
@@ -82,7 +85,7 @@ Pull requests and pushes to `main` run `npm ci`, lint, typecheck, and builds in 
 
 ## Staging and production VPSes
 
-See [the VPS deployment guide](docs/deploy-vps.md). CI builds API/web Docker images and publishes them to GHCR using the passing commit SHA. A successful `main` build deploys that exact image to the staging VPS. Production uses a manual workflow to promote the same image tag to its separate VPS. Both environments use independent databases, volumes, domains, and GitHub Environment secrets. Cloudflare proxying is recommended for public hostnames; Cloudflare Universal SSL handles visitor TLS, while Caddy uses a Cloudflare Origin CA certificate and accepts origin TLS only from Cloudflare IP ranges. The simple initial deployment retains key-only SSH-based CI deployment; Cloudflare Tunnel can remove public inbound SSH later if its Access setup is worthwhile.
+For CI/CD, staging and production environments, and the VPS network and TLS configuration, see [the VPS deployment guide](docs/deploy-vps.md).
 
 ## Reuse this starter
 

@@ -15,16 +15,14 @@ Create a root-level, reusable starter repository that can be copied or generated
 - Operate file storage in the project: local filesystem for developer environments and a SeaweedFS S3-compatible adapter for self-hosted deployments, behind one application storage interface.
 - Use provider-neutral SMTP configuration for sending email. Local and agent environments route mail to Mailpit; each product chooses its own real SMTP provider for staging and production.
 - Target Docker Desktop/Engine with Compose v2 on macOS/Linux; the shell setup scripts target macOS/Linux.
-- GitHub Actions hosted runners provide CI and build versioned Docker images in GHCR. VPS deploys use SSH from protected GitHub Environment jobs; no GitHub runner runs on the VPS.
-- Staging and production run on separate Ubuntu 24.04 VPSes, each with its own Docker Compose project, PostgreSQL and OpenObserve volumes, Caddy reverse proxy, Cloudflare-proxied domains, and environment secrets. Use Cloudflare-proxied, one-level DNS hostnames and Full (strict). Cloudflare Universal SSL handles visitor TLS; Caddy uses a per-VPS Cloudflare Origin CA certificate and publishes only origin port 443, restricted by the VPS firewall to Cloudflare IP ranges. GitHub-hosted CI deploys use key-only SSH; Cloudflare Tunnel with Access is a later option to remove public inbound SSH.
+- GitHub Actions hosted runners provide CI and build versioned Docker images in GHCR. VPS release procedures are documented in the deployment guide.
 - API traces, metrics, and Pino logs use OpenTelemetry and an environment-local Collector; each Collector authenticates to its own OpenObserve instance. Collector ports stay on a private Docker network.
-- Staging deploys the commit image after CI succeeds on `main`; production manually promotes a commit image already built by CI.
 - The starter includes functional health/status flows and a minimal connected web-to-API example, not a full product or authentication system.
 - Local one-click means a setup script that checks prerequisites, creates environment files, starts dependencies, installs packages, and provides clear next commands.
 
 ## Tech Stack
 
-- Node.js 22+, TypeScript, npm workspaces
+- Node.js 22.12+, TypeScript, npm workspaces
 - API: Fastify
 - Web: Next.js
 - Mobile: Expo with React Native
@@ -35,7 +33,7 @@ Create a root-level, reusable starter repository that can be copied or generated
 - Email: SMTP transport configured per product; Mailpit for local capture
 - Validation: Zod
 - CI/CD: GitHub Actions, GHCR, SSH deployment to separate VPSes
-- VPS runtime: Docker Compose, PostgreSQL, pg-boss worker, OpenTelemetry Collector, OpenObserve, Caddy reverse proxy with Cloudflare Origin CA TLS behind Cloudflare proxy
+- VPS runtime: Docker Compose, PostgreSQL, pg-boss worker, SeaweedFS, OpenTelemetry Collector, OpenObserve, and Caddy
 - Local orchestration: Docker Compose plus scripts
 
 ## Commands
@@ -43,9 +41,11 @@ Create a root-level, reusable starter repository that can be copied or generated
 - Setup: `./scripts/setup.sh`
 - Install: `npm install`
 - Start API and web: `npm run dev`
-- Start API, web, and Expo: `npm run dev:all`
+- Start API, web, Expo, and worker: `npm run dev:all`
 - Start web: `npm run dev:web`
 - Start API: `npm run dev:api`
+- Start worker: `npm run dev:worker`
+- Apply migrations: `npm run db:migrate --workspace=@starter/api`
 - Start Expo: `npm run dev:mobile`
 - Typecheck: `npm run typecheck`
 - Lint: `npm run lint`
@@ -58,12 +58,13 @@ Create a root-level, reusable starter repository that can be copied or generated
 apps/api/              Fastify API and health endpoint
 apps/web/              Next.js web app consuming the API
 apps/mobile/           Expo starter app
-apps/api/migrations/   Coordinated application migration history
+apps/api/src/migrations/  Coordinated application migration history
 packages/shared/       Shared schemas and types
 compose.yaml           Local PostgreSQL service
 scripts/               Setup and isolated-agent environment scripts
 .github/workflows/     CI and deployment workflow templates
 deploy/vps/            VPS Compose, Caddy, Collector, and deployment scripts
+docs/deploy-vps.md    VPS CI/CD, Cloudflare DNS/TLS, SSH, and operations guide
 packages/storage/      Storage interface and filesystem/S3-compatible adapters
 docs/                  Architecture, local development, agents, and VPS deployment
 docs/email.md          SMTP configuration and Mailpit local capture
@@ -111,11 +112,10 @@ export const healthResponseSchema = z.object({
 - GitHub Actions CI checks all workspaces and publishes commit-tagged API/web images after quality checks pass.
 - Staging and production use separate VPSes and databases; staging deploys after CI and production manually promotes the same image tag using protected environment secrets.
 - Staging and production keep independent OpenObserve data volumes and credentials; API traces, metrics, and Pino logs flow through the private Collector.
-- README documents prerequisites, local setup, agent isolation, GitHub push/CI, deployment setup, and template reuse.
+- README documents prerequisites, local setup, agent isolation, GitHub push/CI, links to deployment guidance, and template reuse.
 
 ## Open Questions
 
 - VPS host, DNS names, SSH deploy users/keys, and GHCR pull credentials are supplied during environment setup; no VPS credentials are committed.
 - A real app store publishing pipeline is out of scope; Expo local development is included.
 - Cloudflare Tunnel with Access may replace direct GitHub Actions SSH after its CI authentication and deployment flow are designed.
-

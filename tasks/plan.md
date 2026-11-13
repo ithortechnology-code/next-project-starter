@@ -1,52 +1,40 @@
 # Implementation Plan: Reusable Project Starter
 
-## Overview
+## Goal
 
-Build a template-ready npm workspace with an API, web app, Expo app, shared contracts, Docker PostgreSQL, per-agent isolated compose environments, and GitHub CI/deployment templates.
+Complete the starter architecture chosen in the project discussion: npm/TypeScript apps, PostgreSQL and Kysely, generated REST/OpenAPI, pg-boss jobs, project-operated storage, SMTP, OpenObserve telemetry, and separate staging/production VPS deployments. Keep architecture notes concise in README/SPEC/CAPABILITIES; this file tracks delivery only.
 
-## Architecture Decisions
+## Implementation status
 
-- npm workspaces and one root lockfile keep package management native to Node.js.
-- TypeScript is used throughout; shared Zod contracts make the web/API boundary explicit.
-- Fastify API, Next.js web, Expo mobile, PostgreSQL and Docker Compose form the default app stack.
-- Local agent isolation uses separate git worktrees plus generated `.env` and Compose project names; Docker host ports vary per agent while container ports remain stable.
-- CI runs on GitHub-hosted Actions runners and publishes immutable SHA-tagged API/web images to GHCR after quality checks pass.
-- Staging and production use separate Ubuntu VPSes with Caddy, Docker Compose, and independent PostgreSQL volumes.
-- Staging deploys the passing `main` image automatically; production manually promotes the same SHA-tagged images after an environment approval.
-- VPS deployment credentials live in protected GitHub Environments; the VPS itself does not run a GitHub Actions runner.
+### Completed baseline
 
-## Dependency Graph
+- [x] npm workspace with TypeScript API, web, Expo app, shared contracts, local PostgreSQL, and Mailpit.
+- [x] Isolated agent worktrees, Compose projects, service ports, and database volumes.
+- [x] API/web images, GitHub CI, GHCR, staging deployment, and manual production promotion.
+- [x] SMTP mailer; OpenTelemetry API/worker instrumentation, Collector, and per-VPS OpenObserve.
+- [x] Cloudflare Origin CA certificates served by Caddy in Full (strict) mode.
 
-Shared contracts → API → web integration. The app skeleton precedes Docker and agent isolation. CI runs against the completed workspaces; deployment templates follow CI.
+### Completed starter runtime
 
-## Task List
+- [x] Kysely connection factory and database types shared by API/migrator; PostgreSQL health query uses Kysely.
+- [x] Ordered Kysely migration directory and CLI. VPS deploy starts PostgreSQL and runs migrations before API/worker rollout; migration errors stop rollout.
+- [x] Fastify route schemas generate `/openapi.json`.
+- [x] PostgreSQL-backed pg-boss producer and separate worker entrypoint, graceful shutdown, and idempotency-key example.
+- [x] Typed `@starter/storage` interface with filesystem and S3-compatible adapters, configured from environment variables.
+- [x] Private persistent SeaweedFS S3 service in VPS Compose; staging and production use separate credentials and volumes.
+- [x] README, SPEC, CAPABILITIES, deployment guide, and this checklist reflect the implemented stack.
 
-### Phase 1: Foundation
-1. Create npm workspace manifests, TypeScript configuration, formatting/lint scripts, ignore files, and repository template docs.
-2. Create shared Zod contracts and an API health route.
+## Verification completed
 
-### Phase 2: Runnable applications
-3. Create Next.js web starter that calls API and renders service/database status.
-4. Create Expo mobile starter with API health screen and configurable API URL.
-5. Add PostgreSQL Compose service, readiness checks, and API database connectivity.
+- [x] Workspace typecheck.
+- [x] API, web, and Expo production builds.
+- [x] VPS Compose config rendering, deployment shell syntax, and `git diff --check`.
+- [ ] Dependency audit: npm registry was unreachable in the current environment, so the advisory check could not complete.
+- [ ] Live database, SeaweedFS, VPS, Cloudflare, and GitHub deployment checks remain environment setup tasks; no live credentials were available.
 
-### Phase 3: Local collaboration and delivery
-6. Add setup and agent workspace scripts that allocate isolated git worktrees, Docker project names, database volumes, and host ports.
-7. Add production Docker images, a VPS Compose stack, Caddy routing, and a rollback-capable deploy script.
-8. Add GitHub Actions quality CI, GHCR publishing, automatic staging deployment, and manually approved production promotion.
-9. Document VPS bootstrap, DNS, environment secrets, backups, deployment, and creating future projects from the template.
+## Operational constraints
 
-## Risks and Mitigations
-
-- Mobile simulators need host-specific networking: expose `EXPO_PUBLIC_API_URL` and document emulator/device addresses.
-- Dynamic ports can collide if independently assigned: allocate a deterministic range from a hash with collision detection and allow override.
-- VPS access and domain values differ per project: inject them through separate GitHub Environments and configure each host's persistent `.env` once.
-- Deploying from an untrusted self-hosted runner exposes the VPS: use GitHub-hosted runners and narrowly scoped SSH deployment secrets.
-- Dependency installation may be network-restricted in this environment: keep manifests reproducible and report any verification blocked by that condition.
-
-## Verification Checkpoints
-
-- After tasks 1–3: npm workspace install, lint/typecheck/build, and API/web connected flow.
-- After tasks 4–6: Expo typecheck plus concurrent isolated environment/port/database configuration checks.
-- After tasks 7–9: inspect workflow triggers and protection conditions; check documentation commands against manifests.
-
+- Use additive/backward-compatible migrations so old app images tolerate the deployed schema during rollback.
+- Treat pg-boss jobs as at-least-once; make real handlers idempotent and keep secrets/needless personal data out of payloads.
+- Keep filesystem/S3 keys provider-neutral and storage credentials outside Git.
+- Bound PostgreSQL pools across API and worker processes to fit the VPS connection budget.

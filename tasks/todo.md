@@ -1,44 +1,21 @@
 # Task Checklist: Reusable Project Starter
 
-- [ ] Create npm workspace foundation and repository conventions.
-  - Acceptance: root `package.json` declares workspaces; strict TypeScript and standard scripts are configured.
-  - Verify: `npm install`, `npm run typecheck`, `npm run lint`.
-  - Files: root manifests/configuration and `.gitignore`.
-- [ ] Add shared contracts and functional API health route.
-  - Acceptance: API serves health and database status; shared response schema validates it.
-  - Verify: API health route returns API and database status.
-  - Files: `packages/shared`, `apps/api`.
-- [ ] Add connected Next.js web starter.
-  - Acceptance: home page calls API and displays status/errors accessibly.
-  - Verify: workspace typecheck/build and local smoke check.
-  - Files: `apps/web`.
-- [ ] Add Expo mobile starter.
-  - Acceptance: screen displays API status using configurable URL.
-  - Verify: workspace typecheck and Expo config validation.
-  - Files: `apps/mobile`.
-- [ ] Add local PostgreSQL Compose setup.
-  - Acceptance: DB has persistent volume and health check; API connects and reports DB status.
-  - Verify: Compose config validation and local health route.
-  - Files: `compose.yaml`, `apps/api`, `infra`.
-- [ ] Add setup and isolated agent environment scripts.
-  - Acceptance: named agent workspace has unique worktree, project name, host ports, and DB volume/config; cleanup targets only that workspace.
-  - Verify: script dry-run/config checks for two distinct names.
-  - Files: `scripts` and agent docs.
-- [ ] Add production Docker images and separate VPS runtime.
-  - Acceptance: API/web images build; Caddy fronts the services; PostgreSQL is private; each VPS has its own volume and Compose project.
-  - Verify: build both Dockerfiles and validate Compose config.
-  - Files: `apps/*/Dockerfile`, `deploy/vps`.
-- [ ] Add GitHub Actions CI, GHCR publishing, and staging/production promotion.
-  - Acceptance: successful main CI publishes commit-tagged images; staging deploys that image; production validates the commit and manually promotes the same image on its own VPS.
-  - Verify: inspect workflows and run CI commands locally.
-  - Files: `.github/workflows`.
-- [ ] Complete starter usage documentation.
-  - Acceptance: fresh-user flow, environment setup, agent collaboration, GitHub push, CI, deployment, and template reuse are documented.
-  - Verify: command cross-check against package scripts.
-  - Files: `README.md`, `docs`.
+## Completed
 
-## Checkpoint: Foundation and connected web/API flow
-- [ ] Workspace scripts pass.
-- [ ] API and web connect end-to-end.
-- [ ] Review the runnable starter before adding deployment adapters.
+- [x] npm workspace, TypeScript API/web/Expo apps, shared Zod contracts, and one-command local setup.
+- [x] Local PostgreSQL and Mailpit; isolated agent worktrees, Compose projects, ports, and databases.
+- [x] Kysely connection factory/types, PostgreSQL health query, ordered migrations, and CLI.
+- [x] VPS deploy runs migrations once before API/worker rollout and stops on migration failure.
+- [x] Fastify route schemas generate the OpenAPI contract at `/openapi.json`.
+- [x] pg-boss producer, idempotency-key example job, separate worker, and graceful shutdown.
+- [x] Filesystem and S3-compatible storage adapters behind `@starter/storage`.
+- [x] Private persistent SeaweedFS S3 service with separate environment credentials and backup guidance.
+- [x] GitHub CI, GHCR images, staging deploy, protected production promotion, SMTP/Mailpit, OTel Collector/OpenObserve, and Cloudflare Origin CA Caddy configuration.
+- [x] README, SPEC, CAPABILITIES, VPS guide, implementation plan, and task checklist reconciled.
 
+## Final checkpoint
+
+- [x] Workspace typecheck and API/web/Expo production builds pass.
+- [x] VPS Compose configuration renders; deploy shell scripts parse; `git diff --check` passes.
+- [ ] npm audit could not reach registry.npmjs.org in this environment.
+- [ ] No live VPS, DNS, Cloudflare, or GitHub credentials were used; deployment configuration remains to be applied during environment setup.

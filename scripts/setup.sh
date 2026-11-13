@@ -20,6 +20,7 @@ fi
 
 npm ci
 docker compose up -d --wait
+npm run db:migrate --workspace=@starter/api
 
 if [[ "${1:-}" == "--start" ]]; then
   npm run dev:all
@@ -30,8 +31,9 @@ cat <<'EOF'
 
 Starter is ready.
   npm run dev         Start the API and web app
+  npm run dev:worker  Start the durable job worker
   npm run dev:mobile  Start Expo in another terminal
-  ./scripts/setup.sh --start  Set up services and start API, web, and Expo
+  ./scripts/setup.sh --start  Set up services and start API, web, Expo, and the worker
 
 For an isolated agent workspace:
   ./scripts/agent-env.sh create <name>

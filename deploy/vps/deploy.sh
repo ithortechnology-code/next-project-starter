@@ -39,6 +39,16 @@ if ! compose "$DEPLOY_TAG" pull; then
   exit 1
 fi
 
+if ! compose "$DEPLOY_TAG" up -d --wait --wait-timeout 180 db; then
+  echo "PostgreSQL did not become healthy; application rollout was not started." >&2
+  exit 1
+fi
+
+if ! compose "$DEPLOY_TAG" --profile ops run --rm --no-deps migrate; then
+  echo "Database migration failed; application rollout was not started." >&2
+  exit 1
+fi
+
 if ! compose "$DEPLOY_TAG" up -d --remove-orphans --wait --wait-timeout 180; then
   rollback
   exit 1

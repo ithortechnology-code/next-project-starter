@@ -32,7 +32,7 @@ SCP=(scp -i "$TEMP_SSH_DIR/id_ed25519" -o IdentitiesOnly=yes -o StrictHostKeyChe
 TARGET="$VPS_USER@$VPS_HOST"
 
 "${SSH[@]}" "$TARGET" "mkdir -p '$VPS_DEPLOY_PATH/deploy'"
-"${SCP[@]}" deploy/vps/compose.yaml deploy/vps/Caddyfile deploy/vps/otel-collector.yaml deploy/vps/deploy.sh "$TARGET:$VPS_DEPLOY_PATH/deploy/"
+"${SCP[@]}" deploy/vps/compose.yaml deploy/vps/Caddyfile deploy/vps/otel-collector.yaml deploy/vps/seaweedfs-s3-config.example.json deploy/vps/deploy.sh "$TARGET:$VPS_DEPLOY_PATH/deploy/"
 "${SSH[@]}" "$TARGET" "chmod 700 '$VPS_DEPLOY_PATH/deploy/deploy.sh'"
 
 printf '%s' "$GHCR_PULL_TOKEN" | "${SSH[@]}" "$TARGET" "docker login ghcr.io --username '$GHCR_PULL_USERNAME' --password-stdin"

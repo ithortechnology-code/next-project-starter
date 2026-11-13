@@ -5,6 +5,7 @@ build/
 .expo/
 coverage/
 .env
+.data/
 .env.*
 !.env.example
 !deploy/vps/.env.staging.example
