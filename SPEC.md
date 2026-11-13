@@ -38,6 +38,10 @@ Create a root-level, reusable starter repository that can be copied or generated
 - VPS runtime: Docker Compose, PostgreSQL, pg-boss worker, OpenTelemetry Collector, OpenObserve, Caddy reverse proxy with Cloudflare Origin CA TLS behind Cloudflare proxy
 - Local orchestration: Docker Compose plus scripts
 
+## Decision records and implementation status
+
+This spec is the normative starter contract. The [decision index](docs/decisions/README.md) gives a concise stack summary, links each major choice to its ADR, and distinguishes selected defaults from implemented capabilities. [CAPABILITIES.md](CAPABILITIES.md) is the implementation-status map. The [VPS guide](docs/deploy-vps.md) and [email guide](docs/email.md) contain operational setup steps.
+
 ## Commands
 
 - Setup: `./scripts/setup.sh`

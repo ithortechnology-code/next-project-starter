@@ -1,5 +1,7 @@
 # Self-hosted VPS deployment
 
+The TLS and delivery decisions are recorded in [ADR-0002](decisions/0002-cloudflare-origin-tls.md) and [ADR-0009](decisions/0009-github-vps-delivery.md).
+
 The starter deploys the API and web app to two independent Ubuntu 24.04 VPSes. PostgreSQL, Caddy, the API, the web app, OpenTelemetry Collector, and OpenObserve run in Docker Compose on each host. The mobile app is built for iOS/Android by CI; mobile store submission is a separate step. Cloudflare hosts public DNS and proxies the web hostnames. Cloudflare Universal SSL serves visitor-facing certificates; each VPS uses a Cloudflare Origin CA certificate in Caddy for Full (strict) origin TLS. The initial deployment retains direct SSH from GitHub Actions; Cloudflare Tunnel remains an option if you later want to remove public inbound SSH.
 
 ## Release flow
