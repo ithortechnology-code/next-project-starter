@@ -1,6 +1,5 @@
 # Email
 
-The SMTP and Mailpit choice is recorded in [ADR-0006](decisions/0006-provider-neutral-smtp.md).
 
 The API uses SMTP settings rather than a provider SDK. Each product selects its provider and supplies the provider's SMTP host, port, TLS mode, credentials, and sender address through environment variables.
 

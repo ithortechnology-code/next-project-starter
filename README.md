@@ -2,20 +2,20 @@
 
 An npm-workspaces monorepo with a TypeScript API, web app, Expo mobile app, shared contracts, and local PostgreSQL. The default local stack runs app processes on your machine and PostgreSQL plus Mailpit in Docker.
 
-## Opinionated stack and decisions
+## Stack
 
-| Area | Default | Decision |
-|---|---|---|
-| Runtime and apps | Node.js 22+, npm workspaces, TypeScript, Fastify API, Next.js web, Expo mobile, Zod | [ADR-0008](docs/decisions/0008-typescript-npm-monorepo.md) |
-| Database | PostgreSQL 17, Kysely, coordinated migration history | [ADR-0003](docs/decisions/0003-postgresql-kysely-migrations.md) |
-| API contract | REST with OpenAPI generated from route schemas | [ADR-0004](docs/decisions/0004-rest-openapi-contract.md) |
-| Jobs | pg-boss on PostgreSQL, separate Node.js worker | [ADR-0001](docs/decisions/0001-postgresql-jobs-with-pg-boss.md) |
-| Files | Local filesystem; SeaweedFS S3-compatible adapter for self-hosting | [ADR-0005](docs/decisions/0005-project-operated-file-storage.md) |
-| Email | Nodemailer over SMTP; Mailpit for local capture | [ADR-0006](docs/decisions/0006-provider-neutral-smtp.md) |
-| Telemetry | OpenTelemetry Collector and OpenObserve per VPS environment | [ADR-0007](docs/decisions/0007-open-telemetry-openobserve.md) |
-| VPS edge and delivery | Cloudflare Universal SSL + Origin CA, Caddy, GitHub Actions/GHCR, separate staging and production VPSes | [ADR-0002](docs/decisions/0002-cloudflare-origin-tls.md), [ADR-0009](docs/decisions/0009-github-vps-delivery.md) |
+- Node.js 22+ and npm workspaces; TypeScript throughout
+- Fastify API, Next.js web app, Expo / React Native mobile app, and shared Zod contracts
+- PostgreSQL 17 with Kysely and one coordinated application migration history
+- REST API with OpenAPI generated from route schemas
+- pg-boss for PostgreSQL-backed durable jobs, processed by a separate Node.js worker
+- Local filesystem storage; SeaweedFS S3-compatible adapter for self-hosted deployments
+- Provider-neutral SMTP with Mailpit for local email capture
+- OpenTelemetry Collector and OpenObserve for API traces, metrics, and logs
+- GitHub Actions and GHCR; separate staging and production VPSes
+- Cloudflare Universal SSL at the edge; Caddy uses a Cloudflare Origin CA certificate in Full (strict) mode
 
-The [decision index](docs/decisions/README.md) shows implementation status. Kysely migrations, OpenAPI generation, storage adapters, and the pg-boss worker remain to be implemented; SMTP/Mailpit and API/VPS telemetry have starter integrations. See [email setup](docs/email.md) and the [VPS deployment guide](docs/deploy-vps.md) for operating instructions.
+Kysely migrations, OpenAPI generation, storage adapters, and the pg-boss worker remain to be implemented. SMTP/Mailpit and API/VPS telemetry have starter integrations. See [SPEC.md](SPEC.md) for the starter contract, [CAPABILITIES.md](CAPABILITIES.md) for implementation status, [email setup](docs/email.md), and the [VPS deployment guide](docs/deploy-vps.md).
 
 ## Quick start
 
