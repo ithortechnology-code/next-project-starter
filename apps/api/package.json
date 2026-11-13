@@ -1,0 +1,20 @@
+{
+  "name": "@starter/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file=../../.env --import tsx --watch src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsup --config tsup.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "prettier --check src"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.1.0",
+    "@starter/shared": "*",
+    "fastify": "^5.6.2",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": { "@types/pg": "^8.15.5", "tsx": "^4.20.6", "tsup": "^8.4.0", "typescript": "^5.9.3" }
+}

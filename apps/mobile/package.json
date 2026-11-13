@@ -1,0 +1,16 @@
+{
+  "name": "@starter/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node --env-file=../../.env ../../node_modules/expo/bin/cli start --port ${EXPO_PORT:-8081}",
+    "android": "node --env-file=../../.env ../../node_modules/expo/bin/cli start --android --port ${EXPO_PORT:-8081}",
+    "ios": "node --env-file=../../.env ../../node_modules/expo/bin/cli start --ios --port ${EXPO_PORT:-8081}",
+    "build": "node ../../node_modules/expo/bin/cli export --platform all",
+    "typecheck": "tsc --noEmit",
+    "lint": "prettier --check App.tsx"
+  },
+  "dependencies": { "@starter/shared": "*", "expo": "~54.0.22", "expo-status-bar": "~3.0.9", "react": "19.1.0", "react-native": "0.81.5" },
+  "devDependencies": { "@types/react": "~19.1.10", "typescript": "~5.9.2" }
+}

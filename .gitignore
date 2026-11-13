@@ -1,0 +1,15 @@
+node_modules/
+.next/
+dist/
+build/
+.expo/
+coverage/
+.env
+.env.*
+!.env.example
+!deploy/vps/.env.staging.example
+!deploy/vps/.env.production.example
+.agent-env/
+*.log
+*.tsbuildinfo
+.DS_Store
