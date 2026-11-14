@@ -8,6 +8,17 @@ for cmd in node npm docker; do
   command -v "$cmd" >/dev/null || { echo "Required command not found: $cmd" >&2; exit 1; }
 done
 
+NVM_SCRIPT="${NVM_DIR:-$HOME/.nvm}/nvm.sh"
+if [[ -s "$NVM_SCRIPT" ]]; then
+  # nvm is a shell function; load it in this non-interactive Bash process.
+  # shellcheck disable=SC1090
+  . "$NVM_SCRIPT"
+  if ! nvm use --silent >/dev/null; then
+    echo "The Node.js version in .nvmrc is not installed. Run 'nvm install' from the repository and retry." >&2
+    exit 1
+  fi
+fi
+
 NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
 if [[ "$NODE_MAJOR" != "24" && "$NODE_MAJOR" != "26" ]]; then
   echo "Node.js 24 (default in .nvmrc) or 26 LTS is required. Run 'nvm install && nvm use' from the repository, or select a supported version with your Node version manager, then retry." >&2
