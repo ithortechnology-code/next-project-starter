@@ -19,7 +19,9 @@ See [SPEC.md](SPEC.md) for the starter contract, [CAPABILITIES.md](CAPABILITIES.
 
 ## Quick start
 
-Prerequisites: Node.js, npm, Docker Desktop/Engine with Compose v2.
+Prerequisites: Node.js 24 (selected by `.nvmrc`), npm, Docker Desktop/Engine with Compose v2. Node.js 26 LTS is also supported.
+
+With nvm installed, run `nvm install && nvm use` from the repository to install and select the default Node.js version before setup. Other version managers should select Node.js 24 based on `.nvmrc`; automated agents should read `.nvmrc` and switch their runtime before running npm commands. The setup script checks for Node.js 24 or 26 and prints this guidance if the active version is unsupported.
 
 `package-lock.json` is committed for reproducible installs. When changing dependencies, run `npm install` and commit the updated lockfile.
 

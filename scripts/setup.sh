@@ -8,8 +8,9 @@ for cmd in node npm docker; do
   command -v "$cmd" >/dev/null || { echo "Required command not found: $cmd" >&2; exit 1; }
 done
 
-if ! node -e 'process.exit([24, 26].includes(Number(process.versions.node.split(".")[0])) ? 0 : 1)'; then
-  echo "Node.js 24 or 26 LTS is required. Install a supported LTS release and retry." >&2
+NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+if [[ "$NODE_MAJOR" != "24" && "$NODE_MAJOR" != "26" ]]; then
+  echo "Node.js 24 (default in .nvmrc) or 26 LTS is required. Run 'nvm install && nvm use' from the repository, or select a supported version with your Node version manager, then retry." >&2
   exit 1
 fi
 
