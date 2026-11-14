@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import "./globals.css";
 
 export const metadata = { title: "Project Starter", description: "Your next project starts here." };
 
