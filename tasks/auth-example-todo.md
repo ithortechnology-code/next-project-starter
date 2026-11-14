@@ -65,7 +65,8 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 **Acceptance criteria:**
 
 - [x] Expo remains on SDK 58 throughout the spike.
-- [ ] Candidate is checked against official compatibility guidance and installed only in an isolated, reversible spike.
+- [x] NativeWind v4.2.7 was checked against its official installation guidance; the guidance documents SDK 57 support, and the local SDK 58 evidence is recorded separately.
+- [ ] The installation was performed only in an isolated, reversible spike; the existing commit history shows a reversible change but does not establish that the install was isolated.
 - [ ] iOS and Android both bundle and render a probe covering layout, spacing, color, and state styles; a bundle-only pass does not count as compatibility.
 
 **Verification:** Record exact versions, commands, device/runtime results, and known issues in the task notes or design decision. NativeWind is selected; retain the remaining color and interaction-state checks as explicit follow-up.
@@ -82,9 +83,11 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Expo SDK 58 remains pinned and its dependency compatibility check passes.
-- [ ] Styling configuration is documented and mobile components remain platform-local.
-- [ ] Existing iOS and Android exports continue to work.
+- [x] Expo SDK 58 remains pinned.
+- [ ] Expo's dependency compatibility check completes reliably against package metadata; the recorded offline check warned that its validation was unreliable.
+- [x] Styling configuration is documented and mobile components remain platform-local.
+- [x] Existing iOS and Android exports continue to work; the compatibility note records a successful export for both platforms.
+- [ ] During auth UI implementation, verify component colors, pressed and disabled states, accessibility behavior, and keyboard/focus behavior on iOS and Android.
 
 **Verification:** Run mobile lint, typecheck, iOS/Android export, and the runtime probe on both platforms.
 

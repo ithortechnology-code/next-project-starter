@@ -1,6 +1,6 @@
 # NativeWind on Expo 58 compatibility spike
 
-Decision: NativeWind 4 is the selected mobile styling approach. Build and type compatibility passed; iOS and Android simulator/emulator layout and spacing rendering passed.
+Decision: NativeWind 4 is the selected mobile styling approach. Build and type compatibility passed; iOS and Android simulator/emulator layout and spacing rendering passed. The probe does not yet cover component colors, interaction states, accessibility, or keyboard behavior; verify those with the auth UI on both platforms.
 
 ## Versions
 
@@ -21,7 +21,7 @@ The first typecheck failed with TS2882 because TypeScript could not resolve the 
 
 ## Runtime checks and remaining work
 
-The iOS 26.5 starter verification simulator successfully opened the app in Expo Go and rendered the NativeWind layout/spacing probe. Metro reported no NativeWind or Worklets errors; it emitted ImageBackground and SafeAreaView deprecation warnings. The screen displayed an API connection failure because the API was unavailable, independently of styling. Android API 36.1 (Medium_Phone_API_36.1) also rendered the probe successfully using Expo Go 58.0.5. Metro emitted the same deprecation warnings and no NativeWind/Worklets errors. The emulator was closed after verification. Bundling does not establish correct rendering or native dependency behavior. During auth UI implementation, expand component checks on both platforms and check layout, spacing, colors, pressed/disabled states, and absence of Reanimated/Worklets runtime errors. The small probe currently checks layout and spacing only.
+The iOS 26.5 starter verification simulator successfully opened the app in Expo Go and rendered the NativeWind layout/spacing probe. Metro reported no NativeWind or Worklets errors; it emitted ImageBackground and SafeAreaView deprecation warnings. The screen displayed an API connection failure because the API was unavailable, independently of styling. Android API 36.1 (Medium_Phone_API_36.1) also rendered the probe successfully using Expo Go 58.0.5. Metro emitted the same deprecation warnings and no NativeWind/Worklets errors. The emulator was closed after verification. The probe checks layout and spacing only; it does not establish component colors, pressed/disabled states, accessibility behavior, or keyboard/focus behavior. During auth UI implementation, check those on both platforms and confirm there are no Reanimated/Worklets runtime errors. Bundling alone does not establish correct rendering or native dependency behavior.
 
 Run `npm run dev:mobile` and open it in an SDK 58 compatible runtime. If native packages require it, use a development build. Test physical devices with a reachable `EXPO_PUBLIC_API_URL`, not the host computer's localhost address.
 
@@ -30,7 +30,7 @@ Run `npm run dev:mobile` and open it in an SDK 58 compatible runtime. If native 
 - [NativeWind v4 installation](https://www.nativewind.dev/docs/getting-started/installation)
 - [Expo SDK 58](https://docs.expo.dev/versions/v58.0.0/)
 
-The NativeWind stable guide explicitly documents SDK 57 support; this local spike checks the newer pinned stack without downgrading Expo. No incompatibility has yet justified switching libraries.
+The official NativeWind v4.2.7 installation guide explicitly adds Expo SDK 57 support. It does not claim SDK 58 support. This local spike checked the newer pinned Expo 58 stack without downgrading Expo; the iOS and Android rendering evidence is for layout and spacing only. No incompatibility has yet justified switching libraries. The `expo install --check` result reported dependencies up to date but warned that validation was unreliable offline, so it is not recorded as a reliable compatibility-check pass.
 
 A root `npm install` was needed after Expo dependency installation to reconcile Tailwind v3 (mobile) and v4 (web). Before reconciliation the web build failed with an undefined `All` error from Tailwind. The web Webpack build compiles successfully after reconciliation; default Turbopack remains blocked by the environment port-binding restriction.
 
