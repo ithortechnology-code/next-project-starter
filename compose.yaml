@@ -9,7 +9,7 @@ services:
       - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
 
   postgres:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-starter_dev}
@@ -18,7 +18,7 @@ services:
     ports:
       - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_v18:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -73,6 +73,6 @@ services:
       - ./deploy/vps/seaweedfs-s3-config.local.json:/etc/seaweedfs/s3-config.json:ro
 
 volumes:
-  postgres_data:
+  postgres_data_v18:
   openobserve_data:
   seaweedfs_local_data:

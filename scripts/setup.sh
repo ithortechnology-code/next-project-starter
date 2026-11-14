@@ -8,6 +8,11 @@ for cmd in node npm docker; do
   command -v "$cmd" >/dev/null || { echo "Required command not found: $cmd" >&2; exit 1; }
 done
 
+if ! node -e 'process.exit([24, 26].includes(Number(process.versions.node.split(".")[0])) ? 0 : 1)'; then
+  echo "Node.js 24 or 26 LTS is required. Install a supported LTS release and retry." >&2
+  exit 1
+fi
+
 if ! docker compose version >/dev/null 2>&1; then
   echo "Docker Compose v2 is required. Install/update Docker Desktop and retry." >&2
   exit 1
@@ -52,6 +57,8 @@ print_url_row() {
 print_credential_row() {
   printf '  %-25s | %-38s | %s\n' "$1" "$2" "$3"
 }
+
+bash "$ROOT_DIR/deploy/vps/postgres-18-preflight.sh" postgres
 
 print_local_services() {
   local api_state="not started by this command"

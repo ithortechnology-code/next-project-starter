@@ -4,9 +4,9 @@ An npm-workspaces monorepo with a TypeScript API, web app, Expo mobile app, shar
 
 ## Stack
 
-- Node.js 22.12+ and npm workspaces; TypeScript throughout
+- Node.js 24 LTS baseline (CI also checks Node 26 LTS) and npm workspaces; TypeScript throughout
 - Fastify API, Next.js web app, Expo / React Native mobile app, and shared Zod contracts
-- PostgreSQL 17 with Kysely and one coordinated application migration history
+- PostgreSQL 18 with Kysely and one coordinated application migration history
 - REST API with OpenAPI generated from route schemas
 - pg-boss for PostgreSQL-backed durable jobs, processed by a separate Node.js worker
 - `@starter/storage`: local filesystem and SeaweedFS S3-compatible adapters
@@ -15,7 +15,7 @@ An npm-workspaces monorepo with a TypeScript API, web app, Expo mobile app, shar
 - GitHub Actions and GHCR; separate staging and production VPSes
 - Cloudflare Universal SSL at the edge; Caddy uses a Cloudflare Origin CA certificate in Full (strict) mode
 
-See [SPEC.md](SPEC.md) for the starter contract, [CAPABILITIES.md](CAPABILITIES.md) for implementation status, [email setup](docs/email.md), and the [VPS deployment guide](docs/deploy-vps.md).
+See [SPEC.md](SPEC.md) for the starter contract, [CAPABILITIES.md](CAPABILITIES.md) for implementation status, [email setup](docs/email.md), the [PostgreSQL 18 upgrade guide](docs/postgresql-18-upgrade.md), and the [VPS deployment guide](docs/deploy-vps.md).
 
 ## Quick start
 

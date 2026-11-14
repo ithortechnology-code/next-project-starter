@@ -22,11 +22,11 @@ Create a root-level, reusable starter repository that can be copied or generated
 
 ## Tech Stack
 
-- Node.js 22.12+, TypeScript, npm workspaces
+- Node.js 24 LTS baseline; CI also verifies Node 26 LTS. TypeScript and npm workspaces.
 - API: Fastify
 - Web: Next.js
 - Mobile: Expo with React Native
-- Database: PostgreSQL, Kysely, Kysely Migrator, Docker Compose
+- Database: PostgreSQL 18, Kysely, Kysely Migrator, Docker Compose
 - API contract: REST, Fastify route schemas, generated OpenAPI
 - Jobs: pg-boss on PostgreSQL; separate Node.js worker process/container
 - Files: project-operated filesystem and SeaweedFS S3-compatible storage adapter

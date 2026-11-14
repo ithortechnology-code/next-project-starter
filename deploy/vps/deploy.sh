@@ -26,6 +26,8 @@ compose() {
   IMAGE_TAG="$1" docker compose --env-file .env -f compose.yaml "${@:2}"
 }
 
+bash ./postgres-18-preflight.sh db --env-file .env -f compose.yaml
+
 rollback() {
   if [[ -n "$PREVIOUS_TAG" && "$PREVIOUS_TAG" != "$DEPLOY_TAG" ]]; then
     echo "Deployment failed; restoring image $PREVIOUS_TAG."

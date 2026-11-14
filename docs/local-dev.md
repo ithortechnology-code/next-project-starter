@@ -1,12 +1,14 @@
 # Local development services
 
-`./scripts/setup.sh` starts PostgreSQL and the optional Docker services listed in `COMPOSE_PROFILES` in `.env`. The default `.env.example` enables all three profiles:
+`./scripts/setup.sh` starts PostgreSQL 18 and the optional Docker services listed in `COMPOSE_PROFILES` in `.env`. The default `.env.example` enables all three profiles:
 
 - `email`: Mailpit SMTP capture and inbox
 - `observability`: OpenObserve and the OpenTelemetry Collector
 - `seaweedfs`: local S3-compatible storage
 
 Edit `COMPOSE_PROFILES` in `.env` to remove services a project does not use, then rerun `./scripts/setup.sh`; the script stops old optional containers before starting the selected profiles. For example, `COMPOSE_PROFILES=observability` keeps telemetry but skips Mailpit and SeaweedFS. PostgreSQL remains part of the default core stack. If observability is disabled, clear `OTEL_EXPORTER_OTLP_ENDPOINT` as well so the API and worker do not retry a missing Collector. If SeaweedFS is disabled, use `STORAGE_DRIVER=filesystem` unless `S3_ENDPOINT` points to another reachable S3 service.
+
+If this checkout already has a PostgreSQL 17 data volume, follow the [PostgreSQL 18 upgrade guide](postgresql-18-upgrade.md) before rerunning setup. The setup script refuses to start an existing PostgreSQL 17 volume with the PostgreSQL 18 image.
 
 After migrations, setup prints a URL table and a credentials table. The printed username/password/key values come from `.env.example` and are local examples; if `.env` overrides them, use the values from `.env` instead.
 

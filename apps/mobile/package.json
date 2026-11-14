@@ -11,6 +11,15 @@
     "typecheck": "tsc --noEmit",
     "lint": "prettier --check App.tsx"
   },
-  "dependencies": { "@starter/shared": "*", "expo": "~54.0.22", "expo-status-bar": "~3.0.9", "react": "19.1.0", "react-native": "0.81.5" },
-  "devDependencies": { "@types/react": "~19.1.10", "typescript": "~5.9.2" }
+  "dependencies": {
+    "@starter/shared": "*",
+    "expo": "55.0.32",
+    "expo-status-bar": "~55.0.6",
+    "react": "19.2.0",
+    "react-native": "0.83.10"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.10",
+    "typescript": "~5.9.2"
+  }
 }

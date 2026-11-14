@@ -1,6 +1,8 @@
 # Self-hosted VPS deployment
 
-The starter deploys the API and web app to two independent Ubuntu 24.04 VPSes. PostgreSQL, Caddy, the API, a separate pg-boss worker, SeaweedFS S3 storage, the web app, OpenTelemetry Collector, and OpenObserve run in Docker Compose on each host. The mobile app is built for iOS/Android by CI; mobile store submission is a separate step. Cloudflare hosts public DNS and proxies the web hostnames. Cloudflare Universal SSL serves visitor-facing certificates; each VPS uses a Cloudflare Origin CA certificate in Caddy for Full (strict) origin TLS. The initial deployment retains direct SSH from GitHub Actions; Cloudflare Tunnel remains an option if you later want to remove public inbound SSH.
+The starter deploys the API and web app to two independent Ubuntu 24.04 VPSes. PostgreSQL 18, Caddy, the API, a separate pg-boss worker, SeaweedFS S3 storage, the web app, OpenTelemetry Collector, and OpenObserve run in Docker Compose on each host. The mobile app is built for iOS/Android by CI; mobile store submission is a separate step. Cloudflare hosts public DNS and proxies the web hostnames. Cloudflare Universal SSL serves visitor-facing certificates; each VPS uses a Cloudflare Origin CA certificate in Caddy for Full (strict) origin TLS. The initial deployment retains direct SSH from GitHub Actions; Cloudflare Tunnel remains an option if you later want to remove public inbound SSH.
+
+Existing PostgreSQL 17 deployments need a maintenance-window backup and restore before normal deployment to PostgreSQL 18. Follow the [PostgreSQL 18 upgrade guide](postgresql-18-upgrade.md); the deploy script blocks rollout until the restore has been verified and marked complete.
 
 ## Release flow
 

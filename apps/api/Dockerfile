@@ -1,4 +1,4 @@
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /repo
 
 COPY package.json package-lock.json ./
@@ -14,7 +14,7 @@ COPY packages/shared packages/shared
 COPY packages/storage packages/storage
 RUN npm run build --workspace=@starter/api
 
-FROM node:22-alpine AS runtime-dependencies
+FROM node:24-alpine AS runtime-dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
@@ -24,7 +24,7 @@ COPY packages/shared/package.json packages/shared/package.json
 COPY packages/storage/package.json packages/storage/package.json
 RUN npm ci --omit=dev --workspace=@starter/api --workspace=@starter/shared --workspace=@starter/storage --include-workspace-root=false
 
-FROM node:22-alpine AS runtime
+FROM node:24-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production API_PORT=4000 HOST=0.0.0.0
 COPY --from=runtime-dependencies --chown=node:node /app/node_modules ./node_modules
