@@ -76,3 +76,11 @@ This remains a template example. It demonstrates integration patterns without ad
 ## Completion
 
 This Epic is complete when all acceptance criteria above are met and the implementation plan's final checkpoint is satisfied. Deployment-specific production origin, secret, and email-provider choices remain the responsibility of each fork.
+
+## Native session implementation
+
+Expo uses the official Better Auth Expo integration with an opaque session cookie persisted through `expo-secure-store`. PostgreSQL owns session validity and revocation. The client checks the session at launch, on foreground resume, and every five minutes while active; the server applies seven-day expiry and one-day rolling renewal. This implementation does not issue JWT access/refresh token pairs. See [native session details](../design/auth-login-logout.md) and Task 12 in the [task checklist](../../tasks/auth-example-todo.md).
+
+## Auth observability follow-up
+
+Existing HTTP rate/error/duration metrics, OpenTelemetry tracing, request IDs, and token-redacted request logs provide infrastructure coverage. Auth lifecycle outcome events and funnel coverage are not complete; the dedicated observability task in the checklist tracks this gap. Do not interpret registration or reset HTTP 200 responses as proof that an account was created or email delivered: these responses intentionally preserve account privacy.

@@ -401,3 +401,23 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 - [ ] Expo remains SDK 58 and the selected mobile styling decision is verified.
 - [ ] Auth-selected and no-auth setup paths both work from clean copies.
 - [ ] Workspace lint, typecheck, build, API tests, web browser tests, and mobile checks pass.
+
+
+### Auth observability follow-up: lifecycle outcomes and privacy
+
+**Description:** Complete auth instrumentation using the observability-and-instrumentation skill while preserving the existing session architecture.
+
+**Questions to answer:** Where do registration, verification, sign-in, and recovery flows fail or stop? Are failures caused by rejected input, unavailable API/database, or email delivery? Are session checks failing or expiring unexpectedly? Which lifecycle operations are slow?
+
+**Acceptance criteria:**
+
+- [ ] Define bounded lifecycle operation/outcome events and counters for registration, verification/resend, sign-in/out, recovery/reset, and session checks; distinguish actual server outcomes from privacy-preserving public responses.
+- [ ] Correlate API and email outcomes with request/trace IDs and explicit entry points. Log expected rejection separately from operational failure; avoid noisy success logs for periodic session checks.
+- [ ] Document aggregate funnel limitations: request counts are not unique-user conversion. Any client funnel instrumentation must use allowlisted fields and an explicit privacy/retention policy.
+- [ ] Review every logging and tracing sink, including Better Auth library logs, HTTP URL attributes, SMTP errors, and client errors. Exclude passwords, cookies, authorization headers, tokens, email addresses, full bodies, raw deep links, and database/SMTP credentials; sanitize query and path tokens consistently.
+- [ ] Add meaningful regression checks with sentinel secrets for actual logs and exported spans. Verify counters and duration histograms use bounded operation/outcome labels.
+- [ ] Record observed success/failure telemetry and local collector evidence; add actionable runbooks for auth/API or email failures. Production alert destinations and thresholds depend on the fork's hosting/SLO configuration.
+
+**Current evidence:** API HTTP counters and duration histograms, OpenTelemetry auto-instrumentation, structured HTTP error/slow logs, and an auth email-delivery failure event exist. Request logging redacts verification query tokens and reset path tokens. HTTP tracing currently explicitly redacts the `token` query parameter; broader sink and path-token coverage needs verification. Auth lifecycle events and cross-client funnels have not been verified or completed.
+
+**Verification:** Exercise successful and rejected sign-in, email-delivery failure, session expiry/revocation, and verification/reset links against isolated services. Inspect emitted logs, metrics, and traces for correlation, bounded labels, and absence of sentinel secrets.
