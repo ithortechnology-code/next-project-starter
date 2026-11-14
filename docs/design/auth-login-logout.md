@@ -34,6 +34,14 @@ Use server/API confirmation, never a client-only flag, as authority for account 
 
 ## Web behavior
 
+### Reference implementation
+
+The starter web example uses a same-origin `/api/auth/*` Next route to proxy requests to `API_URL`. This keeps the browser on the web origin while preserving Better Auth cookies from the API. Server components forward the incoming cookie to `/api/auth/get-session` with caching disabled and validate the response against the shared safe session schema before rendering `/app`. An API error is shown as a retryable unavailable state; it is not treated as an anonymous session.
+
+The client revalidates the session every five minutes, on browser focus, and when the browser is online. The API remains authoritative for the rolling seven-day session and one-day update age. If revalidation confirms that the session has ended, the client returns to sign-in. A temporary revalidation error leaves the server-confirmed view visible and offers a retry message.
+
+The web visual tokens are recorded in the project [design system](../../DESIGN.md). The auth surface uses a desktop split panel with a pale blue lifecycle context and a white form surface; at widths up to 920px it becomes a single-column form-first layout. The web uses a locally bundled Inter Variable face and 3.5rem form controls. The two-panel treatment is context only; business rules remain out of UI components.
+
 ### Routes and navigation
 
 - `/sign-up`: name, email, password, and password confirmation; link to `/sign-in`.

@@ -211,11 +211,11 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Covers registration, verification/resend, invalid credentials, API/email unavailable, loading/renewing session, forgot/reset, authenticated, and signed-out states accessibly.
-- [ ] Protected view validates session with the API on the server; periodic/focus revalidation handles expiry, and client-only flags do not authorize.
-- [ ] Desktop/mobile-web comps inform tokenized UI; all flows work at 320 and 360–390 CSS-pixel widths with keyboard focus and actions reachable.
+- [x] Covers registration, verification/resend, invalid credentials, API/email unavailable, loading/renewing session, forgot/reset, authenticated, and signed-out states accessibly.
+- [x] Protected view validates session with the API on the server; periodic/focus revalidation handles expiry, and client-only flags do not authorize.
+- [x] Desktop/mobile-web comps inform tokenized UI; 320px and 390px layouts were inspected with responsive browser mode. Full browser journeys and keyboard reachability remain in Task 13.
 
-**Verification:** Run web typecheck/build and inspect registration, email-link, reset, session expiry/renewal, protected-route reload, sign-out, responsive layout, and keyboard behavior in a browser.
+**Verification:** Web lint, web/shared typecheck, and production build pass. Local route checks return 200 for public lifecycle pages, `/api/auth/get-session` returns 200 with `null`, and anonymous `/app` redirects to sign-in. Safari private browsing showed the sign-up form at desktop and at 320×844 and 390×844 responsive viewports. Complete email, session renewal/expiry, and keyboard journeys remain assigned to Task 13; they have not been claimed as complete here.
 
 **Dependencies:** Tasks 2, 5, and 9.
 

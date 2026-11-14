@@ -110,6 +110,21 @@ Redact credentials, session identifiers, and personal data. Do not retain intent
 
 Add commands as the corresponding suites are implemented. At each milestone record the command, pass/fail result, database isolation used, and any platform/runtime limits. Store device-only checks in the manual checklist and redact credentials from artifacts.
 
+### Web implementation check (Task 11)
+
+Run from the repository root:
+
+```sh
+npm run lint --workspace=@starter/web
+npm run typecheck --workspace=@starter/web
+npm run typecheck --workspace=@starter/shared
+npm run build --workspace=@starter/web
+```
+
+The web auth pages are `/sign-up`, `/sign-in`, `/verify-email`, `/forgot-password`, `/reset-password`, and `/app`. The auth client is served through `/api/auth/*`, which proxies to `API_URL`. Check anonymous session lookup with `curl -i http://localhost:3000/api/auth/get-session`; it should return HTTP 200 with `null`. With no session, `/app` redirects to `/sign-in?next=%2Fapp`. The public lifecycle routes return HTTP 200.
+
+For responsive review, use Safari Develop → Enter Responsive Design Mode and inspect `/sign-up` at 320×844 and 390×844 CSS pixels. The form remains a single column and its controls fit the viewport width. Browser automation for complete email, session renewal, expiry, and keyboard journeys is tracked separately in Task 13; do not treat the manual layout check as coverage of those journeys.
+
 ### Email unit tests
 
 Run the focused mail configuration and template tests:

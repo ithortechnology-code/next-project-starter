@@ -1,0 +1,37 @@
+{
+  "source": "apps/web/app/globals.css",
+  "surface": "apps/web/.impeccable/surfaces/auth-web.md",
+  "colors": {
+    "ink": "#091125",
+    "blue": "#0853e8",
+    "blue-focus": "#2168f3",
+    "blue-panel": "#edf2f8",
+    "white": "#ffffff",
+    "muted": "#515c6c",
+    "border": "#d5dce6",
+    "danger": "#b42318",
+    "success": "#176b47"
+  },
+  "typography": {
+    "family": "Inter Variable, ui-sans-serif, system-ui, sans-serif",
+    "displaySize": "clamp(2rem, 3.25vw, 2.75rem)",
+    "titleSize": "clamp(2rem, 3.3vw, 2.875rem)",
+    "bodySize": "1rem",
+    "bodyLineHeight": 1.55
+  },
+  "layout": {
+    "desktopColumns": "40% 60%",
+    "mobileBreakpoint": "920px",
+    "narrowBreakpoint": "360px",
+    "formMaxWidth": "43.75rem"
+  },
+  "shapes": {
+    "fieldRadius": "0.625rem",
+    "iconRadius": "0.75rem",
+    "controlHeight": "3.5rem"
+  },
+  "notes": [
+    "Inter Variable is self-hosted from @fontsource-variable/inter 5.3.0 under SIL Open Font License.",
+    "Token values are read from apps/web/app/globals.css; adjust this sidecar when those values change."
+  ]
+}

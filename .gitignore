@@ -18,6 +18,14 @@ coverage/
 # Expo
 .expo/
 
+# Impeccable local build and browser review artifacts
+.impeccable/hook.cache.json
+.impeccable/mocks/
+apps/web/.impeccable/build/
+apps/web/.impeccable/mocks/
+apps/web/.impeccable/questions/
+apps/web/.impeccable/review/
+
 # Local environment files (keep example templates)
 .env
 .env.*

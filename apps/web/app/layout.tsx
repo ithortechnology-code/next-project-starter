@@ -1,14 +1,16 @@
 import type { ReactNode } from "react";
 import "./globals.css";
 
-export const metadata = { title: "Project Starter", description: "Your next project starts here." };
+export const metadata = {
+  title: "Project Starter · Account access",
+  description: "A complete email and password account lifecycle example.",
+  referrer: "no-referrer",
+};
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: "system-ui, sans-serif", background: "#f5f7fb" }}>
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
