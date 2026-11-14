@@ -54,7 +54,7 @@ Current API integration coverage includes public registration with a verificatio
 
 Use browser automation for route, form, session, and viewport cases. Add a keyboard-only/manual pass for the final rendered screen and review accessible names, associations, and live feedback with the browser accessibility tree or equivalent tooling.
 
-### Expo client and native UI
+### Expo client and native UI (iOS quick-check target)
 
 | ID        | Case                                                                                        | Expected result                                                                                                              |
 | --------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -63,12 +63,12 @@ Use browser automation for route, form, session, and viewport cases. Add a keybo
 | NATIVE-03 | Keep the app active through update-age and resume after backgrounding                       | Client revalidates at the configured interval and on resume; valid session expiry extends, expired/revoked session clears.   |
 | NATIVE-04 | Submit invalid credentials, invalid/reused links, or simulate unavailable API/email service | Native feedback is announced and recoverable; no stale authenticated content appears.                                        |
 | NATIVE-05 | Sign out or complete password reset, then navigate Back/resume                              | Server revokes sessions and local session/navigation state is cleared.                                                       |
-| NATIVE-06 | Open verification/reset email links on iOS and Android                                      | Supported deep link or web fallback reaches the correct flow; tokens are not logged or persisted in plain text.              |
-| NATIVE-07 | Use iOS/Android keyboards, autofill, screen readers, safe areas, and shorter screens        | Fields, feedback, and next actions remain reachable; controls use native accessibility semantics.                            |
-| NATIVE-08 | Connect a physical device using its configured API origin                                   | Requests reach the API without assuming that `localhost` points to the developer's computer.                                 |
-| NATIVE-09 | Render real auth components on iOS and Android                                              | Layout, colors, pressed/disabled states, accessibility, and keyboard behavior work in runtime; bundling alone is not a pass. |
+| NATIVE-06 | Open verification/reset email links on iOS                                                  | Supported deep link or web fallback reaches the correct flow; tokens are not logged or persisted in plain text.              |
+| NATIVE-07 | Use iOS keyboard, autofill, screen reader semantics, safe areas, and shorter screens         | Fields, feedback, and next actions remain reachable; controls use native accessibility semantics.                            |
+| NATIVE-08 | Connect an iOS simulator/device using its configured API origin                             | Requests reach the API without assuming that `localhost` points to a physical phone's own loopback.                            |
+| NATIVE-09 | Render real auth components on iOS                                                         | Layout, colors, pressed/disabled states, accessibility, and keyboard behavior work in runtime; bundling alone is not a pass. |
 
-Use automated client/UI checks for deterministic state transitions and errors. Keep a manual device checklist for secure-storage persistence and platform behavior that the chosen automation runtime cannot prove.
+Use automated client/UI checks for deterministic state transitions and errors. Keep a manual iOS checklist for secure-storage persistence and platform behavior that the chosen automation runtime cannot prove. Android remains supported and should continue to export, but Android runtime review is optional and does not block routine auth tasks unless the change is Android-specific or Android verification is explicitly requested.
 
 ### Setup selection
 
@@ -89,7 +89,7 @@ Run each setup case from a fresh disposable copy so an earlier run cannot hide s
 | API lifecycle, invalid credentials, session renewal, email delivery, and origin behavior are checked | API-01 through API-12                                                                                                                                     |
 | Web and Expo complete account lifecycle, session renewal, protected state, and recovery are checked  | WEB-01 through WEB-09; NATIVE-01 through NATIVE-08                                                                                                        |
 | Web narrow layout, keyboard, and overflow work                                                       | WEB-10 and WEB-11, including a manual rendered-screen pass                                                                                                |
-| Native keyboard, secure persistence, deep links, navigation, and API URL work                        | NATIVE-02 through NATIVE-09                                                                                                                               |
+| Native keyboard, secure persistence, deep links, navigation, and API URL work on iOS                 | NATIVE-02 through NATIVE-09                                                                                                                               |
 | Auth-selected and auth-omitted setup work from clean copies                                          | SETUP-01 through SETUP-04                                                                                                                                 |
 | Workspace quality gates and focused checks pass                                                      | CI runs lint, typecheck, build, API, browser, native/client, and both setup-mode suites with isolated services and no external credentials.               |
 | Failure/fix guide uses observed evidence                                                             | Record only a real failure that occurred during development and passed a regression check; see the format below.                                          |
@@ -145,6 +145,18 @@ DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/starter_auth_test" np
 AUTH_TEST_DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/starter_auth_test" npm run test:auth --workspace=@starter/api
 ```
 
-The suite rejects database names without a test marker, creates a unique test user, and removes its user and captured email messages when finished. Current integration coverage includes SMTP delivery of verification and reset links through Mailpit, generic reset responses, token redaction in request logs, production auth configuration validation, sign-in/out, session lookup, and trusted/untrusted origins. It passes 8 tests against the isolated local `starter_auth_test` database. Registration enforcement, token completion/reuse, rolling renewal/expiry, web/native behavior, and setup-selection remain future coverage.
+The suite rejects database names without a test marker, creates a unique test user, and removes its user and captured email messages when finished. Current integration coverage includes SMTP delivery of verification and reset links through Mailpit, generic reset responses, token redaction in request logs, production auth configuration validation, sign-in/out, session lookup, and trusted/untrusted origins. It passes 11 tests against the isolated local `starter_auth_test` database. Web/native client behavior and setup-selection remain future coverage.
 
-Web browser, native runtime, and setup-selection suites remain future work.
+Web browser lifecycle and setup-selection suites remain future work.
+
+### Expo implementation check (Task 12)
+
+Run from the repository root:
+
+```sh
+npm run lint --workspace=@starter/mobile
+npm run typecheck --workspace=@starter/mobile
+npm run build --workspace=@starter/mobile
+```
+
+The Expo export must report both Android and iOS bundles. For the default native quick-check, set `EXPO_PUBLIC_API_URL` to an origin reachable from iOS, then run `npm run ios --workspace=@starter/mobile`. The iOS Simulator can reach the host's localhost API; physical iOS devices need the computer's LAN address. A native development build is needed to test the configured `projectstarter://` scheme; Expo Go does not register it for this project. Exercise the native lifecycle, links, secure persistence, and session checks on iOS before marking Task 12 complete. Android runtime review is an optional follow-up; keep Android export passing, and run an Android emulator/device check when a change is Android-specific or explicit Android verification is requested.

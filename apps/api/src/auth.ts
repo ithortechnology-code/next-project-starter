@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { expo } from "@better-auth/expo";
 import type { Kysely } from "kysely";
 import type { Database } from "./database.js";
 import { createAuthEmailCallbacks, createEmailClient, type AuthEmailPurpose } from "./email.js";
@@ -110,6 +111,7 @@ export function createAuth(
       sendOnSignUp: true,
       sendVerificationEmail: authEmail.sendVerificationEmail,
     },
+    plugins: [expo()],
     session: {
       expiresIn: 7 * 24 * 60 * 60,
       updateAge: 24 * 60 * 60,

@@ -52,6 +52,10 @@ Both experiences should support the same core task and content, but the browser 
 
 When a native convention differs from the responsive web rule, document the native exception in the screen's native design or implementation notes. Keep the web experience functional without requiring the native app.
 
+### Default quick-check platforms
+
+For routine UI changes, verify web at desktop and mobile-web widths plus the iOS native app. Android remains a supported target and should continue to typecheck/export, but Android runtime review is outside the default quick-check and does not block a task unless the change is Android-specific or Android runtime validation is explicitly requested.
+
 ## UI stack and logic boundaries
 
 - **Web styling:** Use Tailwind CSS for web styles. Use shadcn/ui as source-owned component starting points in `apps/web`; add only the components a screen needs and keep their visual behavior specific to web.

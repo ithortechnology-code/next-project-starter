@@ -16,7 +16,11 @@ The `filesystem` adapter is always available to the API and stores data under `.
 
 ## Better Auth local accounts
 
-Local setup generates a random `BETTER_AUTH_SECRET` in the ignored `.env` when the value is blank. The API uses `BETTER_AUTH_URL` when set, or the local `API_PUBLIC_URL`, and uses `AUTH_TRUSTED_ORIGINS` or the local `WEB_ORIGIN` as its explicit origin list. `AUTH_TRUSTED_ORIGINS` also controls credentialed CORS when Better Auth is enabled. The example includes the web origin and Expo development origin; add the exact scheme/host origin used by your simulator or device, with no wildcard. Expo native requests do not use browser CORS, but Better Auth still checks the request origin. Production must set `BETTER_AUTH_URL`, a high-entropy `BETTER_AUTH_SECRET` of at least 32 bytes, and `AUTH_TRUSTED_ORIGINS` explicitly.
+Local setup generates a random `BETTER_AUTH_SECRET` in the ignored `.env` when the value is blank. The API uses `BETTER_AUTH_URL` when set, or the local `API_PUBLIC_URL`, and uses `AUTH_TRUSTED_ORIGINS` or the local `WEB_ORIGIN` as its explicit origin list. `AUTH_TRUSTED_ORIGINS` also controls credentialed CORS when Better Auth is enabled. The example includes the web origin, Expo development origin, and `projectstarter://` app scheme; the Better Auth Expo plugin handles the Expo development origin. Do not add wildcard origins. Expo native requests do not use browser CORS, but Better Auth still checks the request origin. Production must set `BETTER_AUTH_URL`, a high-entropy `BETTER_AUTH_SECRET` of at least 32 bytes, and `AUTH_TRUSTED_ORIGINS` explicitly.
+
+The mobile client reads its API origin from `EXPO_PUBLIC_API_URL`. On the iOS Simulator, the host's `http://localhost:4000` is reachable. Android emulators commonly reach the host through `http://10.0.2.2:4000`. Physical devices must use the development computer's LAN IP or hostname (for example, `http://192.168.x.x:4000`), with the API bound to a reachable interface and firewall access enabled; `localhost` on a phone refers to the phone. The API public origin and trusted origins must match the configured setup. Use HTTPS for deployed builds.
+
+The custom `projectstarter://` email callback scheme is configured in `apps/mobile/app.json` and works in a development or production build. Expo Go does not automatically register a project's custom scheme. For production forks, configure universal links/app links and retain a web fallback so users without the app can complete verification and password reset.
 
 Public registration now requires email verification before sign-in. For a local/test account created with the provisioner, set `AUTH_ENABLE_LOCAL_PROVISIONING=true`, `AUTH_PROVISION_NAME`, `AUTH_PROVISION_EMAIL`, and `AUTH_PROVISION_PASSWORD` in the ignored `.env`, then run:
 
@@ -24,7 +28,7 @@ Public registration now requires email verification before sign-in. For a local/
 npm run auth:provision-user --workspace=@starter/api
 ```
 
-The provisioner is a local command, refuses `NODE_ENV=production`, and accepts only loopback database URLs. It does not print the password. Open the verification message in Mailpit and follow its link before signing in. Remove the provisioning values and switch `AUTH_ENABLE_LOCAL_PROVISIONING` back to `false` after creating the account. Do not use a reusable production password. The web and Expo client flows are completed in the later authentication tasks.
+The provisioner is a local command, refuses `NODE_ENV=production`, and accepts only loopback database URLs. It does not print the password. Open the verification message in Mailpit and follow its link before signing in. Remove the provisioning values and switch `AUTH_ENABLE_LOCAL_PROVISIONING` back to `false` after creating the account. Do not use a reusable production password. The web and Expo clients support the account lifecycle described in the auth design specification.
 
 Verification and password-reset messages use the local Mailpit service. Open `http://localhost:${MAILPIT_UI_PORT:-8025}` to inspect them. The auth endpoint responses do not contain one-time tokens; the links are available only in the captured email. Keep the `email` Compose profile enabled while testing auth email delivery.
 

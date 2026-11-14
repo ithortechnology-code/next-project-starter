@@ -17,7 +17,7 @@ if (!/(^|[_-])test($|[_-])/.test(databaseName)) {
 process.env.DATABASE_URL = databaseUrl;
 process.env.BETTER_AUTH_SECRET = "auth-integration-test-secret-32-bytes-minimum";
 process.env.BETTER_AUTH_URL = "http://localhost:4000";
-process.env.AUTH_TRUSTED_ORIGINS = "http://localhost:3000,exp://127.0.0.1:8081";
+process.env.AUTH_TRUSTED_ORIGINS = "http://localhost:3000,exp://127.0.0.1:8081,projectstarter://";
 process.env.WEB_ORIGIN = "http://localhost:3000";
 process.env.FILE_URL_SIGNING_SECRET = "auth-integration-test-file-signing-secret";
 process.env.STORAGE_DRIVER = "filesystem";
@@ -458,4 +458,12 @@ test("credentialed CORS permits configured origins and rejects untrusted origins
     payload: { email, password: activePassword },
   });
   assert.equal(expoSignIn.statusCode, 200, expoSignIn.body);
+
+  const nativeSchemeSignIn = await app.inject({
+    method: "POST",
+    url: "/api/auth/sign-in/email",
+    headers: { "expo-origin": "projectstarter://" },
+    payload: { email, password: activePassword },
+  });
+  assert.equal(nativeSchemeSignIn.statusCode, 200, nativeSchemeSignIn.body);
 });

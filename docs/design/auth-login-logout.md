@@ -78,6 +78,12 @@ After successful sign-in, return only to a same-origin relative path that starts
 - Read the API origin from `EXPO_PUBLIC_API_URL`; physical-device setup must not assume localhost points to the developer computer.
 - Record deliberate iOS/Android differences in implementation notes.
 
+The reference Expo client uses `@better-auth/expo` on both sides, the `projectstarter` app scheme, and `expo-secure-store` through Better Auth's storage adapter. The opaque session cookie is persisted in SecureStore; the API remains authoritative and confirms it before the authenticated screen appears. The native app calls `getSession` at launch, every five minutes while active, and after returning to the foreground. Temporary lookup failure keeps a previously confirmed screen visible with retry feedback; a confirmed missing session returns to sign-in. The server's seven-day expiry and one-day update age decide whether the database session is renewed.
+
+The app handles `projectstarter://verify-email` and `projectstarter://reset-password`. Reset tokens are held only in component memory while the form is active, then cleared after completion. Email delivery remains generic. A development/production native build is required for the custom scheme; Expo Go does not register this scheme automatically. Production email links should use universal/app links and a web fallback when the fork configures its own domain and associated app identifiers.
+
+For a simulator, `EXPO_PUBLIC_API_URL` can point to the host API origin. Android emulators typically use the emulator's host bridge address; physical devices need the development computer's reachable LAN address, firewall access, and a matching `BETTER_AUTH_URL`/trusted-origin setup. Use HTTPS for deployed environments. Never ship a localhost API origin in a device build.
+
 ## Content and account safety
 
 - Use concise, neutral messages. Sign-in errors do not distinguish unknown email and wrong password.
@@ -95,7 +101,7 @@ Use [project design guidelines](../design-guidelines.md) for responsive behavior
 - [ ] Public feedback does not disclose account existence.
 - [ ] Protected web content is rendered only after a server session check; API outages are not mistaken for anonymous sessions.
 - [ ] Web flows work at 320 and 360–390 CSS pixels with keyboard access and no page-level horizontal overflow.
-- [ ] Expo uses secure session persistence, reachable API configuration, usable keyboards/navigation, and safe email-link handling on iOS and Android.
+- [ ] Expo uses secure session persistence, reachable API configuration, usable keyboards/navigation, and safe email-link handling on iOS. Android native runtime review is optional for routine tasks; its export remains part of the build check.
 - [ ] Sign-out invalidates the server session and clears local/protected navigation state.
 - [ ] No social sign-in, MFA, role/organization, or account-deletion UI is implied.
 

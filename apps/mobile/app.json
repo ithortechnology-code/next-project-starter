@@ -1,1 +1,21 @@
-{ "expo": { "name": "Project Starter", "slug": "project-starter", "scheme": "projectstarter", "version": "1.0.0", "orientation": "portrait", "userInterfaceStyle": "automatic", "platforms": ["ios", "android"], "ios": { "supportsTablet": true }, "android": { "adaptiveIcon": { "backgroundColor": "#ffffff" } } } }
+{
+  "expo": {
+    "name": "Project Starter",
+    "slug": "project-starter",
+    "scheme": "projectstarter",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "platforms": ["ios", "android"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.projectstarter.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "plugins": ["expo-secure-store"]
+  }
+}

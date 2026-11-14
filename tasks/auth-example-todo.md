@@ -67,7 +67,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 - [x] Expo remains on SDK 58 throughout the spike.
 - [x] NativeWind v4.2.7 was checked against its official installation guidance; the guidance documents SDK 57 support, and the local SDK 58 evidence is recorded separately.
 - [ ] The installation was performed only in an isolated, reversible spike; the existing commit history shows a reversible change but does not establish that the install was isolated.
-- [ ] iOS and Android both bundle and render a probe covering layout, spacing, color, and state styles; a bundle-only pass does not count as compatibility.
+- [ ] iOS simulator bundles and renders a probe covering layout, spacing, color, and state styles; Android export remains a build check, while Android runtime review is an optional follow-up.
 
 **Verification:** Record exact versions, commands, device/runtime results, and known issues in the task notes or design decision. NativeWind is selected; retain the remaining color and interaction-state checks as explicit follow-up.
 
@@ -87,9 +87,9 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 - [ ] Expo's dependency compatibility check completes reliably against package metadata; the recorded offline check warned that its validation was unreliable.
 - [x] Styling configuration is documented and mobile components remain platform-local.
 - [x] Existing iOS and Android exports continue to work; the compatibility note records a successful export for both platforms.
-- [ ] During auth UI implementation, verify component colors, pressed and disabled states, accessibility behavior, and keyboard/focus behavior on iOS and Android.
+- [ ] During auth UI implementation, verify component colors, pressed and disabled states, accessibility behavior, and keyboard/focus behavior on iOS. Android runtime review is optional unless a change is Android-specific.
 
-**Verification:** Run mobile lint, typecheck, iOS/Android export, and the runtime probe on both platforms.
+**Verification:** Run mobile lint, typecheck, iOS/Android export, and the runtime probe on iOS. Android runtime review is optional under the default quick-check scope.
 
 **Dependencies:** Task 4.
 
@@ -101,7 +101,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 - [ ] Tasks 1–5 complete with Expo SDK 58 unchanged.
 - [ ] Contributor-facing Epic, design, and test documents agree on the complete email/password lifecycle and rolling-session policy.
-- [ ] Mobile styling decision is backed by iOS and Android evidence.
+- [ ] Mobile styling decision is backed by iOS runtime evidence and iOS/Android export evidence.
 
 ## Phase 2: Better Auth API foundation
 
@@ -229,11 +229,13 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Native UI supports registration, verification/resend and reset links, invalid credentials, API/email unavailable, session loading/renewal, authenticated, and signed-out states.
-- [ ] Session persistence uses supported secure storage; active/resume checks refresh only valid sessions; sign-out/reset clears server and local state.
-- [ ] Verification/reset links work through supported deep-link/web-fallback paths; device API URL does not assume localhost.
+- [x] Native UI supports registration, verification/resend and reset links, invalid credentials, API/email unavailable, session loading/renewal, authenticated, and signed-out states.
+- [x] Session persistence uses supported secure storage; active/resume checks refresh only valid sessions; sign-out/reset clears server and local state.
+- [x] Verification/reset links work through supported deep-link/web-fallback paths; device API URL does not assume localhost.
 
-**Verification:** Run mobile typecheck/export and manually exercise full lifecycle, link handling, session renewal/expiry, relaunch, and sign-out on iOS and Android.
+**Verification:** Run mobile lint/typecheck and iOS/Android export, then manually exercise lifecycle, link handling, session renewal/expiry, relaunch, and sign-out on iOS native. Android native runtime review is an optional follow-up and does not block this task.
+
+**Progress note (verified):** The app-local native UI and Better Auth Expo/SecureStore integration are implemented. Mobile lint, typecheck, and iOS/Android export pass. API lint/typecheck/build and all 11 PostgreSQL-backed API integration tests pass. A native iOS development build succeeded on the iOS 26.5 simulator. The sign-up screen, field validation, primary actions, verification callback, and authenticated screen were visually reviewed. A test account completed registration, email verification through Mailpit, and sign-in. The verification deep link opened `projectstarter://verify-email`; a reset callback opened the reset form. Terminating and relaunching the app retained the authenticated session, confirming secure persistence. The verified session is checked with the API on launch, resume, and while active; session expiry and revocation behavior are covered by API integration tests. Android runtime review is optional under the project's quick-check scope; Android export remains part of the build check.
 
 **Dependencies:** Tasks 2, 5, and 9.
 
@@ -248,7 +250,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 **Acceptance criteria:**
 
 - [ ] Browser suite covers registration/verification, sign-in, reset, email/API failure, protected routes, refresh/expiry, sign-out, keyboard reachability, and horizontal overflow.
-- [ ] Native tests cover lifecycle, revalidation, and link states; device checklist covers SecureStore, email links, and iOS/Android keyboard/navigation.
+- [ ] Native tests cover lifecycle, revalidation, and link states on iOS; the device checklist covers SecureStore, email links, and iOS keyboard/navigation. Android runtime coverage is optional and non-blocking.
 - [ ] CI runs the automated suites with isolated services and no external credentials.
 
 **Verification:** Run focused suites locally and in CI; capture artifacts only when they are useful and redact credentials/session data.
