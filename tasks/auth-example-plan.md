@@ -1,138 +1,146 @@
-# Implementation Plan: Cross-Platform Better Auth Example
+# Implementation Plan: Cross-Platform Better Auth Account Lifecycle Example
 
 ## Overview
 
-Build a small, generic authentication example that teaches contributors how this starter carries a feature from an Epic and design through implementation, automated tests, and documented failure diagnosis. Better Auth runs as a TypeScript library in the project's API and stores auth data in the existing PostgreSQL service. The first user-visible flow is email/password sign-in, a protected signed-in view, and sign-out in both the Next.js web app and Expo app. The existing web/mobile apps remain independent clients of the API.
+Build a generic, complete email/password authentication example that teaches contributors how this starter carries a feature through API, email delivery, web and native clients, tests, and documentation. Better Auth runs in the API process and stores users and database-backed sessions in PostgreSQL. Verification and reset messages use the existing SMTP client and local Mailpit. Web and Expo remain independent clients of the API.
 
 ## Scope and constraints
 
-- Use NativeWind 4.2.7 with app-local Tailwind CSS 3 for mobile styling. Expo 58.0.25 / React Native 0.88.1 passed iOS and Android bundling and layout/spacing runtime checks; see [evidence](../docs/testing/nativewind-expo58.md). **Do not downgrade Expo.** Validate component colors, interaction states, accessibility, and keyboard behavior during auth implementation.
-- Auth is an in-app package/framework integration, not a hosted auth service.
-- This first flow includes sign-in, session persistence, a protected signed-in view, and sign-out. It does not include sign-up, email verification, password reset, social providers, organizations, or role management.
-- Since there is no sign-up UI in this slice, provide an explicit local/test account provisioning path. Never commit demo passwords or seed a reusable production account.
-- Keep Better Auth server configuration in the API. Use `packages/shared` only for contracts genuinely shared by apps; keep UI components and platform-specific behavior local to web and Expo.
-- Add Better Auth's required schema to the existing Kysely migration history. Do not introduce an independent auth migration path.
-- Preserve the current intent to make auth selectable during setup. First prove the complete recipe, then scaffold it through setup and verify both selected and unselected setup paths.
-- Document failures observed during implementation with the failing test or command, symptom, root cause, fix, and regression check. Do not leave intentionally broken code or CI tests behind.
+- The supported lifecycle is registration, email verification and resend, sign-in, server-validated session, sign-out, forgot-password, and password reset.
+- Use an opaque database-backed cookie session: 7-day expiry, renewed after a 1-day update age. Browser clients revalidate every 5 minutes and on focus; Expo clients revalidate while active and on resume. Sign-out and password reset revoke server sessions. Do not add JWT access/refresh tokens or stateless cookie caching to this first-party example.
+- Social sign-in, MFA, organizations, roles, SSO, and account deletion remain out of scope.
+- Keep Better Auth configuration in `apps/api`; PostgreSQL remains the source of truth. Add any required auth schema only through the ordered Kysely migration runner.
+- Use the existing API email client and Mailpit profile. Production auth configuration must require explicit SMTP host/sender settings and never log passwords, cookies, or one-time tokens.
+- Keep `packages/shared` for contracts genuinely shared by clients; web and Expo presentation remain app-local.
+- Keep Expo SDK 58 and NativeWind 4.2.7. See [compatibility evidence](../docs/testing/nativewind-expo58.md); verify component colors, states, accessibility, and keyboard behavior during implementation.
+- Auth stays selectable during setup. Prove the full recipe first, then scaffold it and test both selected and unselected paths.
+- Use Impeccable as development tooling for the auth demo's responsive design tokens and comp-first web references. Keep those artifacts scoped to `docs/design`/the demo; do not add a root `PRODUCT.md` or `DESIGN.md` that could misstate a fork's product. A fork should create its own product/design record for its actual product.
+- Record only observed failures with reproduction, root cause, fix, and a passing regression check.
 
-## Architecture decisions to validate
+## Architecture decisions
 
-- Better Auth server instance and Fastify handler live in `apps/api`; PostgreSQL remains the source of truth for users and sessions.
-- Web uses Better Auth's React client against the API. Expo uses the official Expo integration and secure local session storage.
-- Configure trusted origins and credentialed CORS explicitly for local web and Expo development. Test cookie/session behavior in supported mobile browsers and on native clients. Confirm the production web/API origin strategy before production deployment; unrelated domains can cause browser cookie restrictions.
-- Generate the Better Auth PostgreSQL schema, review it, then bring it into a versioned Kysely migration so existing deploy migration ordering remains authoritative.
-- Keep one auth design and behavior contract while allowing separate responsive web and native screens.
-- Auth dependencies and files are included only when the contributor selects the auth recipe during setup. The exact scaffold representation (copyable recipe sources versus generated package/files) must be chosen after the working recipe exists and both setup modes can be tested safely.
+- Better Auth owns verification/reset tokens and session operations; Kysely migrations remain the only schema migration path.
+- Registration requires verified email before Better Auth creates an authenticated session. Reset requests and registration feedback must not reveal account existence.
+- Session renewal is a database expiry extension triggered by valid session reads after the update-age threshold. Client revalidation checks validity; it does not revive an expired or revoked session.
+- The API integrates Better Auth with the existing SMTP client; local development reads messages from Mailpit.
+- The web uses Better Auth's React client against `API_URL` and validates protected sessions on the server. Expo uses the official integration and secure storage, with safe email-link handoff.
+- Configure trusted origins and credentialed CORS explicitly. Confirm any production browser/API proxy and cookie-domain arrangement before deployment.
+- The auth recipe remains optional; the no-auth path must stay independently runnable and preserve user edits.
 
 ## Dependency graph
 
 ```text
-Expo 58 styling compatibility check
+Epic/design/test specs + mobile styling foundation
           │
-          ├── Native styling decision and mobile UI foundation
+Email delivery adapter (existing SMTP client + Mailpit)
           │
-Auth Epic + reusable templates + cross-platform design/test specs
+Better Auth lifecycle config + session policy
           │
-PostgreSQL auth schema → Better Auth API config → Fastify handler/session tests
-          │                                      │
-          ├──────────────────────────────────────┤
-          │                                      │
-Web auth client + sign-in/out UI      Expo auth client + sign-in/out UI
-          │                                      │
-          └──────────── Browser/device tests ────┘
-                               │
-                 Optional setup scaffold + both-path checks
+Existing Kysely auth schema → Fastify handler + origins/CORS
+          │
+Isolated API lifecycle tests
+          ├─────────────────────────┐
+          │                         │
+Responsive web lifecycle       Expo lifecycle
+          │                         │
+          └──── browser/native tests ┘
+                       │
+          Optional setup recipe + both-path checks
 ```
 
-## Task List
+## Task list
 
-### Phase 1: Plan, design, and verify mobile styling
+### Phase 1: Plan, design, and mobile styling foundation
 
-1. Write the authentication Epic and reusable Epic/task templates.
-2. Write the web and Expo sign-in/sign-out flow and responsive design specification.
-3. Write the cross-platform test strategy and acceptance case matrix.
-4. Completed: NativeWind compatibility spike passed iOS/Android builds and basic layout/spacing runtime checks on Expo 58.
-5. Use the installed NativeWind foundation and finish component-level state, color, and accessibility checks during UI implementation.
+1. Write the auth Epic and reusable Epic/task templates.
+2. Specify web and Expo lifecycle behavior, including session refresh and responsive/accessibility requirements.
+3. Specify API, email, web, native, and setup tests plus failure diagnosis.
+4. Complete the NativeWind Expo 58 compatibility spike; retain the recorded remaining component-state checks.
+5. Establish the mobile styling foundation and check component colors, interaction states, accessibility, and keyboard behavior during UI work.
 
-### Checkpoint: design and mobile foundation
+### Checkpoint: specification and mobile foundation
 
-- Epic, reusable templates, design spec, and test cases are usable by a contributor without relying on this conversation.
-- Expo SDK 58 remains pinned; the mobile styling decision has evidence from iOS and Android bundling and a runtime check.
+- Epic, design, test strategy, capability map, and task checklist agree on the complete email/password lifecycle.
+- Expo SDK 58 remains pinned; iOS and Android compatibility evidence remains available.
 
-### Phase 2: Better Auth API foundation
+### Phase 2: Email and Better Auth API foundation
 
-6. Add Better Auth server configuration, secrets/origins configuration, and a safe local/test user provisioning path.
-7. Add the reviewed Better Auth schema as a new ordered Kysely migration.
-8. Mount the Better Auth Fastify handler and configure credentialed CORS/trusted origins.
-9. Add API integration tests for account provisioning, valid/invalid sign-in, session lookup, sign-out, and rejected/untrusted requests.
+6. Integrate verification and password-reset email delivery with the API's SMTP client and Mailpit; add safe templates and focused delivery checks.
+7. Configure Better Auth for verified public registration, sign-in/out, reset, local/test provisioning, production config validation, and the 7-day/1-day rolling database session policy.
+8. Keep the reviewed Better Auth tables/indexes in the ordered Kysely migration sequence; confirm the schema covers verification/reset tokens and sessions.
+9. Keep the Better Auth Fastify handler mounted at `/api/auth` with credentialed CORS and explicit web/Expo trusted origins.
+10. Extend isolated PostgreSQL API integration tests for registration, email verification, sign-in gating, password reset/session revocation, renewal/expiry, enumeration-safe responses, and origin/config failures.
 
-### Checkpoint: API authentication
+### Checkpoint: API lifecycle
 
-- A local account can sign in and out through the API; sessions persist and are invalidated correctly.
-- Missing production secrets and invalid database/configuration fail safely; no credentials appear in source, logs, or test artifacts.
+- A user can register, verify, sign in, persist/renew a valid session, sign out, and reset a password using captured email.
+- Expired or revoked sessions and one-time tokens cannot be reused; reset revokes active sessions.
+- Trusted origins work and untrusted origins cannot use credentialed auth routes.
 
-### Phase 3: Cross-platform sign-in and sign-out
+### Phase 3: Web and Expo lifecycle
 
-10. Build the responsive web sign-in, authenticated view, and sign-out flow using the established Tailwind/shadcn foundation.
-11. Build the Expo sign-in, authenticated view, and sign-out flow using the selected mobile styling approach and secure session storage.
-12. Add web browser tests and native client/UI tests plus a repeatable iOS/Android manual verification checklist.
-13. Record implementation failure/fix examples and how to run each test path locally.
+11. Build responsive web registration, verification/resend, sign-in, forgot/reset, server-validated authenticated, and sign-out views. Create desktop and mobile-web comps and document the resulting demo tokens within the auth design scope.
+12. Build Expo equivalents using secure session storage, verification/reset deep-link handling, active/resume revalidation, and native keyboard/navigation behavior.
+13. Add browser and native/client tests for the complete account lifecycle, rolling renewal, links, responsive/accessibility behavior, and failures.
+14. Document local email inspection, provisioning, session policy, API/web/mobile URLs, test commands, and observed failure/fix evidence.
 
-### Checkpoint: cross-platform flow
+### Checkpoint: cross-platform lifecycle
 
-- Web and native clients sign in, retain a session across app/page reload, show the authenticated identity, and sign out.
-- Invalid credentials, unavailable API, expired session, and failed requests produce recoverable UI states.
-- Narrow web layouts satisfy `docs/design-guidelines.md`; mobile keyboard, input focus, and navigation remain usable.
+- Web and Expo support every flow from the design spec; protected state is shown only after API confirmation.
+- Browser works at 320 and 360–390 CSS pixels; iOS/Android secure storage, keyboards, links, and navigation are checked.
+- Email and session failure states recover without account enumeration or stale authenticated UI.
 
 ### Phase 4: Make auth selectable during setup
 
-14. Choose and document a maintainable source-of-truth model for the optional auth recipe.
-15. Add setup selection and scaffold the API/auth database pieces only when auth is selected.
-16. Scaffold the web auth dependencies and sign-in flow only when auth is selected.
-17. Scaffold the Expo auth dependencies and sign-in flow only when auth is selected.
-18. Verify setup with auth enabled and disabled from clean checkouts; confirm the disabled path has no auth-only dependencies, files, migration, or stale generated state.
-19. Update the README/local development guide with selection, account provisioning, web/mobile URLs, test commands, and the auth example's production-readiness boundary.
+15. Choose and document a maintainable source-of-truth model for the optional auth recipe.
+16. Add setup selection and scaffold API, email, dependencies, environment, and migration only when selected.
+17. Scaffold the web client and all lifecycle screens only when auth is selected.
+18. Scaffold Expo auth dependencies and lifecycle screens only when selected.
+19. Verify auth-selected and no-auth setup paths from clean copies, including reruns and edited-file preservation.
+20. Update starter docs with recipe selection, email/Mailpit, account lifecycle, session policy, and all test commands.
 
-### Checkpoint: ready as a forkable example
+### Final checkpoint: forkable example
 
-- Both setup modes work from a clean checkout and preserve existing local configuration.
-- A contributor can follow the Epic, task checklist, design, tests, and failure/fix walkthrough to understand the repository workflow.
-- Workspace lint, typecheck, build, API tests, web browser tests, and mobile checks pass.
+- Auth-enabled and no-auth setups work from clean copies; the no-auth path has no stale auth dependencies, files, migrations, or generated state.
+- A contributor can follow the Epic, task checklist, design, tests, and failure guide without relying on this conversation.
+- Workspace lint, typecheck, build, API, browser, native, and setup checks pass.
 
 ## Verification strategy
 
-- **Native styling compatibility:** Read official compatibility guidance for the exact pinned versions; build/export both platforms; run a minimal utility-class screen on iOS and Android and verify representative layout, color, spacing, and state styles. A successful Metro bundle alone is not enough.
-- **API:** Test auth handler and session behavior against an isolated PostgreSQL database with migrations applied. Include valid/invalid credentials, no session, session persistence, sign-out invalidation, rejected origin, and missing secret/database configuration.
-- **Web:** Use browser automation for sign-in success/failure, reload persistence, protected-view redirect, sign-out, API-unavailable messaging, keyboard reachability, and 320/360–390 CSS-pixel overflow checks.
-- **Expo:** Test client state transitions and auth request failures with automated UI/client tests; verify sign-in, persisted session, and sign-out on iOS and Android. Use a development build or supported Expo runtime for device checks as required by native dependencies.
-- **Setup:** Run the setup command in clean copies for both auth selections and assert dependencies, files, migrations, environment keys, and test commands match the selected mode.
-- **Regression diagnosis:** For each encountered implementation failure worth teaching, retain the reproducer and passing regression check; distinguish expected negative test cases from actual development failures.
+- **Email:** Verify registration and reset messages using an isolated SMTP capture/Mailpit service; check link destinations, token handling, and generic public responses.
+- **API:** Against isolated PostgreSQL, test registration, verified/unverified sign-in, session refresh/expiry, sign-out, reset and revocation, one-time tokens, untrusted origins, and invalid production configuration.
+- **Web:** Browser checks cover all lifecycle routes, reload/protected-session checks, periodic/focus refresh, sign-out/reset invalidation, email/API outages, keyboard access, and 320/360–390 CSS-pixel overflow.
+- **Expo:** Test lifecycle state transitions and failures, then verify session storage, active/resume refresh, email deep links, keyboard, and navigation on iOS and Android.
+- **Setup:** Run both auth selections in disposable copies and assert dependencies, files, migrations, environment, rerun behavior, and test commands.
+- **Regression diagnosis:** Record only real failures and passing regression checks; expected negative cases are not defects.
 
 ## Risks and mitigations
 
-| Risk                                                                     | Impact                                                                                   | Mitigation                                                                                                                                 |
-| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| NativeWind stable docs cover Expo 57, while this repo pins Expo 58       | Mobile styling integration may fail or compile while rendering incorrectly               | Basic iOS/Android checks passed; retain Expo 58 and recheck component behavior during implementation and upgrades.                         |
-| Web/API origins and cookies differ across local, staging, and production | Sign-in can work in one browser and fail in another, especially with third-party cookies | Explicitly test credentialed CORS and origins locally; decide production origin/reverse-proxy strategy before enabling auth in deployment. |
-| Auth schema tooling could create a second migration history              | Fresh setup and deploys may diverge                                                      | Review generated SQL and commit it as the next migration in the existing Kysely runner.                                                    |
-| Sign-in-only UI has no account creation flow                             | Contributors cannot try it without a user                                                | Provide explicit local/test account provisioning and document it; do not seed shared credentials.                                          |
-| Optional setup can leave stale files or lockfile entries                 | Forks without auth may be inconsistent                                                   | Test both paths from clean copies and make selection idempotent; avoid deleting user-owned files.                                          |
-| Native secure storage behavior differs by platform                       | Session persistence or logout could diverge                                              | Use the official Better Auth Expo integration and SecureStore guidance; test iOS and Android independently.                                |
+| Risk                                                              | Impact                                               | Mitigation                                                                                                              |
+| ----------------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| SMTP delivery or link origin is misconfigured                     | Users cannot verify accounts or reset passwords      | Validate production SMTP settings, use explicit public origins, and test locally with Mailpit.                          |
+| Public messages reveal account existence                          | Email enumeration                                    | Use generic registration/reset/resend feedback and compare responses in API tests.                                      |
+| Session refresh runs after expiry or delays revocation            | Stale access persists                                | Use database sessions without stateless cookie cache; refresh only valid sessions and test sign-out/reset invalidation. |
+| Browser/API cookie policy differs in deployment                   | Sign-in fails or cookies are not sent                | Verify deployed origin/proxy arrangement before production launch.                                                      |
+| Expo link/session behavior differs by platform                    | Verification/reset or persistence breaks on a device | Use supported secure storage/deep links and check iOS and Android separately.                                           |
+| Optional setup leaves stale artifacts                             | Forks without auth become inconsistent               | Test both paths from clean copies and preserve user-owned files.                                                        |
+| NativeWind stable docs target Expo 57 while this repo uses SDK 58 | UI can bundle but render incorrectly                 | Keep the recorded iOS/Android evidence and recheck component behavior during implementation.                            |
 
 ## Open questions for implementation time
 
-- NativeWind is selected; revalidate compatibility when upgrading Expo, React Native, or NativeWind.
-- Should the optional setup choice be an interactive prompt, an explicit `--with-auth` flag, or both? Preserve a non-interactive option for CI and automation.
-- What domain/proxy arrangement will web and API use in each deployment environment? Do not finalize production cookie settings until this is known.
-- Which Expo automation framework works cleanly with the pinned SDK 58? Confirm against current Expo documentation before adding a test stack.
+- What domain/proxy arrangement will production web and API use? Do not finalize production cookie attributes before this is known.
+- Which Expo automation framework works with the pinned SDK 58? Confirm against current Expo docs before adding test dependencies.
+- Should setup selection be interactive, flag-based, or both? Keep an explicit non-interactive option for CI.
 
 ## Technical references
 
-- [Better Auth Fastify integration](https://better-auth.com/docs/integrations/fastify) — Fastify handler, trusted origins, credentialed CORS, and session retrieval.
-- [Better Auth PostgreSQL adapter](https://better-auth.com/docs/adapters/postgresql) — PostgreSQL support through Kysely.
-- [Better Auth CLI](https://better-auth.com/docs/concepts/cli) — schema generation and checks; generated Kysely SQL must be reviewed and integrated into this repository's Kysely migration runner.
-- [Better Auth Expo integration](https://better-auth.com/docs/integrations/expo) — Expo plugin, client, SecureStore, trusted origins, and session behavior.
-- [Better Auth cookies](https://better-auth.com/docs/concepts/cookies) — cookie behavior and cross-domain browser limitations.
-- [NativeWind stable installation](https://www.nativewind.dev/docs/getting-started/installation) — stable v4 guidance currently documents Expo SDK 57; SDK 58 basic compatibility was verified locally; see the compatibility report.
-- [Expo SDK 58 reference](https://docs.expo.dev/versions/v58.0.0/) — pinned SDK and React Native version compatibility.
-- [Expo testing overview](https://docs.expo.dev/develop/unit-testing/) — Expo-supported testing options; confirm current SDK 58 support during implementation.
+- [Better Auth Fastify integration](https://better-auth.com/docs/integrations/fastify)
+- [Better Auth PostgreSQL adapter](https://better-auth.com/docs/adapters/postgresql)
+- [Better Auth email/password](https://better-auth.com/docs/authentication/email-password)
+- [Better Auth session management](https://better-auth.com/docs/concepts/session-management)
+- [Better Auth client session options](https://better-auth.com/docs/concepts/client)
+- [Better Auth Expo integration](https://better-auth.com/docs/integrations/expo)
+- [Better Auth cookies](https://better-auth.com/docs/concepts/cookies)
+- [NativeWind stable installation](https://www.nativewind.dev/docs/getting-started/installation)
+- [Expo SDK 58 reference](https://docs.expo.dev/versions/v58.0.0/)
+- [Expo testing overview](https://docs.expo.dev/develop/unit-testing/)

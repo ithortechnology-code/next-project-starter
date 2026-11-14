@@ -1,84 +1,98 @@
-# Cross-platform sign-in and sign-out design
+# Cross-platform email/password account lifecycle design
 
 ## Purpose and scope
 
-This specification defines the behavior of the starter's email/password sign-in example in the web and Expo apps. Both clients use the same API and support session persistence, a server-validated signed-in view, and sign-out.
+This specification defines a complete generic email/password account lifecycle for the web and Expo clients. Visitors can register, verify their email, sign in, use a server-validated session, sign out, request a password reset, and complete a reset.
 
-There is no public registration or account lifecycle UI. Account provisioning is a local/test operation described in the implementation and local development documentation. Do not imply that a visitor can create an account, reset a password, verify an email, or use a social provider.
+Do not imply social sign-in, MFA, organizations, roles, account deletion, or product-specific account features. Local/test provisioning remains available for isolated development and tests.
 
-The two apps share behavior and API expectations, not presentation components. Use each app's platform conventions. This document sets no new palette, spacing, typography, or shared UI tokens; visual decisions for the demo screens and any reusable tokens belong to UI implementation, using the project design guidelines and the existing app context.
+The API owns account and session state in PostgreSQL. Verification and password-reset links are sent through the API's configured SMTP transport. Web and Expo share behavior and API expectations, not visual components. Web/mobile-web token demos use a responsive web design; Expo keeps native presentation and keyboard conventions.
 
-## Shared behavior contract
+Web and Expo use Better Auth's opaque, database-backed session cookie. Set an explicit 7-day session expiry and 1-day update age. Revalidate session status every 5 minutes while the client is active, plus on browser focus or app resume. Better Auth extends the session expiry when a valid session is fetched after the update-age threshold; an expired session is never revived. Sign-out and password reset revoke server-side sessions. Do not add JWT access/refresh tokens or stateless cookie caching to this first-party example; if a future fork needs bearer tokens for external API consumers, document that as a separate credential flow.
 
-The flow has these states:
+## Shared lifecycle
 
-| State | Entry condition | Required behavior |
-| --- | --- | --- |
-| Checking session | App/page starts, reloads, or returns to the foreground when a refresh is due | Ask the API for the current session. Do not show protected identity or actions until the response is known. Keep the loading state brief and identifiable to assistive technology. |
-| Signed out | The API confirms there is no valid session | Show the sign-in form. Do not show a registration or account recovery action. |
-| Submitting | A valid form is being sent | Prevent duplicate submissions, keep the current screen stable, and expose progress. Do not log or persist the password in client storage. |
-| Invalid credentials | The API rejects the supplied email/password | Show a concise, non-enumerating message that does not reveal whether the email exists. Keep the email available for correction; allow another attempt. |
-| API unavailable | The request cannot reach the API or returns an unexpected service failure | Explain that sign-in could not be completed and offer a retry. Keep entered email; do not claim the user is signed in. |
-| Authenticated | The API returns a valid session and public user identity | Show the authenticated view only after server confirmation. Display a safe identity field such as the account email and provide sign-out. |
-| Session expired | A later session check or protected request says the session is no longer valid | Clear stale client session state, return to sign-in, and explain that the session ended. Preserve only a safe in-app return destination when applicable. |
-| Signing out | The user starts sign-out | Disable repeated activation and show progress. Treat sign-out as complete only after the server confirms invalidation; then clear client session state. |
-| Signed out again | Server invalidation succeeds | Return to the signed-out state. A browser refresh, app resume, or back navigation must not restore the old authenticated view. |
+| State                     | Entry condition                                                         | Required behavior                                                                                                                                                                                                                              |
+| ------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Checking session          | Web route or app starts, reloads, or resumes                            | Ask the API for the current session. Do not show protected identity before confirmation. Keep loading identifiable to assistive technology.                                                                                                    |
+| Refreshing session        | The client interval, browser focus, or app resume triggers revalidation | Send the existing session cookie to the API. If the session is valid and past the update-age threshold, the API updates its expiry and refreshes the cookie. If it is expired/revoked, clear local session state and show the signed-out flow. |
+| Signed out                | API confirms no valid session                                           | Show sign-in and a clear route to registration. Do not show authenticated content.                                                                                                                                                             |
+| Registering               | Valid name, email, password, and confirmation are submitted             | Prevent duplicate submissions, expose progress, never persist/log the password, and handle email already in use without confirming account existence.                                                                                          |
+| Verification pending      | Registration request is accepted for email verification                 | Explain that a message was sent, show the submitted email safely, offer resend, and allow return to sign-in. Do not treat the account as authenticated.                                                                                        |
+| Verifying email           | User follows a verification link                                        | API validates the one-time token. The web/native landing state reports success, invalid link, or expiry and provides a path to sign-in or resend. Do not expose the token in logs or subsequent navigation.                                    |
+| Submitting sign-in        | Valid email and password are sent                                       | Prevent duplicate submissions and expose progress. Do not store the password.                                                                                                                                                                  |
+| Invalid credentials       | API rejects the supplied email/password                                 | Use the same public feedback for unknown email and wrong password; retain email for correction.                                                                                                                                                |
+| Email not verified        | Credentials are valid but verification is incomplete                    | Do not create an authenticated session. Offer a safe verification resend flow without revealing account existence.                                                                                                                             |
+| API/email unavailable     | API request or message delivery cannot complete                         | Explain what can be retried and how local services can be checked. Never claim success if the API did not confirm it.                                                                                                                          |
+| Authenticated             | API confirms a valid session                                            | Show safe identity data such as email and provide sign-out.                                                                                                                                                                                    |
+| Forgot-password submitted | User submits an email address                                           | Always show the same public confirmation regardless of whether an account exists. Send a reset link only when appropriate.                                                                                                                     |
+| Resetting password        | User opens a valid reset link and submits a new password twice          | Validate confirmation, show progress, consume the one-time token, and report invalid/expired/reused tokens with a request-new-link action.                                                                                                     |
+| Signing out               | User activates sign-out                                                 | Disable repeated activation and treat sign-out as complete only after server invalidation. Clear local state and protected navigation.                                                                                                         |
+| Signed out again          | API confirms sign-out or session expiry                                 | Return to a signed-out route. Reload, browser history, or app Back must not restore protected content.                                                                                                                                         |
 
-Use the API response, not locally cached flags, to decide whether a session is valid. Never put passwords, session tokens, or cookies in URLs, logs, analytics, or error text. Do not expose whether an account exists through sign-in feedback.
+Use server/API confirmation, never a client-only flag, as authority for account verification or sessions. Public feedback must not reveal account existence for registration, sign-in, verification resend, or password-reset requests. Never put passwords, cookies, or session tokens in URLs, logs, analytics, or error text. Verification/reset links necessarily contain one-time tokens; redact them in logs and remove them from the visible URL after processing where the platform permits.
 
 ## Web behavior
 
 ### Routes and navigation
 
-- Provide a sign-in route and a distinct authenticated route or view. The authenticated view must request the current session from the API before rendering protected content.
-- A direct visit or reload of the authenticated route rechecks the session. If the API confirms the visitor is signed out, send them to sign-in.
-- If an unauthenticated visitor was sent from an internal protected route, return them there after successful sign-in. Accept only a same-origin relative destination; ignore external or malformed destinations.
-- Browser Back, Forward, refresh, and opening a route in a new tab must not bypass the session check.
-- After successful sign-out, navigate to the signed-out experience and replace the authenticated history entry where practical, so Back does not flash stale protected content.
+- `/sign-up`: name, email, password, and password confirmation; link to `/sign-in`.
+- `/sign-in`: email/password; links to `/forgot-password` and `/sign-up`.
+- `/verify-email`: status landing page after API verification or resend; expired/invalid links offer a resend path.
+- `/forgot-password`: email field and generic confirmation.
+- `/reset-password`: new password and confirmation; accepts a one-time token from the email link, then removes it from browser history after processing.
+- `/app`: protected view. A direct visit or reload checks the API session on the server before rendering identity. Signed-out visitors go to `/sign-in` with a safe internal return destination. API failure shows a retryable service state instead of treating the user as signed out.
 
-### Narrow-to-wide layout
+After successful sign-in, return only to a same-origin relative path that starts with one slash and contains no backslash or control characters; ignore external, protocol-relative, or malformed values. After sign-out, replace the protected history entry where practical. Verification and reset callbacks must not forward untrusted redirect URLs.
 
-- At 320 CSS pixels, show a single readable column with the page purpose, email field, password field, primary sign-in action, and any feedback in that order. The form must fit without page-level horizontal scrolling.
-- At 360–390 CSS pixels, retain the same content order and comfortable field/action sizing. Do not rely on shrinking text or controls to fit.
-- At medium and wide widths, constrain the form to a readable maximum width and use surrounding space to improve alignment or hierarchy. A second column is not required for this task.
-- Use content-driven breakpoints. Describe any breakpoint that changes the layout when the implementation is ready; do not add a breakpoint solely for a named device.
-- Long error messages, zoom, text resizing, and browser chrome changes must not hide the form or its primary action. Do not force the page into a fixed viewport height.
+### Responsive behavior
 
-### Keyboard and browser interaction
+- At 320 CSS pixels, show one readable column with the page purpose, fields, primary action, feedback, and relevant account-lifecycle link in that order. No page-level horizontal scrolling.
+- At 360–390 CSS pixels, retain the order and comfortable field/action sizing; do not shrink controls to fit.
+- At medium and wide widths, constrain forms to a readable maximum width and use surrounding space for alignment and hierarchy. A second column is optional and must not hide the primary flow.
+- Long addresses and service feedback wrap. Zoom, text resizing, browser chrome changes, and the mobile keyboard must not hide the focused field or next relevant action. Do not use fixed-height or scroll-locking form layouts.
 
-- Use visible labels, appropriate email/password input semantics, browser autofill hints, and a logical tab order. Focus indicators must remain visible.
-- Enter submits from the password field. Validation and service feedback are announced and associated with the relevant form controls; focus moves only when it helps recovery.
-- On mobile browsers, when the virtual keyboard is open, the focused field, its feedback, and the next relevant action can be scrolled into view. Do not use fixed positioning or scroll locking that traps the form.
-- Support browser zoom and navigation. Never disable zoom to preserve a layout.
+### Keyboard and accessibility
+
+- Use visible labels, email/password semantics, browser autofill hints, logical focus order, and persistent focus indicators.
+- Use appropriate password autocomplete values (`new-password` for registration/reset, `current-password` for sign-in).
+- Associate field errors with their inputs. Announce progress and service feedback without repeatedly interrupting typing.
+- The password and confirmation fields remain reachable with a mobile keyboard open. Enter submits from the final field.
+- Do not disable zoom. Do not rely on color alone for verification, error, disabled, or success states.
 
 ## Expo behavior
 
-- On launch or resume, check the session before presenting the authenticated view. Keep loading and signed-out states distinct.
-- Show the same email/password task and recovery feedback as web while using native text inputs, keyboard return behavior, touch targets, accessibility announcements, and app safe areas.
-- The email field advances focus to the password field; the password field's submit action starts sign-in. Keep the focused input and relevant action reachable while the keyboard is open, including on shorter screens.
-- Use the supported Better Auth Expo integration and secure storage for session persistence. Do not copy tokens into general preferences, logs, or app navigation parameters.
-- After successful sign-in, move into the authenticated app state. After sign-out or session expiry, clear the prior authenticated navigation history so Back cannot reopen it.
-- Read the API origin from `EXPO_PUBLIC_API_URL`. Simulator and physical-device setup must use an address reachable from that device; do not assume `localhost` works on a physical device.
-- Account for iOS and Android differences in autofill, keyboard dismissal, safe areas, and navigation. Record a deliberate platform exception in implementation notes rather than forcing identical behavior.
+- Provide native registration, verification-pending/resend, sign-in, forgot/reset-password, authenticated, and sign-out states.
+- Use native text inputs, autofill, screen-reader semantics, safe areas, keyboard return behavior, and touch targets. Email advances to password; password submission starts sign-in.
+- Use the supported Better Auth Expo integration and secure storage. Do not copy tokens into general preferences, logs, or navigation parameters.
+- Verification and reset links must open the app through supported deep-link behavior or a usable web fallback. Token handling must not expose tokens in analytics, logs, or persisted plain-text state.
+- On launch/resume, confirm persisted session with the API before showing authenticated content. Sign-out and expiry clear local session state and authenticated navigation history.
+- Read the API origin from `EXPO_PUBLIC_API_URL`; physical-device setup must not assume localhost points to the developer computer.
+- Record deliberate iOS/Android differences in implementation notes.
 
-## Accessibility and content
+## Content and account safety
 
-- Every field has a persistent visible label. Required, invalid, disabled, submitting, and authenticated states are conveyed with text and semantics, not color alone.
-- Announce sign-in progress and result without repeatedly interrupting typing. Associate field errors with their inputs and expose service-level errors as an alert or status message appropriate to their urgency.
-- Keep all actions reachable by keyboard on web and by screen reader/touch on native. Use native button and text-input semantics rather than clickable containers.
-- Use concise, neutral feedback. Invalid credentials should not distinguish an unknown email from a wrong password. API failures should describe the next useful action, such as retrying or checking local services.
-- Do not include a demo password, shared account credential, or sensitive session detail in the screen or screenshots.
+- Use concise, neutral messages. Sign-in errors do not distinguish unknown email and wrong password.
+- Registration, verification resend, and reset-request feedback do not confirm whether an address exists.
+- Never include demo credentials, reusable passwords, tokens, or session details in screens, screenshots, logs, URLs, or committed fixtures.
+- Email messages identify the action, use the configured application/API origin, explain expiry in plain language, and avoid unnecessary personal data.
 
 ## Design and acceptance review
 
-Use [the project design guidelines](../design-guidelines.md) for responsive behavior, interaction targets, contrast, keyboard, and native differences. During implementation, use the existing app styles as the starting context, then design the auth example's visual treatment and any reusable tokens deliberately. Keep the result generic to the starter and avoid product-specific account behavior.
+Use [project design guidelines](../design-guidelines.md) for responsive behavior, interaction targets, contrast, keyboard, and native differences. Keep the result generic to the starter. Visual direction and tokens are documented separately by the web UI implementation.
 
-Review these cases before accepting either screen:
+- [ ] Registration, verification/resend, sign-in, forgot/reset, authenticated, expired-session, and signed-out-again states are present.
+- [ ] API verification and reset tokens are one-time, expire, and cannot create an authenticated session before email verification.
+- [ ] A valid active session is refreshed according to `expiresAt`/update-age policy; an expired/revoked session is not refreshed. Sign-out and password reset invalidate server sessions.
+- [ ] Public feedback does not disclose account existence.
+- [ ] Protected web content is rendered only after a server session check; API outages are not mistaken for anonymous sessions.
+- [ ] Web flows work at 320 and 360–390 CSS pixels with keyboard access and no page-level horizontal overflow.
+- [ ] Expo uses secure session persistence, reachable API configuration, usable keyboards/navigation, and safe email-link handling on iOS and Android.
+- [ ] Sign-out invalidates the server session and clears local/protected navigation state.
+- [ ] No social sign-in, MFA, role/organization, or account-deletion UI is implied.
 
-- [ ] Signed-out, submitting, invalid-credential, API-unavailable, authenticated, session-expired, and signed-out-again states are present.
-- [ ] The protected view is shown only after an API session check; direct route entry and reload repeat that check.
-- [ ] Web is usable at 320 and 360–390 CSS pixels, with keyboard access and no document-level horizontal overflow.
-- [ ] Web feedback remains readable under zoom, text resizing, long messages, and mobile keyboard use.
-- [ ] Expo uses secure session persistence, reachable API configuration, and usable keyboard/navigation behavior on iOS and Android.
-- [ ] Sign-out invalidates the server session, clears local state, and prevents stale authenticated navigation from returning.
-- [ ] No public registration, password recovery, verification, or social sign-in is implied.
+## Technical references
+
+- [Better Auth session management](https://better-auth.com/docs/concepts/session-management) — database session expiry, `expiresIn`/`updateAge`, and the separate cookie-cache trade-off.
+- [Better Auth client session options](https://better-auth.com/docs/concepts/client) — periodic and focus-based session revalidation.
+- [Better Auth email/password](https://better-auth.com/docs/authentication/email-password) — email verification, password reset, and revoking sessions after a reset.

@@ -6,33 +6,33 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 ### Task 1: Write the authentication Epic and reusable planning templates
 
-**Description:** Document why the sign-in/sign-out example exists, its boundaries, and a reusable format contributors can use for future Epics and implementation tasks.
+**Description:** Document why the account-lifecycle example exists, its boundaries, and a reusable format contributors can use for future Epics and implementation tasks.
 
 **Acceptance criteria:**
 
 - [x] Epic states goals, non-goals, risks, acceptance checks, and links to the design and test documents.
 - [x] Reusable Epic and task templates include ownership-neutral descriptions, acceptance criteria, verification, dependencies, and scope.
-- [x] Epic is scoped to web and Expo sign-in/sign-out; account lifecycle extensions are deferred.
+- [x] Epic is scoped to the complete generic email/password lifecycle across the API, web, and Expo clients.
 
 **Verification:** Review the templates against one auth task and confirm a contributor can fill them without project-specific assumptions.
 
 **Dependencies:** None.
 
-**Files likely touched:** `docs/epics/auth-login-logout.md`, `docs/templates/epic.md`, `docs/templates/task.md`.
+**Files likely touched:** `docs/epics/auth-login-logout.md`, `docs/epics/auth-lifecycle-capability-map.md`, `docs/templates/epic.md`, `docs/templates/task.md`.
 
 **Estimated scope:** Medium.
 
-### Task 2: Specify web and Expo sign-in/sign-out behavior
+### Task 2: Specify web and Expo account lifecycle and session behavior
 
-**Description:** Define screen states and interaction differences while keeping the user flow and API contract consistent across platforms.
+**Description:** Define registration, email verification, sign-in/out, password recovery/reset, and automatic rolling-session behavior while keeping API expectations consistent across platforms.
 
 **Acceptance criteria:**
 
-- [x] Covers signed-out, submitting, invalid-credentials, API-unavailable, authenticated, expired-session, and signed-out-again states.
-- [x] Web specification covers responsive narrow layouts, keyboard reachability, browser reload, and redirects.
-- [x] Expo specification covers native keyboard behavior, session persistence, and platform navigation.
+- [x] Covers registration, verification/resend, sign-in, forgot/reset password, session checking/renewal, API failure, authenticated, and signed-out states.
+- [x] Web specification covers responsive narrow layouts, keyboard reachability, browser reload, safe redirects, expiry, and revalidation.
+- [x] Expo specification covers native keyboard behavior, secure session persistence, link handling, revalidation, and platform navigation.
 
-**Verification:** Review against `docs/design-guidelines.md` and the Expo platform conventions; confirm no signup, verification, reset, or social UI is implied.
+**Verification:** Review against `docs/design-guidelines.md` and Expo conventions; confirm registration, verification, and reset are included, while social sign-in and account deletion remain out of scope.
 
 **Dependencies:** Task 1.
 
@@ -42,11 +42,11 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 ### Task 3: Specify test cases and failure diagnosis
 
-**Description:** Create a cross-platform test matrix and a repeatable format for recording actual failures, their root causes, fixes, and regression checks.
+**Description:** Create an API/email/web/native test matrix for the full lifecycle and a repeatable format for recording actual failures, root causes, fixes, and regression checks.
 
 **Acceptance criteria:**
 
-- [x] Includes API, web, native, setup-selection, security/configuration, and responsive interaction cases.
+- [x] Includes API, SMTP/email, web, native, setup-selection, session renewal/expiry, security/configuration, and responsive interaction cases.
 - [x] Separates expected negative cases (such as invalid credentials) from development failures that require diagnosis.
 - [x] Defines what a useful failure/fix walkthrough records without requiring intentionally broken code to remain in the repository.
 
@@ -100,30 +100,50 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 ## Checkpoint: Design and mobile foundation
 
 - [ ] Tasks 1–5 complete with Expo SDK 58 unchanged.
-- [ ] Contributor-facing Epic, design, and test documents agree on the sign-in/sign-out scope.
+- [ ] Contributor-facing Epic, design, and test documents agree on the complete email/password lifecycle and rolling-session policy.
 - [ ] Mobile styling decision is backed by iOS and Android evidence.
 
 ## Phase 2: Better Auth API foundation
 
-### Task 6: Add Better Auth server configuration and local account provisioning
+### Task 6: Integrate email delivery for verification and password reset
 
-**Description:** Add the server-only Better Auth configuration to the API, connect it to PostgreSQL, configure required secrets/origins, and provide a local/test account path without a signup screen or committed credentials.
+**Description:** Connect Better Auth's verification and password-reset callbacks to the API's existing SMTP client. Provide generic, safe message templates and make local delivery inspectable through Mailpit.
+
+**Acceptance criteria:**
+
+- [ ] Verification and reset emails use configured absolute links and concise text/HTML content.
+- [ ] Link tokens, passwords, cookies, and SMTP credentials do not appear in logs or public responses.
+- [ ] Local setup delivers to Mailpit; production requires explicit `SMTP_HOST` and `EMAIL_FROM` configuration.
+
+**Verification:** Test message delivery through an isolated SMTP capture/Mailpit service, inspect both message types and their link destinations, then run API lint/typecheck/build.
+
+**Dependencies:** Tasks 1 and 3.
+
+**Files likely touched:** `apps/api/src/email.ts`, auth email templates/callbacks, `.env.example`, `docs/local-dev.md`, API email tests.
+
+**Estimated scope:** Medium.
+
+### Task 7: Configure Better Auth lifecycle, rolling sessions, and local provisioning
+
+**Description:** Configure Better Auth for verified public registration, sign-in/out, password reset, PostgreSQL-backed session renewal, production configuration, and explicit local/test provisioning.
 
 **Acceptance criteria:**
 
 - [x] Better Auth is pinned to a stable compatible version and runs in the API process, not as a hosted service.
-- [x] The public signup endpoint is disabled for this sign-in-only slice; local/test account provisioning is explicit and never creates a shared production password.
+- [ ] Public registration requires email verification before an authenticated session is created; reset revokes existing sessions.
+- [ ] Session expiry is 7 days with a 1-day update age; web and Expo revalidate every 5 minutes while active and on focus/resume. Expired sessions cannot be renewed.
+- [x] Local/test account provisioning is explicit and never creates a shared production password.
 - [x] Production startup fails clearly for missing required secrets or invalid auth configuration.
 
-**Verification:** Run Better Auth diagnostics/schema checks and prove a local/test account can be provisioned and read without exposing its password in logs.
+**Verification:** Check Better Auth configuration/schema and test verified/unverified sign-in, expiry-based renewal, reset revocation, production configuration failures, and local/test provisioning without exposing secrets.
 
-**Dependencies:** Tasks 1 and 3.
+**Dependencies:** Tasks 1, 3, and 6.
 
 **Files likely touched:** `apps/api/package.json`, `apps/api/src/auth.ts`, auth config/environment docs.
 
 **Estimated scope:** Medium.
 
-### Task 7: Add Better Auth tables to the Kysely migration sequence
+### Task 8: Add Better Auth tables to the Kysely migration sequence
 
 **Description:** Generate and review the auth schema, then incorporate its SQL into one ordered project migration.
 
@@ -133,15 +153,15 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 - [x] Fresh database setup and the existing migration runner apply it in order.
 - [x] Runtime/setup does not depend on a separate Better Auth migration command.
 
-**Verification:** Generated and reviewed Better Auth 1.7.24's PostgreSQL/Kysely schema. API typecheck, lint, and build pass. Applying migrations on a clean PostgreSQL database and running Better Auth's schema check remain pending with the database services unavailable in this environment.
+**Verification:** Generated and reviewed Better Auth 1.7.24's PostgreSQL/Kysely schema. The Task 10 isolated PostgreSQL suite applied both migrations successfully; API typecheck, lint, build, and auth schema use passed.
 
-**Dependencies:** Task 6.
+**Dependencies:** Task 7.
 
 **Files likely touched:** `apps/api/src/migrations/<new_auth_migration>.ts`, `apps/api/src/database.ts` if generated database typing needs updates.
 
 **Estimated scope:** Small.
 
-### Task 8: Mount auth routes and configure trusted origins/CORS
+### Task 9: Mount auth routes and configure trusted origins/CORS
 
 **Description:** Connect Better Auth to the existing Fastify API and configure browser/native request origins and credential handling explicitly.
 
@@ -151,27 +171,27 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 - [x] Credentialed CORS allows configured web development origins and rejects untrusted origins; production does not use wildcard origin reflection.
 - [x] Expo deep-link/development origins are narrowly documented and development wildcards are never enabled in production.
 
-**Verification:** API lint, typecheck, and build pass. A real PostgreSQL-backed Fastify inject check confirmed trusted-origin preflight headers, untrusted-origin rejection, and anonymous session lookup through `/api/auth/get-session`. Native origin handling is documented; physical Expo runtime verification remains for Task 11.
+**Verification:** API lint, typecheck, and build pass. A real PostgreSQL-backed Fastify inject check confirmed trusted-origin preflight headers, untrusted-origin rejection, and anonymous session lookup through `/api/auth/get-session`. Native origin handling is documented; physical Expo runtime verification remains for Task 12.
 
-**Dependencies:** Tasks 6 and 7.
+**Dependencies:** Tasks 7 and 8.
 
 **Files likely touched:** `apps/api/src/app.ts`, `apps/api/src/auth.ts`, `.env.example`, `docs/local-dev.md`.
 
 **Estimated scope:** Medium.
 
-### Task 9: Add API authentication integration tests
+### Task 10: Extend API lifecycle integration tests
 
-**Description:** Test the auth API and session lifecycle against an isolated PostgreSQL database.
+**Description:** Extend the existing isolated PostgreSQL suite to cover registration, email verification, session renewal, password reset, and revocation in addition to sign-in/out.
 
 **Acceptance criteria:**
 
-- [x] Covers valid and invalid sign-in, anonymous session, authenticated session, and sign-out invalidation.
-- [x] Covers untrusted origin and missing/invalid production configuration behavior.
+- [ ] Covers registration, verification/resend, verified and unverified sign-in, valid/expired/reused tokens, reset request/completion, session renewal/expiry, and reset/sign-out revocation.
+- [x] Covers untrusted origins, missing/invalid production configuration, invalid credentials, and anonymous/authenticated sessions.
 - [x] Tests clean up users/sessions and do not rely on shared credentials or the developer's database volume.
 
-**Verification:** `npm run test:auth --workspace=@starter/api` passes 5 integration tests against the dedicated `starter_auth_test` database. CI provisions a separate PostgreSQL 18 service database, applies repository migrations, and runs this command. The test refuses database names that are not clearly marked as test databases and cleans up its unique user/session data.
+**Verification:** Baseline `npm run test:auth --workspace=@starter/api` passes 5 tests against dedicated `starter_auth_test`. Extend the suite and CI email capture to verify all lifecycle cases; preserve the test database guard and cleanup.
 
-**Dependencies:** Tasks 6–8.
+**Dependencies:** Tasks 6–9.
 
 **Files likely touched:** `apps/api/src/**/*.test.ts`, `apps/api/package.json`, `.github/workflows/ci.yml`.
 
@@ -183,63 +203,63 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 - [ ] Session and cookie behavior is demonstrated with both web origin and native client requests.
 - [ ] Invalid credentials and rejected origins do not create sessions.
 
-## Phase 3: Web and Expo sign-in/sign-out
+## Phase 3: Web and Expo account lifecycle
 
-### Task 10: Build the web sign-in and authenticated views
+### Task 11: Build responsive web account lifecycle views
 
-**Description:** Use Tailwind and shadcn/ui for a mobile-first sign-in form, session-aware view, and sign-out action over the shared API behavior.
+**Description:** Use Tailwind and shadcn/ui for registration, verification/resend, sign-in, forgot/reset, protected session, and sign-out views. Use Impeccable comp-first references for desktop and mobile web and document tokens within the auth demo scope.
 
 **Acceptance criteria:**
 
-- [ ] Covers submitting, invalid credentials, API unavailable, loading session, authenticated, and signed-out states accessibly.
-- [ ] Protected view validates the session with the server; client-only session UI is not treated as authorization.
-- [ ] Works at 320 and 360–390 CSS-pixel widths with keyboard focus and relevant actions reachable.
+- [ ] Covers registration, verification/resend, invalid credentials, API/email unavailable, loading/renewing session, forgot/reset, authenticated, and signed-out states accessibly.
+- [ ] Protected view validates session with the API on the server; periodic/focus revalidation handles expiry, and client-only flags do not authorize.
+- [ ] Desktop/mobile-web comps inform tokenized UI; all flows work at 320 and 360–390 CSS-pixel widths with keyboard focus and actions reachable.
 
-**Verification:** Run web typecheck/build and inspect browser behavior for direct protected-route access, reload, and sign-out.
+**Verification:** Run web typecheck/build and inspect registration, email-link, reset, session expiry/renewal, protected-route reload, sign-out, responsive layout, and keyboard behavior in a browser.
 
-**Dependencies:** Tasks 2, 5, and 8.
+**Dependencies:** Tasks 2, 5, and 9.
 
 **Files likely touched:** `apps/web/app/**`, `apps/web/components/**`, `apps/web/lib/**`, `apps/web/package.json`.
 
 **Estimated scope:** Medium.
 
-### Task 11: Build the Expo sign-in and authenticated views
+### Task 12: Build Expo account lifecycle views
 
-**Description:** Use the official Better Auth Expo integration for sign-in, session state, secure session storage, and sign-out in the native app.
+**Description:** Use the official Better Auth Expo integration for registration, email verification/resend, sign-in, forgot/reset, secure session storage, rolling-session revalidation, and sign-out.
 
 **Acceptance criteria:**
 
-- [ ] Native UI supports submitting, invalid credentials, API unavailable, session loading, authenticated, and signed-out states.
-- [ ] Session persistence uses supported secure storage; sign-out clears server session and local session state.
-- [ ] API URL works from simulator and physical device networking, with no localhost assumption on a physical device.
+- [ ] Native UI supports registration, verification/resend and reset links, invalid credentials, API/email unavailable, session loading/renewal, authenticated, and signed-out states.
+- [ ] Session persistence uses supported secure storage; active/resume checks refresh only valid sessions; sign-out/reset clears server and local state.
+- [ ] Verification/reset links work through supported deep-link/web-fallback paths; device API URL does not assume localhost.
 
-**Verification:** Run mobile typecheck/export and sign in, reload/relaunch, and sign out on iOS and Android.
+**Verification:** Run mobile typecheck/export and manually exercise full lifecycle, link handling, session renewal/expiry, relaunch, and sign-out on iOS and Android.
 
-**Dependencies:** Tasks 2, 5, and 8.
+**Dependencies:** Tasks 2, 5, and 9.
 
 **Files likely touched:** `apps/mobile/App.tsx`, `apps/mobile/lib/**`, `apps/mobile/app.json`, `apps/mobile/package.json`.
 
 **Estimated scope:** Medium.
 
-### Task 12: Add web browser and native client/UI tests
+### Task 13: Add web browser and native lifecycle tests
 
 **Description:** Automate web browser journeys and native auth UI/session transitions, then document the device-only checks that cannot run reliably in CI.
 
 **Acceptance criteria:**
 
-- [ ] Browser suite covers sign-in success/failure, protected-route behavior, reload persistence, sign-out, API failure, keyboard reachability, and horizontal overflow.
-- [ ] Native tests cover auth client/UI state transitions and failure handling; a device checklist covers actual SecureStore persistence on iOS and Android.
+- [ ] Browser suite covers registration/verification, sign-in, reset, email/API failure, protected routes, refresh/expiry, sign-out, keyboard reachability, and horizontal overflow.
+- [ ] Native tests cover lifecycle, revalidation, and link states; device checklist covers SecureStore, email links, and iOS/Android keyboard/navigation.
 - [ ] CI runs the automated suites with isolated services and no external credentials.
 
 **Verification:** Run focused suites locally and in CI; capture artifacts only when they are useful and redact credentials/session data.
 
-**Dependencies:** Tasks 9–11.
+**Dependencies:** Tasks 10–12.
 
 **Files likely touched:** `apps/web/tests/**`, `apps/mobile/**` test files, root/workspace package manifests, `.github/workflows/ci.yml`.
 
 **Estimated scope:** Medium.
 
-### Task 13: Document test operation and observed failure/fix examples
+### Task 14: Document test operation and observed failure/fix examples
 
 **Description:** Turn real development/test failures into a short teaching walkthrough and document local commands for every test layer.
 
@@ -251,7 +271,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Verification:** A contributor can run the documented commands from a clean setup and locate the corresponding tests.
 
-**Dependencies:** Task 12.
+**Dependencies:** Task 13.
 
 **Files likely touched:** `docs/testing/auth-login-logout.md`, `README.md` or `docs/local-dev.md`.
 
@@ -265,7 +285,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 ## Phase 4: Selectable auth setup recipe
 
-### Task 14: Choose the optional recipe source-of-truth model
+### Task 15: Choose the optional recipe source-of-truth model
 
 **Description:** Decide how the working API, web, and Expo implementation is stored and copied/generated so it remains maintainable as an optional setup recipe.
 
@@ -277,13 +297,13 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Verification:** Review a small representative scaffold in a disposable copy and confirm selected/unselected outputs and rerun behavior.
 
-**Dependencies:** Tasks 6–13.
+**Dependencies:** Tasks 7–14.
 
 **Files likely touched:** `docs/decisions/auth-scaffold.md`.
 
 **Estimated scope:** Small.
 
-### Task 15: Add setup selection and scaffold API/database auth
+### Task 16: Add setup selection and scaffold API/database auth
 
 **Description:** Add an interactive and non-interactive auth selection path and apply the selected API dependencies, configuration, and migration files.
 
@@ -295,13 +315,13 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Verification:** Run the setup helper in isolated copies for both choices and inspect resulting manifests, files, lockfile, and migration list.
 
-**Dependencies:** Task 14.
+**Dependencies:** Task 15.
 
 **Files likely touched:** `scripts/setup.sh`, `scripts/scaffold-auth.mjs`, API recipe manifest/source.
 
 **Estimated scope:** Medium.
 
-### Task 16: Scaffold the web auth client and UI
+### Task 17: Scaffold the web auth client and UI
 
 **Description:** Make web auth dependencies, client configuration, and sign-in/signed-in screens available only when the auth option is selected.
 
@@ -313,13 +333,13 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Verification:** Run selected/unselected web typecheck and build from clean copies.
 
-**Dependencies:** Tasks 10 and 15.
+**Dependencies:** Tasks 11 and 16.
 
 **Files likely touched:** `apps/web/package.json`, web recipe manifest/source, `scripts/scaffold-auth.mjs`.
 
 **Estimated scope:** Medium.
 
-### Task 17: Scaffold the Expo auth client and UI
+### Task 18: Scaffold the Expo auth client and UI
 
 **Description:** Make the Better Auth Expo client and sign-in/signed-in screens available only when the auth option is selected.
 
@@ -329,15 +349,15 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 - [ ] Unselected setup keeps the baseline Expo app free of auth-only dependencies and configuration.
 - [ ] Expo remains SDK 58 and rerunning setup preserves user-edited app files.
 
-**Verification:** Run selected/unselected mobile typecheck and iOS/Android export from clean copies; perform the device checks defined in Task 12.
+**Verification:** Run selected/unselected mobile typecheck and iOS/Android export from clean copies; perform the device checks defined in Task 13.
 
-**Dependencies:** Tasks 11 and 15.
+**Dependencies:** Tasks 12 and 16.
 
 **Files likely touched:** `apps/mobile/package.json`, mobile recipe manifest/source, `apps/mobile/app.json`, `scripts/scaffold-auth.mjs`.
 
 **Estimated scope:** Medium.
 
-### Task 18: Verify both clean setup paths
+### Task 19: Verify both clean setup paths
 
 **Description:** Prove that auth-selected and no-auth setups install cleanly and remain independently runnable.
 
@@ -349,13 +369,13 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Verification:** Run setup, migrations, API tests, web browser tests, Expo checks, workspace lint/typecheck/build for each selected path.
 
-**Dependencies:** Tasks 15–17.
+**Dependencies:** Tasks 16–18.
 
 **Files likely touched:** setup tests, `.github/workflows/ci.yml`, package scripts.
 
 **Estimated scope:** Medium.
 
-### Task 19: Document the selected auth recipe workflow
+### Task 20: Document the selected auth recipe workflow
 
 **Description:** Update starter docs with recipe selection, local account provisioning, service URLs, test commands, failure/fix guide, and scope limits.
 
@@ -367,7 +387,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Verification:** Follow the documented instructions from a clean clone or clean worktree for each setup mode.
 
-**Dependencies:** Tasks 13 and 18.
+**Dependencies:** Tasks 14 and 19.
 
 **Files likely touched:** `README.md`, `docs/local-dev.md`, `docs/testing/auth-login-logout.md`.
 

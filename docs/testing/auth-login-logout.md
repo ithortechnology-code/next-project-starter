@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This strategy covers the generic Better Auth sign-in example across the API, web, Expo, and optional setup paths. It verifies server-owned session state, recoverable failures, responsive/accessibility behavior, and the boundaries of the sign-in-only scope.
+This strategy covers the generic Better Auth email/password account lifecycle across the API, email delivery, web, Expo, and optional setup paths. It verifies server-owned account/session state, email verification and reset, automatic session renewal, recoverable failures, and responsive/accessibility behavior.
 
 Expected negative cases (such as invalid credentials) are successful test outcomes when the application responds correctly. A development failure is an unexpected mismatch between actual and expected behavior; only observed failures belong in the later [failure and operation guide](auth-login-logout.md#recording-a-real-failure).
 
@@ -19,70 +19,78 @@ Expected negative cases (such as invalid credentials) are successful test outcom
 
 ### API integration
 
-| ID | Case | Expected result |
-| --- | --- | --- |
-| API-01 | Provision a local/test account | Account can be read by the auth system; password is not returned or logged; public signup remains unavailable. |
-| API-02 | Request a session without credentials | API reports no authenticated session and creates none. |
-| API-03 | Sign in with valid credentials from a trusted origin | API accepts the request, returns the supported session response/cookie headers, and a subsequent session request identifies the same public user. |
-| API-04 | Sign in with an unknown email and with a wrong password | Both cases fail without creating a session and use non-enumerating public feedback. |
-| API-05 | Sign out, then request the session with the same client state | Server invalidates the session; subsequent lookup is anonymous. |
-| API-06 | Send credentialed preflight/auth requests from configured and untrusted origins | Configured origins receive the required CORS headers; untrusted origins are rejected and never receive reflected credential permission. |
-| API-07 | Start production configuration without a required auth secret or with invalid auth configuration | Startup fails with an actionable message that identifies the missing/invalid setting without revealing any secret. |
-| API-08 | Exercise account creation paths in production mode | Public sign-up/provisioning is not available; local/test provisioning cannot create a shared production account. |
+| ID     | Case                                                                            | Expected result                                                                                                                                                       |
+| ------ | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API-01 | Register a new email/password account                                           | API creates an unverified account, sends a verification message, does not create an authenticated session, and does not expose password or account-existence details. |
+| API-02 | Verify with a valid, expired, reused, or malformed token                        | A valid token verifies once; invalid, expired, and reused tokens cannot verify or create a session.                                                                   |
+| API-03 | Sign in before and after email verification                                     | Unverified account receives no session; verified credentials create a session with supported cookie headers.                                                          |
+| API-04 | Request a session anonymously, authenticate, then request it again              | Anonymous request has no user; authenticated request returns the same public identity and a valid session expiry.                                                     |
+| API-05 | Cross the session update-age threshold while session is still valid             | Session lookup extends the database expiry and refreshes the cookie; expired/revoked sessions stay anonymous.                                                         |
+| API-06 | Sign in with an unknown email and wrong password                                | Both fail without a session and return the same public message/status.                                                                                                |
+| API-07 | Sign out with active session state                                              | Server invalidates the session; subsequent lookup with the same cookie is anonymous.                                                                                  |
+| API-08 | Request reset for known and unknown email addresses                             | Both return equivalent public responses; only the registered account receives a reset email.                                                                          |
+| API-09 | Complete a reset with valid, expired, or reused token                           | A valid token updates the password once and revokes all sessions; invalid tokens cannot change the password.                                                          |
+| API-10 | Send credentialed requests from trusted and untrusted origins                   | Trusted origins receive required CORS headers; untrusted preflight/auth requests are rejected without credential permission.                                          |
+| API-11 | Start production configuration without required secrets or with invalid origins | Startup fails with an actionable message and never reveals a secret.                                                                                                  |
+| API-12 | Exercise local/test provisioning and public registration                        | Public registration works only through verification; local provisioning remains explicit, test-only, and unavailable in production.                                   |
 
 ### Web browser
 
-| ID | Case | Expected result |
-| --- | --- | --- |
-| WEB-01 | Open the sign-in view with no session | Form is available after session status is known; fields have visible labels and the password is not exposed. |
-| WEB-02 | Open the authenticated route directly without a session, then sign in successfully | Route sends the visitor to sign-in, accepts a same-origin return path, and shows authenticated content only after API confirmation. External return URLs are ignored. |
-| WEB-03 | Sign in successfully, reload, and open the route in a new tab | The server session is checked again and the authenticated view remains available while the session is valid. |
-| WEB-04 | Submit invalid credentials | A generic, non-enumerating error is announced; email remains available for correction; no authenticated content appears. |
-| WEB-05 | Make the auth API unavailable during session check and sign-in | Visitor sees a recoverable service error and retry action; the UI never claims an authenticated state. |
-| WEB-06 | Expire the session while the authenticated view is open | Next server check clears stale client state and returns to sign-in with a useful session-ended message. |
-| WEB-07 | Sign out, then use Back, Forward, refresh, and the authenticated URL | API session is invalidated; old protected content is not restored or treated as authorized. |
-| WEB-08 | Exercise sign-in at 320, 360, 390, 768, 1024, and 1440 CSS-pixel widths | Primary content and action remain reachable; no document-level horizontal overflow occurs; long feedback wraps. |
-| WEB-09 | Navigate with keyboard, open the mobile keyboard, zoom, and resize text | Focus order and indicators are visible; focused fields, feedback, and submit action can be reached; zoom is not disabled. |
+| ID     | Case                                                                      | Expected result                                                                                                                             |
+| ------ | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| WEB-01 | Register a new account and request verification resend                    | Form validates and announces progress; confirmation is generic; no authenticated view appears before verification.                          |
+| WEB-02 | Follow a valid, expired, or reused verification link                      | Success/invalid/expired state is clear; token is removed from the visible URL after processing; sign-in/resend action is reachable.         |
+| WEB-03 | Sign in before verification, then after verification                      | Unverified users are denied a session; verified users reach the protected view only after API confirmation.                                 |
+| WEB-04 | Request password reset for known and unknown email                        | Both show the same confirmation and do not reveal whether the account exists.                                                               |
+| WEB-05 | Complete password reset from a valid, expired, or reused link             | Valid link changes password and revokes sessions; invalid links offer a fresh request path.                                                 |
+| WEB-06 | Open protected route directly, reload, or open a new tab                  | Server checks the session; signed-out visitors go to sign-in with a safe same-origin return path; API failure is not mistaken for sign-out. |
+| WEB-07 | Keep a valid session active through the update-age threshold              | Browser revalidates at the configured interval and on focus; API extends only a still-valid session.                                        |
+| WEB-08 | Expire/revoke the session, sign out, then use Back/Forward/refresh        | Protected content is not restored; user returns to signed-out state with useful feedback.                                                   |
+| WEB-09 | Make the API/email service unavailable during account flows               | User sees a recoverable error and retry path; UI never claims an email or session succeeded when it did not.                                |
+| WEB-10 | Exercise all forms at 320, 360, 390, 768, 1024, and 1440 CSS-pixel widths | Primary content/action remain reachable; no document-level overflow; long feedback wraps.                                                   |
+| WEB-11 | Navigate with keyboard, open mobile keyboard, zoom, and resize text       | Focus order and indicators are visible; fields, feedback, and next action remain reachable; zoom is not disabled.                           |
 
 Use browser automation for route, form, session, and viewport cases. Add a keyboard-only/manual pass for the final rendered screen and review accessible names, associations, and live feedback with the browser accessibility tree or equivalent tooling.
 
 ### Expo client and native UI
 
-| ID | Case | Expected result |
-| --- | --- | --- |
-| NATIVE-01 | Launch with no session, then sign in with valid credentials | Loading and signed-out states are distinct; successful sign-in moves to the authenticated view only after the API confirms it. |
-| NATIVE-02 | Relaunch the app with a valid persisted session | Supported secure storage restores the client session and the API confirms it before the authenticated view appears. |
-| NATIVE-03 | Submit invalid credentials or simulate an unavailable API | Native feedback is announced and recoverable; no stale authenticated content appears. |
-| NATIVE-04 | Sign out, then navigate Back or resume the app | Server session and local session state are cleared; authenticated navigation cannot be reopened. |
-| NATIVE-05 | Use iOS and Android keyboards, autofill, screen readers, safe areas, and shorter screens | Focus/submit behavior works on both platforms; the focused field, feedback, and next action remain reachable; controls use native accessibility semantics. |
-| NATIVE-06 | Connect a physical device using its configured API origin | Requests reach the API without assuming that `localhost` on the device points to the developer's computer. |
-| NATIVE-07 | Render the real auth components on iOS and Android | Layout, spacing, colors, pressed/disabled states, accessibility, and keyboard/focus behavior work in the runtime; bundling alone is not considered a pass. |
+| ID        | Case                                                                                        | Expected result                                                                                                              |
+| --------- | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| NATIVE-01 | Register, verify, sign in, reset password, and sign out                                     | Each state transitions only after API confirmation; unverified accounts receive no authenticated session.                    |
+| NATIVE-02 | Reopen app with a persisted active, expired, or revoked session                             | Secure storage restores the client state; API revalidation confirms validity before protected UI appears.                    |
+| NATIVE-03 | Keep the app active through update-age and resume after backgrounding                       | Client revalidates at the configured interval and on resume; valid session expiry extends, expired/revoked session clears.   |
+| NATIVE-04 | Submit invalid credentials, invalid/reused links, or simulate unavailable API/email service | Native feedback is announced and recoverable; no stale authenticated content appears.                                        |
+| NATIVE-05 | Sign out or complete password reset, then navigate Back/resume                              | Server revokes sessions and local session/navigation state is cleared.                                                       |
+| NATIVE-06 | Open verification/reset email links on iOS and Android                                      | Supported deep link or web fallback reaches the correct flow; tokens are not logged or persisted in plain text.              |
+| NATIVE-07 | Use iOS/Android keyboards, autofill, screen readers, safe areas, and shorter screens        | Fields, feedback, and next actions remain reachable; controls use native accessibility semantics.                            |
+| NATIVE-08 | Connect a physical device using its configured API origin                                   | Requests reach the API without assuming that `localhost` points to the developer's computer.                                 |
+| NATIVE-09 | Render real auth components on iOS and Android                                              | Layout, colors, pressed/disabled states, accessibility, and keyboard behavior work in runtime; bundling alone is not a pass. |
 
 Use automated client/UI checks for deterministic state transitions and errors. Keep a manual device checklist for secure-storage persistence and platform behavior that the chosen automation runtime cannot prove.
 
 ### Setup selection
 
-| ID | Case | Expected result |
-| --- | --- | --- |
-| SETUP-01 | Scaffold with auth selected in a clean copy | Auth API/web/Expo files, dependencies, environment keys, and migration are present and selected apps build/typecheck. |
-| SETUP-02 | Scaffold without auth in a clean copy | Baseline apps remain runnable with no auth-only dependency, file, migration, or generated state. |
-| SETUP-03 | Rerun both selections after editing an unrelated file and one scaffolded file | Setup reports conflicts or preserves user edits; it does not overwrite unrelated work or silently replace edited files. |
-| SETUP-04 | Run setup with missing prerequisites and with both interactive and non-interactive choices | Output identifies the next action, selection is explicit and consistent, and no secret value is printed. |
+| ID       | Case                                                                                       | Expected result                                                                                                         |
+| -------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| SETUP-01 | Scaffold with auth selected in a clean copy                                                | Auth API/web/Expo files, dependencies, environment keys, and migration are present and selected apps build/typecheck.   |
+| SETUP-02 | Scaffold without auth in a clean copy                                                      | Baseline apps remain runnable with no auth-only dependency, file, migration, or generated state.                        |
+| SETUP-03 | Rerun both selections after editing an unrelated file and one scaffolded file              | Setup reports conflicts or preserves user edits; it does not overwrite unrelated work or silently replace edited files. |
+| SETUP-04 | Run setup with missing prerequisites and with both interactive and non-interactive choices | Output identifies the next action, selection is explicit and consistent, and no secret value is printed.                |
 
 Run each setup case from a fresh disposable copy so an earlier run cannot hide stale files or lockfile entries. The disabled-auth copy must be checked for absence, not just successful startup.
 
 ## Epic acceptance coverage
 
-| Epic acceptance criterion | Coverage |
-| --- | --- |
-| Contributors can follow the supporting documents | Review that the Epic, design specification, this strategy, implementation checklist, and eventual operation guide link to one another and agree on scope. |
-| API lifecycle, invalid credentials, and origin behavior are checked | API-01 through API-08 |
-| Web and Expo sign in, persist session, validate identity, sign out, and recover from failures | WEB-01 through WEB-07; NATIVE-01 through NATIVE-06 |
-| Web narrow layout, keyboard, and overflow work | WEB-08 and WEB-09, including a manual rendered-screen pass |
-| Native keyboard, secure persistence, navigation, and API URL work | NATIVE-02, NATIVE-04 through NATIVE-07 |
-| Auth-selected and auth-omitted setup work from clean copies | SETUP-01 through SETUP-04 |
-| Workspace quality gates and focused checks pass | CI runs lint, typecheck, build, API, browser, native/client, and both setup-mode suites with isolated services and no external credentials. |
-| Failure/fix guide uses observed evidence | Record only a real failure that occurred during development and passed a regression check; see the format below. |
+| Epic acceptance criterion                                                                            | Coverage                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contributors can follow the supporting documents                                                     | Review that the Epic, design specification, this strategy, implementation checklist, and eventual operation guide link to one another and agree on scope. |
+| API lifecycle, invalid credentials, session renewal, email delivery, and origin behavior are checked | API-01 through API-12                                                                                                                                     |
+| Web and Expo complete account lifecycle, session renewal, protected state, and recovery are checked  | WEB-01 through WEB-09; NATIVE-01 through NATIVE-08                                                                                                        |
+| Web narrow layout, keyboard, and overflow work                                                       | WEB-10 and WEB-11, including a manual rendered-screen pass                                                                                                |
+| Native keyboard, secure persistence, deep links, navigation, and API URL work                        | NATIVE-02 through NATIVE-09                                                                                                                               |
+| Auth-selected and auth-omitted setup work from clean copies                                          | SETUP-01 through SETUP-04                                                                                                                                 |
+| Workspace quality gates and focused checks pass                                                      | CI runs lint, typecheck, build, API, browser, native/client, and both setup-mode suites with isolated services and no external credentials.               |
+| Failure/fix guide uses observed evidence                                                             | Record only a real failure that occurred during development and passed a regression check; see the format below.                                          |
 
 ## Recording a real failure
 
@@ -109,6 +117,6 @@ DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/starter_auth_test" np
 AUTH_TEST_DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/starter_auth_test" npm run test:auth --workspace=@starter/api
 ```
 
-The test suite rejects a database name without a test marker. It creates a unique test user and removes that user and its sessions when finished. It covers production auth configuration validation, disabled public sign-up, anonymous and authenticated sessions, valid and invalid credentials, sign-out invalidation, trusted and untrusted origins, and Expo's configured origin.
+The expanded suite will reject a database name without a test marker, create unique test users, and remove them and their sessions when finished. It will cover production auth configuration validation, registration and verification, verified/unverified sign-in, anonymous and authenticated sessions, rolling session renewal/expiry, password reset and revocation, sign-out invalidation, trusted/untrusted origins, and Expo's configured origin.
 
-Observed verification: `npm run test:auth --workspace=@starter/api` passed 5 tests against a dedicated local `starter_auth_test` database after applying both repository migrations. The web browser, native runtime, and setup-selection commands will be added when their corresponding suites exist.
+Baseline evidence before this scope revision: `npm run test:auth --workspace=@starter/api` passed 5 tests against a dedicated local `starter_auth_test` database after applying both repository migrations. Those tests cover the earlier sign-in/sign-out scope only; the expanded lifecycle cases are not implemented yet. The web browser, native runtime, and setup-selection suites also remain future work.
