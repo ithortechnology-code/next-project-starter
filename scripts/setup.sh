@@ -21,6 +21,11 @@ if [[ -s "$NVM_SCRIPT" ]]; then
     echo "The Node.js version in .nvmrc is not installed. Run 'nvm install' from the repository and retry." >&2
     exit 1
   fi
+  NVM_VERSION="$(tr -d '[:space:]' < .nvmrc)"
+  if NVM_NODE="$(nvm which "$NVM_VERSION" 2>/dev/null)"; then
+    PATH="$(dirname "$NVM_NODE"):$PATH"
+    export PATH
+  fi
 fi
 
 NODE_VERSION="$(node -p 'process.versions.node')"
