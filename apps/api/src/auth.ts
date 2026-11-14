@@ -100,3 +100,7 @@ export function createAuth(
     telemetry: { enabled: false },
   });
 }
+
+export function readAuthTrustedOrigins(env: NodeJS.ProcessEnv = process.env): string[] {
+  return readAuthConfig(env).trustedOrigins;
+}

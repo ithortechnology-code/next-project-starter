@@ -16,7 +16,7 @@ The `filesystem` adapter is always available to the API and stores data under `.
 
 ## Better Auth local accounts
 
-Local setup generates a random `BETTER_AUTH_SECRET` in the ignored `.env` when the value is blank. The API uses `BETTER_AUTH_URL` when set, or the local `API_PUBLIC_URL`, and uses `AUTH_TRUSTED_ORIGINS` or the local `WEB_ORIGIN` as its explicit origin list. Do not use wildcard origins. Production must set `BETTER_AUTH_URL`, a high-entropy `BETTER_AUTH_SECRET` of at least 32 bytes, and `AUTH_TRUSTED_ORIGINS` explicitly.
+Local setup generates a random `BETTER_AUTH_SECRET` in the ignored `.env` when the value is blank. The API uses `BETTER_AUTH_URL` when set, or the local `API_PUBLIC_URL`, and uses `AUTH_TRUSTED_ORIGINS` or the local `WEB_ORIGIN` as its explicit origin list. `AUTH_TRUSTED_ORIGINS` also controls credentialed CORS when Better Auth is enabled. The example includes the web origin and Expo development origin; add the exact scheme/host origin used by your simulator or device, with no wildcard. Expo native requests do not use browser CORS, but Better Auth still checks the request origin. Production must set `BETTER_AUTH_URL`, a high-entropy `BETTER_AUTH_SECRET` of at least 32 bytes, and `AUTH_TRUSTED_ORIGINS` explicitly.
 
 The sign-in example has no public account-creation endpoint. To provision a local/test account after applying the auth migration, set `AUTH_ENABLE_LOCAL_PROVISIONING=true`, `AUTH_PROVISION_NAME`, `AUTH_PROVISION_EMAIL`, and `AUTH_PROVISION_PASSWORD` in the ignored `.env`, then run:
 

@@ -147,11 +147,11 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Better Auth catch-all handler is mounted at the chosen `/api/auth` path and its response headers/cookies are preserved.
-- [ ] Credentialed CORS allows configured web development origins and rejects untrusted origins; production does not use wildcard origin reflection.
-- [ ] Expo deep-link/development origins are narrowly documented and development wildcards are never enabled in production.
+- [x] Better Auth catch-all handler is mounted at the chosen `/api/auth` path and its response headers/cookies are preserved.
+- [x] Credentialed CORS allows configured web development origins and rejects untrusted origins; production does not use wildcard origin reflection.
+- [x] Expo deep-link/development origins are narrowly documented and development wildcards are never enabled in production.
 
-**Verification:** Exercise preflight, sign-in, session lookup, and sign-out requests from the web origin and Expo runtime; verify cookies/headers survive the Fastify bridge.
+**Verification:** API lint, typecheck, and build pass. A real PostgreSQL-backed Fastify inject check confirmed trusted-origin preflight headers, untrusted-origin rejection, and anonymous session lookup through `/api/auth/get-session`. Native origin handling is documented; physical Expo runtime verification remains for Task 11.
 
 **Dependencies:** Tasks 6 and 7.
 

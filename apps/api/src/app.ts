@@ -2,11 +2,11 @@ import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
-import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 import { healthResponseSchema, HEALTH_PATH } from "@starter/shared";
 import { z } from "zod";
 import { checkDatabaseConnection, createDatabase } from "./database.js";
-import { createAuth } from "./auth.js";
+import { createAuth, readAuthTrustedOrigins } from "./auth.js";
 import { createJobQueue, enqueueExampleJob, EXAMPLE_JOB } from "./jobs.js";
 import { createConfiguredStorage, type FileStorage } from "@starter/storage";
 import { metrics } from "@opentelemetry/api";
@@ -69,6 +69,28 @@ declare module "fastify" {
 }
 
 const healthJsonSchema = z.toJSONSchema(healthResponseSchema, { target: "openapi-3.0" });
+
+async function handleAuthRequest(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  auth: NonNullable<FastifyInstance["auth"]>,
+) {
+  const body =
+    request.body === undefined
+      ? undefined
+      : typeof request.body === "string"
+        ? request.body
+        : JSON.stringify(request.body);
+  const response = await auth.handler(
+    new Request(`${request.protocol}://${request.headers.host}${request.url}`, {
+      method: request.method,
+      headers: request.headers as HeadersInit,
+      ...(body === undefined ? {} : { body }),
+    }),
+  );
+  response.headers.forEach((value, key) => reply.header(key, value));
+  return reply.code(response.status).send(Buffer.from(await response.arrayBuffer()));
+}
 
 export function createApp() {
   const app = Fastify({
@@ -155,13 +177,41 @@ export function createApp() {
     (_request, body, done) => done(null, body),
   );
 
-  app.register(cors, { origin: process.env.WEB_ORIGIN?.split(",") ?? true });
+  const corsOrigins = auth
+    ? readAuthTrustedOrigins()
+    : (process.env.WEB_ORIGIN?.split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean) ?? (process.env.NODE_ENV === "production" ? [] : true));
+  if (process.env.NODE_ENV === "production" && corsOrigins === true) {
+    throw new Error("WEB_ORIGIN or AUTH_TRUSTED_ORIGINS must be configured in production.");
+  }
+  app.register(cors, {
+    origin: (origin, callback) => {
+      if (origin === undefined) return callback(null, true);
+      if (corsOrigins === true) return callback(null, true);
+      return callback(null, corsOrigins.includes(origin) ? origin : false);
+    },
+    credentials: true,
+  });
   app.register(swagger, {
     openapi: {
       info: { title: process.env.API_TITLE ?? "Project Starter API", version: "0.1.0" },
       servers: [{ url: process.env.API_PUBLIC_URL ?? "http://localhost:4000" }],
     },
   });
+
+  if (auth) {
+    app.route({
+      method: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      url: "/api/auth",
+      handler: (request, reply) => handleAuthRequest(request, reply, auth),
+    });
+    app.route({
+      method: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      url: "/api/auth/*",
+      handler: (request, reply) => handleAuthRequest(request, reply, auth),
+    });
+  }
 
   app.register(async function registerRoutes(routes) {
     routes.get(
