@@ -100,13 +100,20 @@ export function createAuth(
     database: { db: db as Kysely<any>, type: "postgres", casing: "camel" },
     emailAndPassword: {
       enabled: true,
-      disableSignUp: !options.allowSignUp,
+      disableSignUp: options.allowSignUp === false,
+      autoSignIn: options.autoSignIn ?? false,
+      requireEmailVerification: true,
+      revokeSessionsOnPasswordReset: true,
       sendResetPassword: authEmail.sendResetPassword,
-      ...(options.autoSignIn === undefined ? {} : { autoSignIn: options.autoSignIn }),
     },
     emailVerification: {
-      sendOnSignUp: false,
+      sendOnSignUp: true,
       sendVerificationEmail: authEmail.sendVerificationEmail,
+    },
+    session: {
+      expiresIn: 7 * 24 * 60 * 60,
+      updateAge: 24 * 60 * 60,
+      cookieCache: { enabled: false },
     },
     telemetry: { enabled: false },
   });

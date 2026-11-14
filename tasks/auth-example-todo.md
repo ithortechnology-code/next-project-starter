@@ -130,12 +130,12 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 **Acceptance criteria:**
 
 - [x] Better Auth is pinned to a stable compatible version and runs in the API process, not as a hosted service.
-- [ ] Public registration requires email verification before an authenticated session is created; reset revokes existing sessions.
-- [ ] Session expiry is 7 days with a 1-day update age; web and Expo revalidate every 5 minutes while active and on focus/resume. Expired sessions cannot be renewed.
+- [x] Public registration requires email verification before an authenticated session is created; password reset revokes existing sessions.
+- [x] Database sessions expire after 7 days and renew after a 1-day update age while still valid; expired sessions cannot be renewed. Web and Expo revalidation is implemented in Tasks 12 and 13.
 - [x] Local/test account provisioning is explicit and never creates a shared production password.
 - [x] Production startup fails clearly for missing required secrets or invalid auth configuration.
 
-**Verification:** Check Better Auth configuration/schema and test verified/unverified sign-in, expiry-based renewal, reset revocation, production configuration failures, and local/test provisioning without exposing secrets.
+**Verification:** `npm run test:auth --workspace=@starter/api` passes 9 PostgreSQL-backed integration tests against the isolated `starter_auth_test` database and Mailpit, covering public registration and verification gating, seven-day expiry, one-day renewal behavior, expired-session rejection, reset revocation, generic duplicate registration, production configuration, and sign-in/out. Local provisioning remains loopback-only and explicit. API lint, typecheck, build, Prettier, and `git diff --check` pass.
 
 **Dependencies:** Tasks 1, 3, and 6.
 
