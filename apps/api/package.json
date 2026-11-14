@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --env-file=../../.env --import tsx --watch src/server.ts",
-    "dev:worker": "node --env-file=../../.env --import tsx --watch src/worker.ts",
-    "db:migrate": "node --env-file=../../.env --import tsx src/migrate.ts",
+    "dev": "node --import=../../scripts/load-env.mjs --import tsx --watch src/server.ts",
+    "dev:worker": "node --import=../../scripts/load-env.mjs --import tsx --watch src/worker.ts",
+    "db:migrate": "node --import=../../scripts/load-env.mjs --import tsx src/migrate.ts",
     "start": "node dist/server.js",
     "start:worker": "node dist/worker.js",
     "migrate": "node dist/migrate.js",
