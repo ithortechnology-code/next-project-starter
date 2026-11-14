@@ -111,15 +111,15 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Verification and reset emails use configured absolute links and concise text/HTML content.
-- [ ] Link tokens, passwords, cookies, and SMTP credentials do not appear in logs or public responses.
-- [ ] Local setup delivers to Mailpit; production requires explicit `SMTP_HOST` and `EMAIL_FROM` configuration.
+- [x] Verification and reset emails use configured absolute links and concise text/HTML content.
+- [x] Link tokens, passwords, cookies, and SMTP credentials do not appear in logs or public responses.
+- [x] Local setup delivers to Mailpit; production requires explicit `SMTP_HOST` and `EMAIL_FROM` configuration.
 
-**Verification:** Test message delivery through an isolated SMTP capture/Mailpit service, inspect both message types and their link destinations, then run API lint/typecheck/build.
+**Verification:** `npm run test:email --workspace=@starter/api` passes 5 unit tests. `npm run test:auth --workspace=@starter/api` passes 8 integration tests against the isolated `starter_auth_test` database and Mailpit, verifying both message types, absolute links, generic responses, and request-log token redaction. API lint, typecheck, build, Prettier, and `git diff --check` pass.
 
 **Dependencies:** Tasks 1 and 3.
 
-**Files likely touched:** `apps/api/src/email.ts`, auth email templates/callbacks, `.env.example`, `docs/local-dev.md`, API email tests.
+**Files likely touched:** `.env.example`, `apps/api/src/email.ts`, `apps/api/src/auth.ts`, `apps/api/src/app.ts`, API email/auth tests, `.github/workflows/ci.yml`, `docs/email.md`, and `docs/local-dev.md`.
 
 **Estimated scope:** Medium.
 

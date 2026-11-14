@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import type { Kysely } from "kysely";
 import type { Database } from "./database.js";
+import { createAuthEmailCallbacks, createEmailClient, type AuthEmailPurpose } from "./email.js";
 
 export interface AuthConfig {
   secret: string;
@@ -11,6 +12,7 @@ export interface AuthConfig {
 export interface AuthOptions {
   allowSignUp?: boolean;
   autoSignIn?: boolean;
+  onEmailDeliveryFailure?: (purpose: AuthEmailPurpose) => void;
 }
 
 export function readAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig {
@@ -85,6 +87,10 @@ export function createAuth(
   options: AuthOptions = {},
 ) {
   const config = readAuthConfig(env);
+  const authEmail = createAuthEmailCallbacks(
+    createEmailClient(env),
+    options.onEmailDeliveryFailure,
+  );
   return betterAuth({
     appName: "Project Starter",
     baseURL: config.baseURL,
@@ -95,7 +101,12 @@ export function createAuth(
     emailAndPassword: {
       enabled: true,
       disableSignUp: !options.allowSignUp,
+      sendResetPassword: authEmail.sendResetPassword,
       ...(options.autoSignIn === undefined ? {} : { autoSignIn: options.autoSignIn }),
+    },
+    emailVerification: {
+      sendOnSignUp: false,
+      sendVerificationEmail: authEmail.sendVerificationEmail,
     },
     telemetry: { enabled: false },
   });

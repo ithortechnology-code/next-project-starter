@@ -24,12 +24,54 @@ process.env.STORAGE_DRIVER = "filesystem";
 process.env.FILE_STORAGE_DIRECTORY = ".data/auth-integration-test-files";
 process.env.NODE_ENV = "test";
 
-const { createApp } = await import("./app.js");
+const { createApp, redactSensitiveRequestUrl } = await import("./app.js");
 const database = createDatabase(databaseUrl);
 const app = createApp();
 const email = `auth-${randomUUID()}@example.test`;
 const password = `test-${randomUUID()}-Aa1!`;
 const name = "Auth Integration Test";
+const mailpitApiUrl =
+  process.env.MAILPIT_API_URL ?? `http://127.0.0.1:${process.env.MAILPIT_UI_PORT ?? "8025"}`;
+
+interface MailpitSummary {
+  ID: string;
+  Subject: string;
+}
+
+interface MailpitMessage extends MailpitSummary {
+  HTML: string;
+  Text: string;
+}
+
+async function findAuthEmail(subject: string): Promise<MailpitMessage> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const response = await fetch(
+      `${mailpitApiUrl}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`,
+    );
+    assert.equal(response.status, 200, "Mailpit API must be available for auth tests");
+    const result = (await response.json()) as { messages: MailpitSummary[] };
+    const summary = result.messages.find((message) => message.Subject === subject);
+    if (summary) {
+      const messageResponse = await fetch(`${mailpitApiUrl}/api/v1/message/${summary.ID}`);
+      assert.equal(messageResponse.status, 200);
+      return (await messageResponse.json()) as MailpitMessage;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  assert.fail(`Mailpit did not receive the expected ${subject} message`);
+}
+
+async function deleteAuthEmails(): Promise<void> {
+  const url = `${mailpitApiUrl}/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`;
+  const response = await fetch(url, {
+    method: "DELETE",
+  });
+  assert.equal(response.status, 200, "Mailpit must remove test auth messages during cleanup");
+  const remaining = await fetch(url);
+  assert.equal(remaining.status, 200);
+  const result = (await remaining.json()) as { messages: MailpitSummary[] };
+  assert.equal(result.messages.length, 0, "test auth messages must be removed");
+}
 
 before(async () => {
   await app.ready();
@@ -43,10 +85,46 @@ before(async () => {
 after(async () => {
   try {
     await app.close();
+    await deleteAuthEmails();
     await sql`delete from "user" where "email" = ${email}`.execute(database.db);
   } finally {
     await database.close();
   }
+});
+
+test("verification email is delivered through SMTP without exposing its token in the response", async () => {
+  const response = await app.inject({
+    method: "POST",
+    url: "/api/auth/send-verification-email",
+    headers: { origin: "http://localhost:3000" },
+    payload: { email, callbackURL: "http://localhost:3000/verify-email" },
+  });
+  assert.equal(response.statusCode, 200, response.body);
+  assert.doesNotMatch(response.body, /token=/i);
+  assert.doesNotMatch(response.body, new RegExp(password));
+  assert.equal(response.headers["set-cookie"], undefined);
+  const message = await findAuthEmail("Verify your email address");
+  assert.match(message.Text, /http:\/\/localhost:4000\/api\/auth\/verify-email\?token=/);
+  assert.match(message.HTML, /href="http:\/\/localhost:4000\/api\/auth\/verify-email\?token=/);
+  assert.doesNotMatch(message.Text + message.HTML, new RegExp(password));
+});
+
+test("password reset email is delivered through SMTP with an enumeration-safe response", async () => {
+  const response = await app.inject({
+    method: "POST",
+    url: "/api/auth/request-password-reset",
+    headers: { origin: "http://localhost:3000" },
+    payload: { email, redirectTo: "http://localhost:3000/reset-password" },
+  });
+  assert.equal(response.statusCode, 200, response.body);
+  assert.match(response.body, /If this email exists in our system/);
+  assert.doesNotMatch(response.body, /token=/i);
+  assert.doesNotMatch(response.body, new RegExp(password));
+  assert.equal(response.headers["set-cookie"], undefined);
+  const message = await findAuthEmail("Reset your password");
+  assert.match(message.Text, /http:\/\/localhost:4000\/api\/auth\/reset-password\//);
+  assert.match(message.HTML, /href="http:\/\/localhost:4000\/api\/auth\/reset-password\//);
+  assert.doesNotMatch(message.Text + message.HTML, new RegExp(password));
 });
 
 test("auth config rejects missing secrets and wildcard origins in production", () => {
@@ -63,6 +141,19 @@ test("auth config rejects missing secrets and wildcard origins in production", (
         AUTH_TRUSTED_ORIGINS: "https://*.example.test",
       }),
     /wildcards are not allowed/,
+  );
+});
+
+test("request logs redact verification query tokens and reset path tokens", () => {
+  assert.equal(
+    redactSensitiveRequestUrl(
+      "/api/auth/verify-email?token=verification-secret&callbackURL=%2Fhome",
+    ),
+    "/api/auth/verify-email?token=[REDACTED]&callbackURL=%2Fhome",
+  );
+  assert.equal(
+    redactSensitiveRequestUrl("/api/auth/reset-password/password-secret?callbackURL=%2Freset"),
+    "/api/auth/reset-password/[REDACTED]?callbackURL=%2Freset",
   );
 });
 

@@ -92,6 +92,12 @@ async function handleAuthRequest(
   return reply.code(response.status).send(Buffer.from(await response.arrayBuffer()));
 }
 
+export function redactSensitiveRequestUrl(url: string): string {
+  return url
+    .replace(/(\/api\/auth\/reset-password\/)[^/?]+/gi, "$1[REDACTED]")
+    .replace(/([?&]token=)[^&]+/gi, "$1[REDACTED]");
+}
+
 export function createApp() {
   const app = Fastify({
     logger: {
@@ -100,7 +106,7 @@ export function createApp() {
           const url = request.url ?? "";
           return {
             method: request.method,
-            url: url.replace(/([?&]token=)[^&]+/g, "$1[REDACTED]"),
+            url: redactSensitiveRequestUrl(url),
             hostname: request.hostname,
             remoteAddress: request.ip,
             ...(request.socket.remotePort ? { remotePort: request.socket.remotePort } : {}),
@@ -115,7 +121,15 @@ export function createApp() {
       "DATABASE_URL is required to start the authentication-enabled API in production.",
     );
   }
-  const auth = database ? createAuth(database.db) : null;
+  const auth = database
+    ? createAuth(database.db, process.env, {
+        onEmailDeliveryFailure: (purpose) =>
+          app.log.error(
+            { event: "auth.email.delivery_failed", purpose },
+            "Authentication email delivery failed.",
+          ),
+      })
+    : null;
   const boss = process.env.DATABASE_URL ? createJobQueue() : undefined;
   const storage = createConfiguredStorage();
   app.decorate("storage", storage);

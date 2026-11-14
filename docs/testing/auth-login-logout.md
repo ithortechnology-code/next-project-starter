@@ -106,17 +106,28 @@ Redact credentials, session identifiers, and personal data. Do not retain intent
 
 ## Run commands and evidence
 
-Add the exact API, browser, native/client, and setup commands here when those suites are implemented. Until then, do not document commands that are not present in the repository. At each milestone record the command, pass/fail result, database isolation used, and any platform/runtime limits. Store device-only checks in the manual checklist and redact credentials from artifacts.
+Add commands as the corresponding suites are implemented. At each milestone record the command, pass/fail result, database isolation used, and any platform/runtime limits. Store device-only checks in the manual checklist and redact credentials from artifacts.
+
+### Email unit tests
+
+Run the focused mail configuration and template tests:
+
+```sh
+npm run test:email --workspace=@starter/api
+```
+
+These tests cover Mailpit defaults, required production SMTP settings, invalid configuration, safe text/HTML links, and privacy-safe delivery failure reporting. They do not require PostgreSQL or SMTP.
 
 ### API integration
 
-The API auth suite requires a disposable PostgreSQL database. CI creates its own `starter_auth_test` database in an ephemeral PostgreSQL 18 service. For a local run, create a separate database whose name includes `test`, then run:
+The API auth suite requires a disposable PostgreSQL database and the Mailpit email profile. CI creates its own `starter_auth_test` database and Mailpit service. For a local run, create a separate database whose name includes `test`, start Mailpit, then run:
 
 ```sh
+COMPOSE_PROFILES=email docker compose up -d --wait mailpit
 DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/starter_auth_test" npm run db:migrate --workspace=@starter/api
 AUTH_TEST_DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/starter_auth_test" npm run test:auth --workspace=@starter/api
 ```
 
-The expanded suite will reject a database name without a test marker, create unique test users, and remove them and their sessions when finished. It will cover production auth configuration validation, registration and verification, verified/unverified sign-in, anonymous and authenticated sessions, rolling session renewal/expiry, password reset and revocation, sign-out invalidation, trusted/untrusted origins, and Expo's configured origin.
+The suite rejects database names without a test marker, creates a unique test user, and removes its user and captured email messages when finished. Current integration coverage includes SMTP delivery of verification and reset links through Mailpit, generic reset responses, token redaction in request logs, production auth configuration validation, sign-in/out, session lookup, and trusted/untrusted origins. It passes 8 tests against the isolated local `starter_auth_test` database. Registration enforcement, token completion/reuse, rolling renewal/expiry, web/native behavior, and setup-selection remain future coverage.
 
-Baseline evidence before this scope revision: `npm run test:auth --workspace=@starter/api` passed 5 tests against a dedicated local `starter_auth_test` database after applying both repository migrations. Those tests cover the earlier sign-in/sign-out scope only; the expanded lifecycle cases are not implemented yet. The web browser, native runtime, and setup-selection suites also remain future work.
+Web browser, native runtime, and setup-selection suites remain future work.
