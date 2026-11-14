@@ -17,7 +17,7 @@ Expected negative cases (such as invalid credentials) are successful test outcom
 
 ## Acceptance case matrix
 
-Current API integration coverage includes public registration with a verification gate, verification-link consumption, rolling session expiry/renewal, expired-session rejection, reset email and session revocation, duplicate-registration privacy, sign-in/out, trusted-origin CORS, and safe request logging. The broader matrix below remains the target for later API, web, and Expo tasks.
+Current API integration coverage includes public registration with a verification gate, verification resend and link consumption/reuse, expired and malformed verification tokens, rolling session expiry/renewal, expired-session rejection, reset email and session revocation, duplicate-registration privacy, sign-in/out revocation, trusted-origin CORS, and safe request logging. The broader matrix below remains the target for later web and Expo tasks.
 
 ### API integration
 

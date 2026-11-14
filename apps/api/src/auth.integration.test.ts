@@ -130,6 +130,76 @@ test("public registration requires verification before sign-in and sends a verif
   assert.equal(session.body, "null");
 });
 
+test("verification resend sends a fresh link and consumed links cannot be reused", async () => {
+  const response = await app.inject({
+    method: "POST",
+    url: "/api/auth/send-verification-email",
+    headers: { origin: "http://localhost:3000" },
+    payload: { email, callbackURL: "http://localhost:3000/verify-email" },
+  });
+  assert.equal(response.statusCode, 200, response.body);
+  const message = await findAuthEmail("Verify your email address");
+  const verificationUrl = new URL(message.Text.match(/https?:\/\/\S+/)?.[0] ?? "");
+  const consumed = await app.inject({
+    method: "GET",
+    url: `${verificationUrl.pathname}${verificationUrl.search}`,
+    headers: { origin: "http://localhost:3000" },
+  });
+  assert.ok(consumed.statusCode >= 200 && consumed.statusCode < 400);
+  const reused = await app.inject({
+    method: "GET",
+    url: `${verificationUrl.pathname}${verificationUrl.search}`,
+    headers: { origin: "http://localhost:3000" },
+  });
+  assert.ok(reused.statusCode >= 200 && reused.statusCode < 400);
+  assert.equal(reused.headers.location, "http://localhost:3000/verify-email");
+  assert.equal((await app.inject({ method: "GET", url: "/api/auth/get-session" })).body, "null");
+});
+
+test("expired and malformed verification tokens cannot verify a new account", async () => {
+  const pendingEmail = `pending-${randomUUID()}@example.test`;
+  const registration = await app.inject({
+    method: "POST",
+    url: "/api/auth/sign-up/email",
+    headers: { origin: "http://localhost:3000" },
+    payload: { name, email: pendingEmail, password },
+  });
+  assert.equal(registration.statusCode, 200, registration.body);
+  try {
+    const message = await findAuthEmail("Verify your email address");
+    const verificationUrl = new URL(message.Text.match(/https?:\/\/\S+/)?.[0] ?? "");
+    const userId = (registration.json() as { user: { id: string } }).user.id;
+    const { SignJWT } = await import("jose");
+    const now = Math.floor(Date.now() / 1000);
+    const expiredToken = await new SignJWT({ email: pendingEmail, userId })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt(now - 7200)
+      .setExpirationTime(now - 3600)
+      .sign(new TextEncoder().encode(process.env.BETTER_AUTH_SECRET));
+    verificationUrl.searchParams.set("token", expiredToken);
+    const expired = await app.inject({
+      method: "GET",
+      url: `${verificationUrl.pathname}${verificationUrl.search}`,
+      headers: { origin: "http://localhost:3000" },
+    });
+    assert.match(expired.headers.location ?? "", /error=TOKEN_EXPIRED/i);
+    const malformed = await app.inject({
+      method: "GET",
+      url: `/api/auth/verify-email?token=malformed-token&callbackURL=${encodeURIComponent("http://localhost:3000/verify-email")}`,
+      headers: { origin: "http://localhost:3000" },
+    });
+    assert.match(malformed.headers.location ?? "", /error=INVALID_TOKEN/i);
+    const user = await sql<{
+      emailVerified: boolean;
+    }>`select "emailVerified" from "user" where "email" = ${pendingEmail}`.execute(database.db);
+    assert.equal(user.rows[0]?.emailVerified, false);
+  } finally {
+    await sql`delete from "user" where "email" = ${pendingEmail}`.execute(database.db);
+    const cleanupUrl = `${mailpitApiUrl}/api/v1/search?query=${encodeURIComponent(`to:${pendingEmail}`)}`;
+    await fetch(cleanupUrl, { method: "DELETE" });
+  }
+});
+
 test("sessions use rolling seven-day expiry and expired sessions cannot be refreshed", async () => {
   const signIn = await app.inject({
     method: "POST",
@@ -291,7 +361,7 @@ test("duplicate registration returns a generic response without a session", asyn
   assert.equal(response.headers["set-cookie"], undefined);
 });
 
-test("sign-in, session lookup, invalid credentials, and sign-out work through Fastify", async () => {
+test("sign-in, session lookup, invalid credentials, and sign-out revoke the active session", async () => {
   const valid = await app.inject({
     method: "POST",
     url: "/api/auth/sign-in/email",

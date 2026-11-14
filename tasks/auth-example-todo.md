@@ -185,11 +185,11 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Covers registration, verification/resend, verified and unverified sign-in, valid/expired/reused tokens, reset request/completion, session renewal/expiry, and reset/sign-out revocation.
+- [x] Covers registration, verification/resend, verified and unverified sign-in, valid/expired/reused tokens, reset request/completion, session renewal/expiry, and reset/sign-out revocation.
 - [x] Covers untrusted origins, missing/invalid production configuration, invalid credentials, and anonymous/authenticated sessions.
 - [x] Tests clean up users/sessions and do not rely on shared credentials or the developer's database volume.
 
-**Verification:** Baseline `npm run test:auth --workspace=@starter/api` passes 5 tests against dedicated `starter_auth_test`. Extend the suite and CI email capture to verify all lifecycle cases; preserve the test database guard and cleanup.
+**Verification:** `npm run test:auth --workspace=@starter/api` passes 11 PostgreSQL-backed integration tests against the dedicated `starter_auth_test` database and Mailpit. Coverage includes registration/verification/resend, malformed and expired tokens, idempotent link reuse, verified/unverified sign-in, reset and sign-out revocation, rolling expiry, rejected origins, config failures, and privacy-safe responses/logs. The CI job provisions PostgreSQL and Mailpit, applies migrations, then runs the guarded suite. API email tests, lint, typecheck, build, Prettier, and `git diff --check` pass.
 
 **Dependencies:** Tasks 6–9.
 

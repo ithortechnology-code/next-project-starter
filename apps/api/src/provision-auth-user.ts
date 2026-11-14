@@ -32,7 +32,9 @@ async function main() {
   const { db, close } = createDatabase();
   try {
     const auth = createAuth(db, process.env, { allowSignUp: true, autoSignIn: false });
-    const result = await auth.api.signUpEmail({ body: { email, password, name } });
+    const result = await auth.api.signUpEmail({
+      body: { email, password, name, callbackURL: process.env.WEB_ORIGIN },
+    });
     console.info(`Provisioned local/test auth user ${result.user.email}.`);
   } finally {
     await close();
