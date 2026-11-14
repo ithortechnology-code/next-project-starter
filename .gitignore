@@ -40,5 +40,8 @@ deploy/vps/seaweedfs-s3-config.json
 # Editor and operating system files
 .vscode/
 .idea/
+.claude/settings.local.json
+.agents/skills/impeccable/scripts/bin/
+.claude/skills/impeccable/scripts/bin/
 .DS_Store
 node_modules
