@@ -8,6 +8,7 @@
     "dev:worker": "node --import=../../scripts/load-env.mjs --import tsx --watch src/worker.ts",
     "db:migrate": "node --import=../../scripts/load-env.mjs --import tsx src/migrate.ts",
     "auth:provision-user": "node --import=../../scripts/load-env.mjs --import tsx src/provision-auth-user.ts",
+    "test:auth": "node --import=tsx --test src/auth.integration.test.ts",
     "start": "node dist/server.js",
     "start:worker": "node dist/worker.js",
     "migrate": "node dist/migrate.js",

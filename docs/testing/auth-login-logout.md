@@ -99,3 +99,16 @@ Redact credentials, session identifiers, and personal data. Do not retain intent
 ## Run commands and evidence
 
 Add the exact API, browser, native/client, and setup commands here when those suites are implemented. Until then, do not document commands that are not present in the repository. At each milestone record the command, pass/fail result, database isolation used, and any platform/runtime limits. Store device-only checks in the manual checklist and redact credentials from artifacts.
+
+### API integration
+
+The API auth suite requires a disposable PostgreSQL database. CI creates its own `starter_auth_test` database in an ephemeral PostgreSQL 18 service. For a local run, create a separate database whose name includes `test`, then run:
+
+```sh
+DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/starter_auth_test" npm run db:migrate --workspace=@starter/api
+AUTH_TEST_DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/starter_auth_test" npm run test:auth --workspace=@starter/api
+```
+
+The test suite rejects a database name without a test marker. It creates a unique test user and removes that user and its sessions when finished. It covers production auth configuration validation, disabled public sign-up, anonymous and authenticated sessions, valid and invalid credentials, sign-out invalidation, trusted and untrusted origins, and Expo's configured origin.
+
+Observed verification: `npm run test:auth --workspace=@starter/api` passed 5 tests against a dedicated local `starter_auth_test` database after applying both repository migrations. The web browser, native runtime, and setup-selection commands will be added when their corresponding suites exist.

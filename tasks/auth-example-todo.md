@@ -165,11 +165,11 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Covers valid and invalid sign-in, anonymous session, authenticated session, and sign-out invalidation.
-- [ ] Covers untrusted origin and missing/invalid production configuration behavior.
-- [ ] Tests clean up users/sessions and do not rely on shared credentials or the developer's database volume.
+- [x] Covers valid and invalid sign-in, anonymous session, authenticated session, and sign-out invalidation.
+- [x] Covers untrusted origin and missing/invalid production configuration behavior.
+- [x] Tests clean up users/sessions and do not rely on shared credentials or the developer's database volume.
 
-**Verification:** Run the focused API test command locally and in CI using a disposable PostgreSQL service.
+**Verification:** `npm run test:auth --workspace=@starter/api` passes 5 integration tests against the dedicated `starter_auth_test` database. CI provisions a separate PostgreSQL 18 service database, applies repository migrations, and runs this command. The test refuses database names that are not clearly marked as test databases and cleans up its unique user/session data.
 
 **Dependencies:** Tasks 6–8.
 
