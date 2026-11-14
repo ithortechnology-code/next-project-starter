@@ -60,15 +60,15 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 ### Task 4: Check utility styling compatibility on Expo 58
 
-**Description:** Test NativeWind and, only if needed, other maintained utility-style options against the repository's pinned Expo SDK 58 / React Native 0.88 stack.
+**Description:** NativeWind 4.2.7 is selected after successful iOS/Android bundling and basic layout/spacing runtime checks on Expo 58. See [evidence](../docs/testing/nativewind-expo58.md). Complete the broader component-state checks during UI work.
 
 **Acceptance criteria:**
 
-- [ ] Expo remains on SDK 58 throughout the spike.
+- [x] Expo remains on SDK 58 throughout the spike.
 - [ ] Candidate is checked against official compatibility guidance and installed only in an isolated, reversible spike.
 - [ ] iOS and Android both bundle and render a probe covering layout, spacing, color, and state styles; a bundle-only pass does not count as compatibility.
 
-**Verification:** Record exact versions, commands, device/runtime results, and known issues in the task notes or design decision. If no candidate passes, stop and retain StyleSheet.
+**Verification:** Record exact versions, commands, device/runtime results, and known issues in the task notes or design decision. NativeWind is selected; retain the remaining color and interaction-state checks as explicit follow-up.
 
 **Dependencies:** None.
 
@@ -78,7 +78,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 ### Task 5: Establish the mobile styling foundation
 
-**Description:** Integrate the candidate that passed Task 4, or record React Native StyleSheet as the supported baseline when none passes.
+**Description:** Use the installed NativeWind 4 foundation and complete component-level behavior checks as the auth UI is implemented.
 
 **Acceptance criteria:**
 

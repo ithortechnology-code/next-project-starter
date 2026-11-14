@@ -6,6 +6,7 @@ An npm-workspaces monorepo with a TypeScript API, web app, Expo mobile app, shar
 
 - Node.js 24 LTS baseline (CI also checks Node 26 LTS) and npm workspaces; TypeScript throughout
 - Fastify API, Next.js web app, Expo / React Native mobile app, and shared Zod contracts
+- Tailwind CSS 4 and shadcn/ui for web; NativeWind 4 with Tailwind CSS 3 for Expo mobile styling (see [design guidelines](docs/design-guidelines.md))
 - PostgreSQL 18 with Kysely and one coordinated application migration history
 - REST API with OpenAPI generated from route schemas
 - pg-boss for PostgreSQL-backed durable jobs, processed by a separate Node.js worker

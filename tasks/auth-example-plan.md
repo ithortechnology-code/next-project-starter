@@ -6,7 +6,7 @@ Build a small, generic authentication example that teaches contributors how this
 
 ## Scope and constraints
 
-- Keep the current Expo SDK 58 and React Native 0.88 versions. **Do not downgrade Expo.** Verify NativeWind against this pinned stack first; if it is incompatible, evaluate other actively maintained utility-style options compatible with Expo 58. Adopt one only after a minimal iOS/Android bundle and runtime check passes. Otherwise retain React Native styling and document the decision.
+- Use NativeWind 4.2.7 with app-local Tailwind CSS 3 for mobile styling. Expo 58.0.25 / React Native 0.88.1 passed iOS and Android bundling and layout/spacing runtime checks; see [evidence](../docs/testing/nativewind-expo58.md). **Do not downgrade Expo.** Validate component colors, interaction states, accessibility, and keyboard behavior during auth implementation.
 - Auth is an in-app package/framework integration, not a hosted auth service.
 - This first flow includes sign-in, session persistence, a protected signed-in view, and sign-out. It does not include sign-up, email verification, password reset, social providers, organizations, or role management.
 - Since there is no sign-up UI in this slice, provide an explicit local/test account provisioning path. Never commit demo passwords or seed a reusable production account.
@@ -51,8 +51,8 @@ Web auth client + sign-in/out UI      Expo auth client + sign-in/out UI
 1. Write the authentication Epic and reusable Epic/task templates.
 2. Write the web and Expo sign-in/sign-out flow and responsive design specification.
 3. Write the cross-platform test strategy and acceptance case matrix.
-4. Run a NativeWind compatibility spike on Expo SDK 58 / React Native 0.88. If it fails, evaluate alternatives against the same small probe; do not change Expo versions.
-5. Adopt the passing styling option and establish the mobile styling foundation, or record that React Native StyleSheet remains the chosen option if no candidate passes.
+4. Completed: NativeWind compatibility spike passed iOS/Android builds and basic layout/spacing runtime checks on Expo 58.
+5. Use the installed NativeWind foundation and finish component-level state, color, and accessibility checks during UI implementation.
 
 ### Checkpoint: design and mobile foundation
 
@@ -112,7 +112,7 @@ Web auth client + sign-in/out UI      Expo auth client + sign-in/out UI
 
 | Risk                                                                     | Impact                                                                                   | Mitigation                                                                                                                                 |
 | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| NativeWind stable docs cover Expo 57, while this repo pins Expo 58       | Mobile styling integration may fail or compile while rendering incorrectly               | Keep Expo 58; test NativeWind and other candidates with an isolated probe on both platforms before adoption.                               |
+| NativeWind stable docs cover Expo 57, while this repo pins Expo 58       | Mobile styling integration may fail or compile while rendering incorrectly               | Basic iOS/Android checks passed; retain Expo 58 and recheck component behavior during implementation and upgrades.                         |
 | Web/API origins and cookies differ across local, staging, and production | Sign-in can work in one browser and fail in another, especially with third-party cookies | Explicitly test credentialed CORS and origins locally; decide production origin/reverse-proxy strategy before enabling auth in deployment. |
 | Auth schema tooling could create a second migration history              | Fresh setup and deploys may diverge                                                      | Review generated SQL and commit it as the next migration in the existing Kysely runner.                                                    |
 | Sign-in-only UI has no account creation flow                             | Contributors cannot try it without a user                                                | Provide explicit local/test account provisioning and document it; do not seed shared credentials.                                          |
@@ -121,7 +121,7 @@ Web auth client + sign-in/out UI      Expo auth client + sign-in/out UI
 
 ## Open questions for implementation time
 
-- Which NativeWind-compatible alternative, if any, passes Expo 58 checks? Keep this evidence-based; never downgrade Expo to satisfy a styling library.
+- NativeWind is selected; revalidate compatibility when upgrading Expo, React Native, or NativeWind.
 - Should the optional setup choice be an interactive prompt, an explicit `--with-auth` flag, or both? Preserve a non-interactive option for CI and automation.
 - What domain/proxy arrangement will web and API use in each deployment environment? Do not finalize production cookie settings until this is known.
 - Which Expo automation framework works cleanly with the pinned SDK 58? Confirm against current Expo documentation before adding a test stack.
@@ -133,6 +133,6 @@ Web auth client + sign-in/out UI      Expo auth client + sign-in/out UI
 - [Better Auth CLI](https://better-auth.com/docs/concepts/cli) — schema generation and checks; generated Kysely SQL must be reviewed and integrated into this repository's Kysely migration runner.
 - [Better Auth Expo integration](https://better-auth.com/docs/integrations/expo) — Expo plugin, client, SecureStore, trusted origins, and session behavior.
 - [Better Auth cookies](https://better-auth.com/docs/concepts/cookies) — cookie behavior and cross-domain browser limitations.
-- [NativeWind stable installation](https://www.nativewind.dev/docs/getting-started/installation) — stable v4 guidance currently documents Expo SDK 57; SDK 58 compatibility must be verified locally.
+- [NativeWind stable installation](https://www.nativewind.dev/docs/getting-started/installation) — stable v4 guidance currently documents Expo SDK 57; SDK 58 basic compatibility was verified locally; see the compatibility report.
 - [Expo SDK 58 reference](https://docs.expo.dev/versions/v58.0.0/) — pinned SDK and React Native version compatibility.
 - [Expo testing overview](https://docs.expo.dev/develop/unit-testing/) — Expo-supported testing options; confirm current SDK 58 support during implementation.

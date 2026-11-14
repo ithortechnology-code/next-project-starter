@@ -1,6 +1,6 @@
 # NativeWind on Expo 58 compatibility spike
 
-Status: build and type compatibility passed; iOS and Android simulator/emulator layout and spacing rendering passed.
+Decision: NativeWind 4 is the selected mobile styling approach. Build and type compatibility passed; iOS and Android simulator/emulator layout and spacing rendering passed.
 
 ## Versions
 
@@ -21,7 +21,7 @@ The first typecheck failed with TS2882 because TypeScript could not resolve the 
 
 ## Runtime checks and remaining work
 
-The iOS 26.5 starter verification simulator successfully opened the app in Expo Go and rendered the NativeWind layout/spacing probe. Metro reported no NativeWind or Worklets errors; it emitted ImageBackground and SafeAreaView deprecation warnings. The screen displayed an API connection failure because the API was unavailable, independently of styling. Android API 36.1 (Medium_Phone_API_36.1) also rendered the probe successfully using Expo Go 58.0.5. Metro emitted the same deprecation warnings and no NativeWind/Worklets errors. The emulator was closed after verification. Bundling does not establish correct rendering or native dependency behavior. Before adopting the integration for auth screens, expand the probe on both platforms and check layout, spacing, colors, pressed/disabled states, and absence of Reanimated/Worklets runtime errors. The small probe currently checks layout and spacing only.
+The iOS 26.5 starter verification simulator successfully opened the app in Expo Go and rendered the NativeWind layout/spacing probe. Metro reported no NativeWind or Worklets errors; it emitted ImageBackground and SafeAreaView deprecation warnings. The screen displayed an API connection failure because the API was unavailable, independently of styling. Android API 36.1 (Medium_Phone_API_36.1) also rendered the probe successfully using Expo Go 58.0.5. Metro emitted the same deprecation warnings and no NativeWind/Worklets errors. The emulator was closed after verification. Bundling does not establish correct rendering or native dependency behavior. During auth UI implementation, expand component checks on both platforms and check layout, spacing, colors, pressed/disabled states, and absence of Reanimated/Worklets runtime errors. The small probe currently checks layout and spacing only.
 
 Run `npm run dev:mobile` and open it in an SDK 58 compatible runtime. If native packages require it, use a development build. Test physical devices with a reachable `EXPO_PUBLIC_API_URL`, not the host computer's localhost address.
 
