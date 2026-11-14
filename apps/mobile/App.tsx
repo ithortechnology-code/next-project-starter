@@ -1,3 +1,4 @@
+import "./global.css";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import { healthResponseSchema, type HealthResponse } from "@starter/shared";
@@ -28,7 +29,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.screen}>
-      <View style={styles.content}>
+      <View className="flex-1 justify-center p-7">
         <Text style={styles.kicker}>PROJECT STARTER</Text>
         <Text style={styles.title}>Your next project starts here.</Text>
         <Text style={styles.body}>Expo app connected to your local API.</Text>
@@ -49,7 +50,6 @@ export default function App() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#f5f7fb" },
-  content: { flex: 1, justifyContent: "center", padding: 28 },
   kicker: { color: "#3563e9", fontWeight: "700", marginBottom: 12 },
   title: { fontSize: 38, fontWeight: "700", color: "#15213b" },
   body: { color: "#526079", fontSize: 17, marginTop: 12 },

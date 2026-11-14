@@ -1,1 +1,9 @@
-{ "extends": "../../tsconfig.base.json", "compilerOptions": { "jsx": "react-jsx", "noEmit": true, "types": ["react", "node"] }, "include": ["App.tsx", "**/*.ts", "**/*.tsx"] }
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "types": ["react", "node"]
+  },
+  "include": ["App.tsx", "**/*.ts", "**/*.tsx", "nativewind-env.d.ts"]
+}
