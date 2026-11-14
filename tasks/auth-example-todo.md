@@ -10,9 +10,9 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Epic states goals, non-goals, risks, acceptance checks, and links to the design and test documents.
-- [ ] Reusable Epic and task templates include ownership-neutral descriptions, acceptance criteria, verification, dependencies, and scope.
-- [ ] Epic is scoped to web and Expo sign-in/sign-out; account lifecycle extensions are deferred.
+- [x] Epic states goals, non-goals, risks, acceptance checks, and links to the design and test documents.
+- [x] Reusable Epic and task templates include ownership-neutral descriptions, acceptance criteria, verification, dependencies, and scope.
+- [x] Epic is scoped to web and Expo sign-in/sign-out; account lifecycle extensions are deferred.
 
 **Verification:** Review the templates against one auth task and confirm a contributor can fill them without project-specific assumptions.
 
@@ -28,9 +28,9 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Covers signed-out, submitting, invalid-credentials, API-unavailable, authenticated, expired-session, and signed-out-again states.
-- [ ] Web specification covers responsive narrow layouts, keyboard reachability, browser reload, and redirects.
-- [ ] Expo specification covers native keyboard behavior, session persistence, and platform navigation.
+- [x] Covers signed-out, submitting, invalid-credentials, API-unavailable, authenticated, expired-session, and signed-out-again states.
+- [x] Web specification covers responsive narrow layouts, keyboard reachability, browser reload, and redirects.
+- [x] Expo specification covers native keyboard behavior, session persistence, and platform navigation.
 
 **Verification:** Review against `docs/design-guidelines.md` and the Expo platform conventions; confirm no signup, verification, reset, or social UI is implied.
 
@@ -46,9 +46,9 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Includes API, web, native, setup-selection, security/configuration, and responsive interaction cases.
-- [ ] Separates expected negative cases (such as invalid credentials) from development failures that require diagnosis.
-- [ ] Defines what a useful failure/fix walkthrough records without requiring intentionally broken code to remain in the repository.
+- [x] Includes API, web, native, setup-selection, security/configuration, and responsive interaction cases.
+- [x] Separates expected negative cases (such as invalid credentials) from development failures that require diagnosis.
+- [x] Defines what a useful failure/fix walkthrough records without requiring intentionally broken code to remain in the repository.
 
 **Verification:** Map every Epic acceptance criterion to at least one automated or manual check.
 
