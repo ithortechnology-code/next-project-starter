@@ -55,3 +55,8 @@ deploy/vps/seaweedfs-s3-config.json
 .claude/skills/impeccable/scripts/bin/
 .DS_Store
 node_modules
+
+# Auth browser test outputs
+.next-auth-test/
+test-results/
+playwright-report/

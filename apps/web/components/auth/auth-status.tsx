@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, MailWarning } from "lucide-react";
 import { AuthForm } from "@/components/auth/auth-form";
 
@@ -57,8 +57,11 @@ export function ResetPasswordForm({
   const [resetToken, setResetToken] = useState(token ?? "");
   const [invalid, setInvalid] = useState(Boolean(error));
   const [ready, setReady] = useState(false);
+  const initialized = useRef(false);
 
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
     const params = new URLSearchParams(window.location.search);
     const linkToken = params.get("token") ?? "";
     setResetToken(linkToken);

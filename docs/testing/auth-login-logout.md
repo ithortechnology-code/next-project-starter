@@ -160,3 +160,24 @@ npm run build --workspace=@starter/mobile
 ```
 
 The Expo export must report both Android and iOS bundles. For the default native quick-check, set `EXPO_PUBLIC_API_URL` to an origin reachable from iOS, then run `npm run ios --workspace=@starter/mobile`. The iOS Simulator can reach the host's localhost API; physical iOS devices need the computer's LAN address. A native development build is needed to test the configured `projectstarter://` scheme; Expo Go does not register it for this project. Exercise the native lifecycle, links, secure persistence, and session checks on iOS before marking Task 12 complete. Android runtime review is an optional follow-up; keep Android export passing, and run an Android emulator/device check when a change is Android-specific or explicit Android verification is requested.
+
+
+### Browser lifecycle automation (Task 13)
+
+Install Chromium with `npx playwright install chromium`. With PostgreSQL and Mailpit running and migrations applied to a disposable database whose name contains `test`, run:
+
+```sh
+AUTH_TEST_DATABASE_URL="postgresql://<user>:<password>@localhost:<port>/starter_auth_test" npm run test:auth --workspace=@starter/web
+```
+
+Playwright owns API port 4100 and web port 3100, refuses to reuse existing servers, and uses `.next-auth-test` to avoid the normal Next.js development lock. It exercises desktop Chromium and Chromium emulating mobile web. This emulation does not claim native iOS or Safari coverage. The lifecycle test registers a unique account, verifies its Mailpit email, signs in, reloads, resets its password, checks session revocation, signs in again, and signs out. Cleanup removes its account and captured messages. Other tests cover anonymous route protection, keyboard focus, overflow, validation, invalid credentials, failed client requests, and invalid reset links. Traces and screenshots are disabled to avoid saving credentials and email tokens in artifacts. Native state automation and forced rolling renewal/expiry browser coverage remain Task 13 work.
+
+### Observed failure: reset link invalidated during development
+
+**Reproduce:** Open a reset email link in Next.js development mode with React Strict Mode, then try to enter a replacement password. Before the fix, the form disappeared and reported an unavailable link.
+
+**Root cause:** The effect captured the token and removed it from browser history. Strict Mode invoked the effect again; the second invocation read the cleaned URL and overwrote the captured state with an empty token.
+
+**Fix:** Guard initial token capture with a component ref. Keep the token only in component memory and remove it from the address bar.
+
+**Regression:** `apps/web/tests/auth.spec.ts` covers both an invalid reset token and a real reset email through completion in development mode, on desktop and mobile web. Expected invalid credentials and expired tokens remain negative cases, not implementation defects.

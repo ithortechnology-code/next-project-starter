@@ -255,6 +255,8 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Verification:** Run focused suites locally and in CI; capture artifacts only when they are useful and redact credentials/session data.
 
+**Progress:** Added desktop/mobile-web Playwright lifecycle coverage and CI wiring. Browser reset tests exposed and fixed Strict Mode token recapture. Native state automation, forced browser renewal/expiry, and email-failure coverage remain open; Task 13 is not complete.
+
 **Dependencies:** Tasks 10–12.
 
 **Files likely touched:** `apps/web/tests/**`, `apps/mobile/**` test files, root/workspace package manifests, `.github/workflows/ci.yml`.
