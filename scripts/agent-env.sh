@@ -64,7 +64,7 @@ case "$ACTION" in
       echo "The deterministic port block $API_PORT-$S3_PORT is already in use. Choose another name." >&2
       exit 1
     fi
-    COMPOSE_PROJECT="starter-${NAME,,}"
+    COMPOSE_PROJECT="starter-$NAME"
     COMPOSE_PROJECT="${COMPOSE_PROJECT//_/-}"
     COMPOSE_PROJECT="${COMPOSE_PROJECT//[^a-z0-9-]/-}"
     DB_NAME="starter_${NAME//-/_}"
@@ -115,7 +115,7 @@ EOF
     [[ -n "$NAME" ]] && safe_name "$NAME" || { usage; exit 2; }
     WORKTREE="$ROOT_DIR/.agent-env/worktrees/$NAME"
     [[ -d "$WORKTREE" ]] || { echo "Workspace does not exist: $NAME" >&2; exit 1; }
-    COMPOSE_PROJECT="starter-${NAME,,}"
+    COMPOSE_PROJECT="starter-$NAME"
     COMPOSE_PROJECT="${COMPOSE_PROJECT//_/-}"
     COMPOSE_PROJECT="${COMPOSE_PROJECT//[^a-z0-9-]/-}"
     docker compose -p "$COMPOSE_PROJECT" --env-file "$WORKTREE/.env" -f "$WORKTREE/compose.yaml" --profile email --profile observability --profile seaweedfs down
