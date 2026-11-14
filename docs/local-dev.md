@@ -14,6 +14,18 @@ After migrations, setup prints a URL table and a credentials table. The printed 
 
 The `filesystem` adapter is always available to the API and stores data under `.data/files` by default. SeaweedFS runs alongside it by default, so both adapters are available locally at once. One API process uses the adapter selected by `STORAGE_DRIVER`; change that setting and restart the API to switch between them. This keeps stored objects in one selected backend instead of silently writing two copies.
 
+## Better Auth local accounts
+
+Local setup generates a random `BETTER_AUTH_SECRET` in the ignored `.env` when the value is blank. The API uses `BETTER_AUTH_URL` when set, or the local `API_PUBLIC_URL`, and uses `AUTH_TRUSTED_ORIGINS` or the local `WEB_ORIGIN` as its explicit origin list. Do not use wildcard origins. Production must set `BETTER_AUTH_URL`, a high-entropy `BETTER_AUTH_SECRET` of at least 32 bytes, and `AUTH_TRUSTED_ORIGINS` explicitly.
+
+The sign-in example has no public account-creation endpoint. To provision a local/test account after applying the auth migration, set `AUTH_ENABLE_LOCAL_PROVISIONING=true`, `AUTH_PROVISION_NAME`, `AUTH_PROVISION_EMAIL`, and `AUTH_PROVISION_PASSWORD` in the ignored `.env`, then run:
+
+```sh
+npm run auth:provision-user --workspace=@starter/api
+```
+
+The provisioner is a local command, refuses `NODE_ENV=production`, and accepts only loopback database URLs. It does not print the password. Remove the provisioning values and switch `AUTH_ENABLE_LOCAL_PROVISIONING` back to `false` after creating the account. Do not use a reusable production password. The API and client sign-in flow are completed in the later authentication tasks.
+
 To override profiles for a one-off Compose command without editing `.env`, set `COMPOSE_PROFILES` for that command, for example:
 
 ```sh
@@ -46,7 +58,7 @@ curl -s http://localhost:4000/files/upload-url \
   -d '{"contentType":"image/png"}'
 ```
 
-The response contains `fileId`, `uploadUrl`, `downloadUrl`, `expiresAt`, and `maxBytes`. Send image bytes to `uploadUrl` with the matching `Content-Type` using `PUT`; then open `downloadUrl` in a browser or fetch it with `curl`. Call `POST /files/{fileId}/download-url` to issue a fresh download URL later. The current starter has no user authentication or file ownership model, so these example routes are disabled in production by default. Before enabling them in a product, require authentication and ownership checks on URL issuance, and add suitable rate limits and lifecycle cleanup.
+The response contains `fileId`, `uploadUrl`, `downloadUrl`, `expiresAt`, and `maxBytes`. Send image bytes to `uploadUrl` with the matching `Content-Type` using `PUT`; then open `downloadUrl` in a browser or fetch it with `curl`. Call `POST /files/{fileId}/download-url` to issue a fresh download URL later. These example routes do not use the auth example or implement file ownership, so they are disabled in production by default. Before enabling them in a product, require authentication and ownership checks on URL issuance, and add suitable rate limits and lifecycle cleanup.
 
 ## SeaweedFS S3 storage
 

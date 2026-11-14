@@ -111,9 +111,9 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Better Auth is pinned to a stable compatible version and runs in the API process, not as a hosted service.
-- [ ] The public signup endpoint is disabled for this sign-in-only slice; local/test account provisioning is explicit and never creates a shared production password.
-- [ ] Production startup fails clearly for missing required secrets or invalid auth configuration.
+- [x] Better Auth is pinned to a stable compatible version and runs in the API process, not as a hosted service.
+- [x] The public signup endpoint is disabled for this sign-in-only slice; local/test account provisioning is explicit and never creates a shared production password.
+- [x] Production startup fails clearly for missing required secrets or invalid auth configuration.
 
 **Verification:** Run Better Auth diagnostics/schema checks and prove a local/test account can be provisioned and read without exposing its password in logs.
 

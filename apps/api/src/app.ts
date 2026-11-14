@@ -6,6 +6,7 @@ import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import { healthResponseSchema, HEALTH_PATH } from "@starter/shared";
 import { z } from "zod";
 import { checkDatabaseConnection, createDatabase } from "./database.js";
+import { createAuth } from "./auth.js";
 import { createJobQueue, enqueueExampleJob, EXAMPLE_JOB } from "./jobs.js";
 import { createConfiguredStorage, type FileStorage } from "@starter/storage";
 import { metrics } from "@opentelemetry/api";
@@ -63,6 +64,7 @@ async function measureStorageOperation<T>(
 declare module "fastify" {
   interface FastifyInstance {
     storage: FileStorage;
+    auth: ReturnType<typeof createAuth> | null;
   }
 }
 
@@ -86,9 +88,16 @@ export function createApp() {
     },
   });
   const database = process.env.DATABASE_URL ? createDatabase() : undefined;
+  if (process.env.NODE_ENV === "production" && !database) {
+    throw new Error(
+      "DATABASE_URL is required to start the authentication-enabled API in production.",
+    );
+  }
+  const auth = database ? createAuth(database.db) : null;
   const boss = process.env.DATABASE_URL ? createJobQueue() : undefined;
   const storage = createConfiguredStorage();
   app.decorate("storage", storage);
+  app.decorate("auth", auth);
 
   const errorsLogged = new WeakSet<FastifyRequest>();
   app.addHook("onError", (request, reply, error, done) => {

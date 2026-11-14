@@ -69,6 +69,7 @@ case "$ACTION" in
     COMPOSE_PROJECT="${COMPOSE_PROJECT//[^a-z0-9-]/-}"
     DB_NAME="starter_${NAME//-/_}"
     DB_PASSWORD="local-${NAME//[^a-zA-Z0-9]/x}-change-me"
+    AUTH_SECRET="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
     cat > "$WORKTREE/.env" <<EOF
 COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT
 COMPOSE_PROFILES=email,observability,seaweedfs
@@ -89,6 +90,13 @@ SMTP_PORT=$SMTP_PORT
 SMTP_SECURE=false
 EMAIL_FROM=no-reply@example.local
 DATABASE_URL=postgresql://starter:$DB_PASSWORD@localhost:$DB_PORT/$DB_NAME
+BETTER_AUTH_URL=http://localhost:$API_PORT
+BETTER_AUTH_SECRET=$AUTH_SECRET
+AUTH_TRUSTED_ORIGINS=http://localhost:$WEB_PORT
+AUTH_ENABLE_LOCAL_PROVISIONING=false
+AUTH_PROVISION_NAME=
+AUTH_PROVISION_EMAIL=
+AUTH_PROVISION_PASSWORD=
 WEB_ORIGIN=http://localhost:$WEB_PORT
 API_URL=http://localhost:$API_PORT
 EXPO_PUBLIC_API_URL=http://localhost:$API_PORT

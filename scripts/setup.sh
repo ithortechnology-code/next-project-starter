@@ -64,6 +64,21 @@ read_setting() {
   printf '%s' "$value"
 }
 
+if [[ -z "$(read_setting .env BETTER_AUTH_SECRET '')" ]]; then
+  auth_secret="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("base64"))')"
+  auth_env_tmp="$(mktemp "$ROOT_DIR/.env.XXXXXX")"
+  trap '[[ ! -f "$auth_env_tmp" ]] || rm -f "$auth_env_tmp"' EXIT
+  awk -F= -v secret="$auth_secret" '
+    BEGIN { updated = 0 }
+    $1 == "BETTER_AUTH_SECRET" { print "BETTER_AUTH_SECRET=" secret; updated = 1; next }
+    { print }
+    END { if (!updated) print "BETTER_AUTH_SECRET=" secret }
+  ' .env > "$auth_env_tmp"
+  mv "$auth_env_tmp" .env
+  trap - EXIT
+  echo "Generated a local Better Auth secret in .env."
+fi
+
 profile_enabled() {
   printf '%s\n' "$ACTIVE_PROFILES" | tr ',' '\n' | grep -Fxq "$1"
 }
