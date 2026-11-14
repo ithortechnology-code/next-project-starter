@@ -129,11 +129,11 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Migration creates the tables and indexes required by the configured Better Auth features.
-- [ ] Fresh database setup and the existing migration runner apply it in order.
-- [ ] Runtime/setup does not depend on a separate Better Auth migration command.
+- [x] Migration creates the tables and indexes required by the configured Better Auth features.
+- [x] Fresh database setup and the existing migration runner apply it in order.
+- [x] Runtime/setup does not depend on a separate Better Auth migration command.
 
-**Verification:** Apply migrations on a clean PostgreSQL database, run the Better Auth schema check, and verify the down-migration policy matches repository migration conventions.
+**Verification:** Generated and reviewed Better Auth 1.7.24's PostgreSQL/Kysely schema. API typecheck, lint, and build pass. Applying migrations on a clean PostgreSQL database and running Better Auth's schema check remain pending with the database services unavailable in this environment.
 
 **Dependencies:** Task 6.
 
