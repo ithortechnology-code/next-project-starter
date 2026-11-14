@@ -9,6 +9,10 @@ for cmd in node npm docker; do
 done
 
 NVM_SCRIPT="${NVM_DIR:-$HOME/.nvm}/nvm.sh"
+if [[ ! -s "$NVM_SCRIPT" && -s "$HOME/.nvm/nvm.sh" ]]; then
+  NVM_SCRIPT="$HOME/.nvm/nvm.sh"
+  NVM_DIR="$HOME/.nvm"
+fi
 if [[ -s "$NVM_SCRIPT" ]]; then
   # nvm is a shell function; load it in this non-interactive Bash process.
   # shellcheck disable=SC1090
@@ -19,9 +23,10 @@ if [[ -s "$NVM_SCRIPT" ]]; then
   fi
 fi
 
-NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+NODE_VERSION="$(node -p 'process.versions.node')"
+NODE_MAJOR="${NODE_VERSION%%.*}"
 if [[ "$NODE_MAJOR" != "24" && "$NODE_MAJOR" != "26" ]]; then
-  echo "Node.js 24 (default in .nvmrc) or 26 LTS is required. Run 'nvm install && nvm use' from the repository, or select a supported version with your Node version manager, then retry." >&2
+  echo "Detected Node.js $NODE_VERSION at $(command -v node). Node.js 24 (default in .nvmrc) or 26 LTS is required. Run 'nvm install && nvm use' from the repository, or select a supported version with your Node version manager, then retry." >&2
   exit 1
 fi
 
