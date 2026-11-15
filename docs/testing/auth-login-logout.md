@@ -170,7 +170,7 @@ Install Chromium with `npx playwright install chromium`. With PostgreSQL and Mai
 AUTH_TEST_DATABASE_URL="postgresql://<user>:<password>@localhost:<port>/starter_auth_test" npm run test:auth --workspace=@starter/web
 ```
 
-Playwright owns API port 4100 and web port 3100, refuses to reuse existing servers, and uses `.next-auth-test` to avoid the normal Next.js development lock. It exercises desktop Chromium and Chromium emulating mobile web. This emulation does not claim native iOS or Safari coverage. The lifecycle test registers a unique account, verifies its Mailpit email, signs in, reloads, resets its password, checks session revocation, signs in again, and signs out. Cleanup removes its account and captured messages. Other tests cover anonymous route protection, keyboard focus, overflow, validation, invalid credentials, failed client requests, and invalid reset links. Traces and screenshots are disabled to avoid saving credentials and email tokens in artifacts. Native state automation and forced rolling renewal/expiry browser coverage remain Task 13 work.
+Playwright owns API port 4100 and web port 3100, refuses to reuse existing servers, and uses `.next-auth-test` to avoid the normal Next.js development lock. It exercises desktop Chromium and Chromium emulating mobile web. This emulation does not claim native iOS or Safari coverage. The lifecycle test registers a unique account, verifies its Mailpit email, signs in, reloads, resets its password, checks session revocation, signs in again, and signs out. Cleanup removes its account and captured messages. Other tests cover anonymous route protection, keyboard focus, overflow, validation, invalid credentials, failed client requests, and invalid reset links. Traces and screenshots are disabled to avoid saving credentials and email tokens in artifacts. The browser lifecycle test also ages only its own database session to verify rolling renewal, then expires it and verifies the protected-route redirect. Email-service rejection is simulated at the browser boundary; actual SMTP delivery and failures belong to the API/email suites.
 
 ### Observed failure: reset link invalidated during development
 
@@ -181,3 +181,19 @@ Playwright owns API port 4100 and web port 3100, refuses to reuse existing serve
 **Fix:** Guard initial token capture with a component ref. Keep the token only in component memory and remove it from the address bar.
 
 **Regression:** `apps/web/tests/auth.spec.ts` covers both an invalid reset token and a real reset email through completion in development mode, on desktop and mobile web. Expected invalid credentials and expired tokens remain negative cases, not implementation defects.
+
+
+### Native state automation and device checklist (Task 13)
+
+Run `npm run test:auth --workspace=@starter/mobile`. The `jest-expo/ios` suite renders the real app and mocks API, link, and platform boundaries. It covers anonymous validation, sign-in rejection and confirmation, persisted-session lookup, sign-out, foreground revalidation after API failure or expiry, and cold verification/reset links. It does not prove Keychain persistence or real email-client handoff. CI's quality job runs this suite; the isolated auth integration job runs desktop/mobile-web browser tests. Remote CI execution must be checked on the corresponding pushed workflow run.
+
+Retain these device checks on iOS; Android runtime remains optional:
+
+- [x] Native build renders sign-in/sign-up actions and validation (Task 12 simulator evidence).
+- [x] Verify email callback opens the native app and reset callback displays the reset form (Task 12).
+- [x] Sign in, terminate, and relaunch; the API-confirmed session persists (Task 12).
+- [ ] Tap Sign out on the simulator/device, relaunch, and confirm protected state remains cleared. Automated component and server revocation checks pass; the earlier simulator automation exposed only the macOS menu and did not verify this tap.
+- [ ] Check keyboard return navigation, autofill, screen-reader order, and pressed/disabled controls on the device.
+- [ ] Follow a reset email through the external mail client and complete the native reset; verify other sessions are revoked.
+
+These unchecked device checks are not implied by passing mocked component tests.

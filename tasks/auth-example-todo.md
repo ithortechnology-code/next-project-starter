@@ -255,7 +255,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Verification:** Run focused suites locally and in CI; capture artifacts only when they are useful and redact credentials/session data.
 
-**Progress:** Added desktop/mobile-web Playwright lifecycle coverage and CI wiring. Browser reset tests exposed and fixed Strict Mode token recapture. Native state automation, forced browser renewal/expiry, and email-failure coverage remain open; Task 13 is not complete.
+**Progress:** Desktop/mobile-web Playwright now covers the real lifecycle, forced rolling renewal/expiry, protected routes, API failure, simulated email-service rejection, validation, keyboard focus, and overflow. The iOS Jest component suite covers session/sign-in/sign-out, foreground failure/expiry, and cold link states. CI jobs run both suites with isolated services for browser tests. Local checks pass; remote CI execution has not been observed. The linked test document records actual iOS evidence and the remaining device-only sign-out, keyboard/accessibility, and mail-client reset checks; Task 13 stays open until these are verified.
 
 **Dependencies:** Tasks 10–12.
 

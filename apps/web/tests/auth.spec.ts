@@ -86,6 +86,32 @@ test("registration, email verification, reload, reset revocation and sign-out", 
     await signIn(password);
     await page.reload();
     await expect(page.getByRole("heading", { name: "You’re signed in." })).toBeVisible();
+    // Age only this test user's session to exercise the server's rolling policy.
+    const { Client: DatabaseClient } = await import("pg");
+    const sessionDb = new DatabaseClient({ connectionString: process.env.AUTH_TEST_DATABASE_URL });
+    await sessionDb.connect();
+    try {
+      await sessionDb.query(
+        `UPDATE session SET "updatedAt" = now() - interval '2 days', "expiresAt" = now() + interval '1 day' WHERE "userId" IN (SELECT id FROM "user" WHERE email = $1)`,
+        [email],
+      );
+      await page.reload();
+      await expect(page.getByRole("heading", { name: "You’re signed in." })).toBeVisible();
+      const renewed = await sessionDb.query(
+        `SELECT "expiresAt" > now() + interval '6 days' AS renewed FROM session WHERE "userId" IN (SELECT id FROM "user" WHERE email = $1)`,
+        [email],
+      );
+      expect(renewed.rows[0]?.renewed).toBe(true);
+      await sessionDb.query(
+        `UPDATE session SET "expiresAt" = now() - interval '1 minute' WHERE "userId" IN (SELECT id FROM "user" WHERE email = $1)`,
+        [email],
+      );
+      await page.reload();
+      await expect(page).toHaveURL(/sign-in/);
+      await signIn(password);
+    } finally {
+      await sessionDb.end();
+    }
     await page.goto("/forgot-password");
     await page.getByLabel("Email", { exact: true }).fill(email);
     await page.getByRole("button", { name: "Send reset link" }).click();
@@ -114,4 +140,19 @@ test("registration, email verification, reload, reset revocation and sign-out", 
       await request.delete(`${mailpit}/api/v1/search`, { params: { query: `to:${email}` } });
     }
   }
+});
+
+test("email service rejection is recoverable", async ({ page }) => {
+  await page.goto("/forgot-password");
+  await page.route("**/api/auth/request-password-reset", (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ message: "Unavailable" }),
+    }),
+  );
+  await page.getByLabel("Email", { exact: true }).fill("unavailable@example.test");
+  await page.getByRole("button", { name: "Send reset link" }).click();
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("couldn’t process");
+  await expect(page.getByRole("button", { name: "Send reset link" })).toBeEnabled();
 });
