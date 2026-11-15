@@ -245,7 +245,7 @@ Deployment files are supplied as a starting point. **Remote CI, VPS rollout, sta
 
 Follow the [VPS guide](docs/deploy-vps.md) in this order:
 
-1. Connect your own GitHub repository and review workflow triggers before pushing. Pushes to `main` can publish GHCR images, and successful CI can trigger the staging workflow. Require appropriate protected GitHub Environments before enabling deployment.
+1. Connect your own GitHub repository and review workflow triggers before pushing. CI runs on pushes to `main`. Image publishing is disabled until the repository variable `ENABLE_IMAGE_PUBLISHING=true` is set. VPS workflows also require repository variables `DEPLOYMENT_PROVIDER=vps` and `ENABLE_VPS_DEPLOYMENTS=true`. Configure protected GitHub Environments, hosting and secrets before opting in.
 2. Run and inspect CI and validate the Docker image builds in that repository. The current quality matrix targets Node 24/26; remote results are still to follow. Do not put cloud credentials in workflow files.
 3. Provision an isolated staging VPS, domains, TLS, SMTP, storage, database credentials, backups and environment secrets. Test the actual web/API/native URLs, email links, migrations and telemetry there.
 4. Verify backup restoration, application rollback and database migration compatibility. Treat existing PostgreSQL version upgrades as separate maintenance work.

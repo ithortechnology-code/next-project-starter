@@ -91,7 +91,7 @@ jobs:
           MAILPIT_API_URL: http://localhost:8025
 
   publish:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: vars.ENABLE_IMAGE_PUBLISHING == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: quality
     runs-on: ubuntu-latest
     permissions:

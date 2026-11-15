@@ -30,7 +30,7 @@
     "apps/api/src/app.ts": "fec5a3bf43d65e12dd51dbe73a4079623a0602a2252037d8ac3466137e72e663",
     "packages/shared/src/index.ts": "f487c25609963d41b96134ffee0347a63cff9da65217ff4635bf520b476ef478",
     ".env.example": "e7b22795cf0a1e73fbb7e0c7bab95aee9a14a55be25c8cc791d8328ac0fcbbf8",
-    ".github/workflows/ci.yml": "d9691ac47ca45801df2d4ffbbff1bae9ae5620008347687fda15fa7295171abe",
+    ".github/workflows/ci.yml": "9f44f208ee50dc655a28ed4e4d391fae80f4e8bcfcd9a27c5d3993b7411357b2",
     "apps/api/src/email.ts": "fde93c1005e4100c7b7c33b1b89e47df8edeade5731ad935074598befd2abe1a",
     "apps/api/package.json": "4616544b24bd1d0d279c043c1c62dd85e5d8e21d119751d46315733a74b30d83",
     "apps/web/package.json": "3d4c2448aeb72a109ee99dd3050a97a9f4bd682b7f812e16ee73810af5e4d5be",

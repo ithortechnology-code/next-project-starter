@@ -6,6 +6,10 @@ The starter deploys the API and web app to two independent Ubuntu 24.04 VPSes. P
 
 Existing PostgreSQL 17 deployments need a maintenance-window backup and restore before normal deployment to PostgreSQL 18. Follow the [PostgreSQL 18 upgrade guide](postgresql-18-upgrade.md); the deploy script blocks rollout until the restore has been verified and marked complete.
 
+## Opt-in gates
+
+Publishing and deployment are disabled by default. Only after configuring hosting, secrets, and protected `staging`/`production` GitHub Environments, set repository variables `ENABLE_IMAGE_PUBLISHING=true`, `DEPLOYMENT_PROVIDER=vps`, and `ENABLE_VPS_DEPLOYMENTS=true`. Unset variables skip the corresponding jobs. Keep these unset while validating source-only CI. Do not enable VPS deployment without image publishing and verified environment protection.
+
 ## Release flow
 
 1. A pull request runs `npm ci`, lint, typecheck, and production builds.
