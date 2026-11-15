@@ -249,11 +249,13 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Browser suite covers registration/verification, sign-in, reset, email/API failure, protected routes, refresh/expiry, sign-out, keyboard reachability, and horizontal overflow.
+- [x] Browser suite covers registration/verification, sign-in, reset, email/API failure, protected routes, refresh/expiry, sign-out, keyboard reachability, and horizontal overflow.
 - [ ] Native tests cover lifecycle, revalidation, and link states on iOS; the device checklist covers SecureStore, email links, and iOS keyboard/navigation. Android runtime coverage is optional and non-blocking.
 - [ ] CI runs the automated suites with isolated services and no external credentials.
 
 **Verification:** Run focused suites locally and in CI; capture artifacts only when they are useful and redact credentials/session data.
+
+**Local verification:** 10 browser tests and 7 iOS component tests pass. Keyboard submission and password-visibility semantics have regression coverage; native Next actions now move focus through email, password, and confirmation. Remote CI is blocked by the absence of a Git remote; a repository URL has been requested. Device-only checks remain listed explicitly below and in the testing document.
 
 **Progress:** Desktop/mobile-web Playwright now covers the real lifecycle, forced rolling renewal/expiry, protected routes, API failure, simulated email-service rejection, validation, keyboard focus, and overflow. The iOS Jest component suite covers session/sign-in/sign-out, foreground failure/expiry, and cold link states. CI jobs run both suites with isolated services for browser tests. Local checks pass; remote CI execution has not been observed. The linked test document records actual iOS evidence and the remaining device-only keyboard/accessibility and mail-client reset checks; Task 13 stays open until these are verified.
 

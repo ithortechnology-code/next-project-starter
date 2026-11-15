@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
+import { useState, type ComponentProps } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-type Props = TextInputProps & { label: string; error?: string | undefined };
+type Props = ComponentProps<typeof TextInput> & { label: string; error?: string | undefined };
 
 export function AuthField({ label, error, secureTextEntry, ...inputProps }: Props) {
   const [visible, setVisible] = useState(false);

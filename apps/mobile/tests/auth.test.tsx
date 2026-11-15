@@ -129,3 +129,15 @@ test("sign-in confirms session with API and handles rejected credentials", async
   await waitFor(() => expect(screen.getByText("Test User")).toBeTruthy());
   expect(client.getSession).toHaveBeenCalledTimes(2);
 });
+
+test("password keyboard submit validates and visibility toggle has accessible state", async () => {
+  await render(<App />);
+  await waitFor(() => expect(screen.getByLabelText("Email")).toBeTruthy());
+  expect(screen.getByLabelText("Email").props.returnKeyType).toBe("next");
+  expect(screen.getByLabelText("Password").props.returnKeyType).toBe("done");
+  await fireEvent(screen.getByLabelText("Password"), "submitEditing");
+  expect(screen.getAllByRole("alert").length).toBeGreaterThan(0);
+  await fireEvent.press(screen.getByRole("button", { name: "Show password" }));
+  expect(screen.getByLabelText("Password").props.secureTextEntry).toBe(false);
+  expect(screen.getByRole("button", { name: "Hide password" })).toBeTruthy();
+});

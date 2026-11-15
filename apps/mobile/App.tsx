@@ -1,5 +1,5 @@
 import "./global.css";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentRef } from "react";
 import {
   ActivityIndicator,
   AppState,
@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useColorScheme,
   View,
 } from "react-native";
@@ -61,6 +62,9 @@ export default function App() {
   const [signedOutNotice, setSignedOutNotice] = useState("");
   const [refreshError, setRefreshError] = useState(false);
   const checkedAt = useRef(0);
+  const emailInput = useRef<ComponentRef<typeof TextInput>>(null);
+  const passwordInput = useRef<ComponentRef<typeof TextInput>>(null);
+  const confirmationInput = useRef<ComponentRef<typeof TextInput>>(null);
 
   const refreshSession = useCallback(async (initial = false) => {
     if (initial) setChecking(true);
@@ -353,6 +357,7 @@ export default function App() {
               label="Name"
               value={name}
               onChangeText={setName}
+              onSubmitEditing={() => emailInput.current?.focus()}
               autoComplete="name"
               error={fieldErrors.name}
               returnKeyType="next"
@@ -360,6 +365,7 @@ export default function App() {
           ) : null}
           {mode !== "reset" ? (
             <AuthField
+              ref={emailInput}
               label="Email"
               value={email}
               onChangeText={setEmail}
@@ -370,11 +376,13 @@ export default function App() {
               returnKeyType={mode === "forgot" || mode === "resend" ? "done" : "next"}
               onSubmitEditing={() => {
                 if (mode === "forgot" || mode === "resend") void submit();
+                else passwordInput.current?.focus();
               }}
             />
           ) : null}
           {mode === "sign-in" || mode === "sign-up" || mode === "reset" ? (
             <AuthField
+              ref={passwordInput}
               label="Password"
               value={password}
               onChangeText={setPassword}
@@ -384,11 +392,13 @@ export default function App() {
               returnKeyType={mode === "sign-up" || mode === "reset" ? "next" : "done"}
               onSubmitEditing={() => {
                 if (mode === "sign-in") void submit();
+                else confirmationInput.current?.focus();
               }}
             />
           ) : null}
           {mode === "sign-up" || mode === "reset" ? (
             <AuthField
+              ref={confirmationInput}
               label="Confirm password"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
