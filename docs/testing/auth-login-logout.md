@@ -192,8 +192,10 @@ Retain these device checks on iOS; Android runtime remains optional:
 - [x] Native build renders sign-in/sign-up actions and validation (Task 12 simulator evidence).
 - [x] Verify email callback opens the native app and reset callback displays the reset form (Task 12).
 - [x] Sign in, terminate, and relaunch; the API-confirmed session persists (Task 12).
-- [ ] Tap Sign out on the simulator/device, relaunch, and confirm protected state remains cleared. Automated component and server revocation checks pass; the earlier simulator automation exposed only the macOS menu and did not verify this tap.
+- [x] Tap Sign out on the simulator/device, relaunch, and confirm protected state remains cleared. Verified on the iOS 26.5 simulator on 2026-11-15; a second sign-in/sign-out run visibly displayed “You have signed out.”
 - [ ] Check keyboard return navigation, autofill, screen-reader order, and pressed/disabled controls on the device.
 - [ ] Follow a reset email through the external mail client and complete the native reset; verify other sessions are revoked.
 
 These unchecked device checks are not implied by passing mocked component tests.
+
+**Additional iOS evidence (2026-11-15):** Registered a disposable local account, opened its actual Mailpit verification link in simulator Safari, accepted the system app handoff, and observed verified state. Signed in through the native form and signed out through its visible action. Requested reset through the native form and opened the actual reset email URL in Safari; accepting the system handoff displayed the native replacement-password form. Full reset submission is pending user handoff because the computer-use tool requires the user to enter and submit new authentication credentials. This verifies the browser-to-app handoff, not an installed mail client. VoiceOver/autofill/keyboard and mail-client-specific checks remain unverified. The repository has no Git remote, so remote CI cannot be executed or inspected from this checkout; local suite results and workflow configuration are the available evidence.
