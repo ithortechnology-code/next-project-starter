@@ -4,6 +4,8 @@ A reusable TypeScript boilerplate for building a web app, an iOS/Android app, an
 
 **Start here:** copy the repository, choose whether to include auth, run local setup, then adapt the generated project. You do not need cloud credentials to try it locally.
 
+[Create a project from this template](https://github.com/ithortechnology-code/next-project-starter/generate) · [Source repository](https://github.com/ithortechnology-code/next-project-starter)
+
 ## Is this an installer package?
 
 This is currently a **repository template with a local recipe generator**. The root npm package is private. There is no published `create-project-starter` package, `npx` installer, project-name wizard, or versioned scaffold release yet.
@@ -67,18 +69,18 @@ The local workflow was exercised on macOS. Windows users need an appropriate Bas
 
 ## Create your own project
 
-Choose one method. Replace the example repository URLs with real URLs; this checkout does not supply a published installer or public source URL.
+Choose one method. The source URL below is this public template; replace `YOUR_ORG/MY_PROJECT` with your own empty destination repository. There is no published npm installer.
 
 ### GitHub template
 
-1. Open the published source repository and select **Use this template → Create a new repository**.
+1. Open [this template](https://github.com/ithortechnology-code/next-project-starter) and select **Use this template → Create a new repository**.
 2. Clone your new repository and enter its directory.
 3. Choose a recipe and run setup below, **before editing app source or package manifests**.
 
 ### Clone a copy
 
 ```sh
-git clone https://github.com/YOUR_ORG/YOUR_STARTER.git my-project
+git clone https://github.com/ithortechnology-code/next-project-starter.git my-project
 cd my-project
 
 # Keep the original as an upstream and connect your own empty repository.
