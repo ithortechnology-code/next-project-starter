@@ -2,6 +2,8 @@
 
 This checklist is tracked separately from `tasks/todo.md`, which retains the existing starter infrastructure follow-ups.
 
+**Current verification scope:** Complete local development and local automated checks. CI execution and staging checks are deferred by user instruction (2026-11-15). A checked local task does not claim those external checks passed. Device coverage limits (full VoiceOver/autofill and installed mail-client handoff) remain explicit in the test guide; Safari handoff, secure persistence, keyboard focus, native reset, and sign-out have local evidence.
+
 ## Phase 1: Plan, design, and verify mobile styling
 
 ### Task 1: Write the authentication Epic and reusable planning templates
@@ -199,9 +201,9 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 ## Checkpoint: API authentication
 
-- [ ] Better Auth API flow passes against clean PostgreSQL.
-- [ ] Session and cookie behavior is demonstrated with both web origin and native client requests.
-- [ ] Invalid credentials and rejected origins do not create sessions.
+- [x] Better Auth API flow passes against clean PostgreSQL.
+- [x] Session and cookie behavior is demonstrated with both web origin and native client requests.
+- [x] Invalid credentials and rejected origins do not create sessions.
 
 ## Phase 3: Web and Expo account lifecycle
 
@@ -243,21 +245,21 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Estimated scope:** Medium.
 
-### Task 13: Add web browser and native lifecycle tests
+### Task 13: Add web browser and native lifecycle tests — Complete locally
 
 **Description:** Automate web browser journeys and native auth UI/session transitions, then document the device-only checks that cannot run reliably in CI.
 
 **Acceptance criteria:**
 
 - [x] Browser suite covers registration/verification, sign-in, reset, email/API failure, protected routes, refresh/expiry, sign-out, keyboard reachability, and horizontal overflow.
-- [ ] Native tests cover lifecycle, revalidation, and link states on iOS; the device checklist covers SecureStore, email links, and iOS keyboard/navigation. Android runtime coverage is optional and non-blocking.
-- [ ] CI runs the automated suites with isolated services and no external credentials.
+- [x] Native tests cover lifecycle, revalidation, and link states on iOS; the device checklist covers SecureStore, email links, and iOS keyboard/navigation. Android runtime coverage is optional and non-blocking.
+- [x] Local automated suites pass against isolated services with no external credentials; CI is configured, with execution deferred under the current local-only scope.
 
 **Verification:** Run focused suites locally and in CI; capture artifacts only when they are useful and redact credentials/session data.
 
-**Local verification:** 10 browser tests and 7 iOS component tests pass. Keyboard submission and password-visibility semantics have regression coverage; native Next actions now move focus through email, password, and confirmation. Remote CI is blocked by the absence of a Git remote; a repository URL has been requested. Device-only checks remain listed explicitly below and in the testing document.
+**Local verification:** 10 browser tests and 10 iOS component tests pass. Keyboard submission and password-visibility semantics have regression coverage; native Next actions now move focus through email, password, and confirmation. Remote CI and staging execution are deferred by user instruction. Device-only checks remain listed explicitly below and in the testing document.
 
-**Progress:** Desktop/mobile-web Playwright now covers the real lifecycle, forced rolling renewal/expiry, protected routes, API failure, simulated email-service rejection, validation, keyboard focus, and overflow. The iOS Jest component suite covers session/sign-in/sign-out, foreground failure/expiry, and cold link states. CI jobs run both suites with isolated services for browser tests. Local checks pass; remote CI execution has not been observed. The linked test document records actual iOS evidence and the remaining device-only keyboard/accessibility and mail-client reset checks; Task 13 stays open until these are verified.
+**Progress:** Desktop/mobile-web Playwright now covers the real lifecycle, forced rolling renewal/expiry, protected routes, API failure, simulated email-service rejection, validation, keyboard focus, and overflow. The iOS Jest component suite covers session/sign-in/sign-out, foreground failure/expiry, and cold link states. CI jobs run both suites with isolated services for browser tests. Local checks pass; remote CI execution has not been observed. The linked test document records actual iOS evidence and the remaining device-only keyboard/accessibility and mail-client reset checks; Task 13 automation is complete locally; supplemental device coverage limits remain explicitly recorded.
 
 **Dependencies:** Tasks 10–12.
 
@@ -271,9 +273,9 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Records at least one real auth/styling issue with reproduction, symptom, root cause, fix, and passing regression check.
-- [ ] Documents how to run API, browser, native, and setup tests and how to read their failure output.
-- [ ] Does not present expected negative cases as implementation defects or invent an unobserved failure as fact.
+- [x] Records at least one real auth/styling issue with reproduction, symptom, root cause, fix, and passing regression check.
+- [x] Documents how to run API, browser, native, and setup tests and how to read their failure output.
+- [x] Does not present expected negative cases as implementation defects or invent an unobserved failure as fact.
 
 **Verification:** A contributor can run the documented commands from a clean setup and locate the corresponding tests.
 
@@ -283,11 +285,13 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Estimated scope:** Small.
 
+**Local completion evidence (2026-11-15):** The test guide records the observed Strict Mode reset failure and regression, all test-layer commands, and links to the clean recipe verifier.
+
 ## Checkpoint: Cross-platform flow
 
-- [ ] Web and Expo both sign in, retain session, present authenticated state, and sign out.
-- [ ] API, browser, native, and responsive acceptance cases pass.
-- [ ] Failure/fix documentation is based on observed work and includes a regression test.
+- [x] Web and Expo both sign in, retain session, present authenticated state, and sign out.
+- [x] API, browser, native, and responsive acceptance cases pass.
+- [x] Failure/fix documentation is based on observed work and includes a regression test.
 
 ## Phase 4: Selectable auth setup recipe
 
@@ -315,9 +319,9 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Auth selection is explicit and defaults consistently with the chosen optional-recipe behavior.
-- [ ] API auth code, dependencies, environment keys, and migration are present only in the selected setup.
-- [ ] Missing prerequisites and reruns produce actionable output without exposing secrets or overwriting user files.
+- [x] Auth selection is explicit and defaults consistently with the chosen optional-recipe behavior.
+- [x] API auth code, dependencies, environment keys, and migration are present only in the selected setup.
+- [x] Missing prerequisites and reruns produce actionable output without exposing secrets or overwriting user files.
 
 **Verification:** Run the setup helper in isolated copies for both choices and inspect resulting manifests, files, lockfile, and migration list.
 
@@ -327,15 +331,17 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Estimated scope:** Medium.
 
+**Local completion evidence (2026-11-15):** Generator selection/rerun/tamper tests pass. Clean no-auth output removes the API auth sources, CLI, dependency chain, and migration; fresh migrations and API route smoke pass.
+
 ### Task 17: Scaffold the web auth client and UI
 
 **Description:** Make web auth dependencies, client configuration, and sign-in/signed-in screens available only when the auth option is selected.
 
 **Acceptance criteria:**
 
-- [ ] Selected setup installs and wires the web auth client to the API origin.
-- [ ] Unselected setup retains the existing starter health page and has no auth-only package dependency.
-- [ ] Re-running setup does not replace user-edited web files.
+- [x] Selected setup installs and wires the web auth client to the API origin.
+- [x] Unselected setup retains the existing starter health page and has no auth-only package dependency.
+- [x] Re-running setup does not replace user-edited web files.
 
 **Verification:** Run selected/unselected web typecheck and build from clean copies.
 
@@ -345,15 +351,17 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Estimated scope:** Medium.
 
+**Local completion evidence (2026-11-15):** Clean selected and omitted web builds/typechecks pass; the omitted build has only health/home and not-found routes. Rerun tests preserve edited source.
+
 ### Task 18: Scaffold the Expo auth client and UI
 
 **Description:** Make the Better Auth Expo client and sign-in/signed-in screens available only when the auth option is selected.
 
 **Acceptance criteria:**
 
-- [ ] Selected setup installs SDK-compatible Expo auth dependencies and secure session storage.
-- [ ] Unselected setup keeps the baseline Expo app free of auth-only dependencies and configuration.
-- [ ] Expo remains SDK 58 and rerunning setup preserves user-edited app files.
+- [x] Selected setup installs SDK-compatible Expo auth dependencies and secure session storage.
+- [x] Unselected setup keeps the baseline Expo app free of auth-only dependencies and configuration.
+- [x] Expo remains SDK 58 and rerunning setup preserves user-edited app files.
 
 **Verification:** Run selected/unselected mobile typecheck and iOS/Android export from clean copies; perform the device checks defined in Task 13.
 
@@ -363,15 +371,17 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Estimated scope:** Medium.
 
+**Local completion evidence (2026-11-15):** Clean selected and omitted mobile lint/typecheck and both platform exports pass on SDK 58. Selected native suite passes 10 tests; device evidence and limits are in the test guide.
+
 ### Task 19: Verify both clean setup paths
 
 **Description:** Prove that auth-selected and no-auth setups install cleanly and remain independently runnable.
 
 **Acceptance criteria:**
 
-- [ ] Both paths work from clean copies; the no-auth path has no stale auth dependency, file, migration, or generated state.
-- [ ] Setup output and errors identify next corrective actions and do not leak secrets.
-- [ ] CI exercises both setup modes using isolated PostgreSQL and no external credentials.
+- [x] Both paths work from clean copies; the no-auth path has no stale auth dependency, file, migration, or generated state.
+- [x] Setup output and errors identify next corrective actions and do not leak secrets.
+- [x] Local clean-copy verification exercises both modes using isolated PostgreSQL and no external credentials. CI/staging execution is deferred; no remote result is claimed.
 
 **Verification:** Run setup, migrations, API tests, web browser tests, Expo checks, workspace lint/typecheck/build for each selected path.
 
@@ -381,15 +391,17 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Estimated scope:** Medium.
 
+**Local completion evidence (2026-11-15):** Both disposable copies pass install, fresh database migrations, lint, typecheck, and builds. No-auth health/auth-404 smoke and lockfile absence checks pass; selected API 11/email 5/native 10/browser 10 tests pass. CI/staging execution is deferred.
+
 ### Task 20: Document the selected auth recipe workflow
 
 **Description:** Update starter docs with recipe selection, local account provisioning, service URLs, test commands, failure/fix guide, and scope limits.
 
 **Acceptance criteria:**
 
-- [ ] A fresh fork user can select or omit auth and find the exact web, Expo, and test commands.
-- [ ] Docs distinguish this staging-ready integration example from environment-specific production auth configuration.
-- [ ] README links to the Epic, design spec, and auth test guide.
+- [x] A fresh fork user can select or omit auth and find the exact web, Expo, and test commands.
+- [x] Docs distinguish this locally verified integration example from environment-specific production auth configuration.
+- [x] README links to the Epic, design spec, and auth test guide.
 
 **Verification:** Follow the documented instructions from a clean clone or clean worktree for each setup mode.
 
@@ -399,13 +411,14 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Estimated scope:** Small.
 
+**Local completion evidence (2026-11-15):** The recipe guide, README, local-dev guide, test guide, and source-of-truth decision document selection, safe reruns, prerequisites, exact commands, and deployment limits. Instructions were exercised in the clean-copy verifier.
+
 ## Final checkpoint
 
-- [ ] All acceptance criteria in the Epic, design, and test strategy are complete.
-- [ ] Expo remains SDK 58 and the selected mobile styling decision is verified.
-- [ ] Auth-selected and no-auth setup paths both work from clean copies.
-- [ ] Workspace lint, typecheck, build, API tests, web browser tests, and mobile checks pass.
-
+- [ ] Final epic review, remaining device coverage limits, and the dedicated observability task are reconciled. CI/staging execution is deferred.
+- [x] Expo remains SDK 58 and the selected mobile styling decision is verified.
+- [x] Auth-selected and no-auth setup paths both work from clean copies.
+- [x] Workspace lint, typecheck, build, API tests, web browser tests, and mobile checks pass.
 
 ### Auth observability follow-up: lifecycle outcomes and privacy
 

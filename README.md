@@ -106,3 +106,7 @@ See [SPEC.md](SPEC.md) and [CAPABILITIES.md](CAPABILITIES.md) for the starter co
 - [Cloudflare Origin CA certificates](https://developers.cloudflare.com/ssl/origin-configuration/origin-ca/)
 - [Cloudflare proxy status](https://developers.cloudflare.com/dns/proxy-status/)
 - [GitHub Actions with GHCR](https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions)
+
+## Optional auth recipe
+
+Choose auth or the no-auth baseline before editing a fresh fork. See the [recipe workflow](docs/auth-recipe.md), [auth epic](docs/epics/auth-login-logout.md), [design specification](docs/design/auth-login-logout.md), and [test guide](docs/testing/auth-login-logout.md). CI and staging execution are currently deferred; local verification does not imply deployment readiness.

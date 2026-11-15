@@ -88,3 +88,7 @@ If authenticated requests return `AccessDenied`, verify that the running Seaweed
 ## Agent workspaces
 
 `./scripts/agent-env.sh create <name>` allocates ten deterministic ports per worktree: API, web, PostgreSQL, Expo, SMTP, Mailpit, OpenObserve, Collector gRPC, Collector HTTP, and SeaweedFS. Generated workspaces enable all three optional profiles by default and have separate database, OpenObserve, and SeaweedFS volumes. Remove unused entries from that worktree's `COMPOSE_PROFILES` to reduce its services. Agent workspace credentials are local examples and must not be reused in deployed environments.
+
+## Optional auth recipe
+
+Choose auth or the no-auth baseline before editing a fresh fork. See the [recipe workflow](auth-recipe.md), [auth epic](epics/auth-login-logout.md), [design specification](design/auth-login-logout.md), and [test guide](testing/auth-login-logout.md). CI and staging execution are currently deferred; local verification does not imply deployment readiness.

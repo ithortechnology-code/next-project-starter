@@ -64,9 +64,9 @@ Use browser automation for route, form, session, and viewport cases. Add a keybo
 | NATIVE-04 | Submit invalid credentials, invalid/reused links, or simulate unavailable API/email service | Native feedback is announced and recoverable; no stale authenticated content appears.                                        |
 | NATIVE-05 | Sign out or complete password reset, then navigate Back/resume                              | Server revokes sessions and local session/navigation state is cleared.                                                       |
 | NATIVE-06 | Open verification/reset email links on iOS                                                  | Supported deep link or web fallback reaches the correct flow; tokens are not logged or persisted in plain text.              |
-| NATIVE-07 | Use iOS keyboard, autofill, screen reader semantics, safe areas, and shorter screens         | Fields, feedback, and next actions remain reachable; controls use native accessibility semantics.                            |
-| NATIVE-08 | Connect an iOS simulator/device using its configured API origin                             | Requests reach the API without assuming that `localhost` points to a physical phone's own loopback.                            |
-| NATIVE-09 | Render real auth components on iOS                                                         | Layout, colors, pressed/disabled states, accessibility, and keyboard behavior work in runtime; bundling alone is not a pass. |
+| NATIVE-07 | Use iOS keyboard, autofill, screen reader semantics, safe areas, and shorter screens        | Fields, feedback, and next actions remain reachable; controls use native accessibility semantics.                            |
+| NATIVE-08 | Connect an iOS simulator/device using its configured API origin                             | Requests reach the API without assuming that `localhost` points to a physical phone's own loopback.                          |
+| NATIVE-09 | Render real auth components on iOS                                                          | Layout, colors, pressed/disabled states, accessibility, and keyboard behavior work in runtime; bundling alone is not a pass. |
 
 Use automated client/UI checks for deterministic state transitions and errors. Keep a manual iOS checklist for secure-storage persistence and platform behavior that the chosen automation runtime cannot prove. Android remains supported and should continue to export, but Android runtime review is optional and does not block routine auth tasks unless the change is Android-specific or Android verification is explicitly requested.
 
@@ -161,7 +161,6 @@ npm run build --workspace=@starter/mobile
 
 The Expo export must report both Android and iOS bundles. For the default native quick-check, set `EXPO_PUBLIC_API_URL` to an origin reachable from iOS, then run `npm run ios --workspace=@starter/mobile`. The iOS Simulator can reach the host's localhost API; physical iOS devices need the computer's LAN address. A native development build is needed to test the configured `projectstarter://` scheme; Expo Go does not register it for this project. Exercise the native lifecycle, links, secure persistence, and session checks on iOS before marking Task 12 complete. Android runtime review is an optional follow-up; keep Android export passing, and run an Android emulator/device check when a change is Android-specific or explicit Android verification is requested.
 
-
 ### Browser lifecycle automation (Task 13)
 
 Install Chromium with `npx playwright install chromium`. With PostgreSQL and Mailpit running and migrations applied to a disposable database whose name contains `test`, run:
@@ -182,7 +181,6 @@ Playwright owns API port 4100 and web port 3100, refuses to reuse existing serve
 
 **Regression:** `apps/web/tests/auth.spec.ts` covers both an invalid reset token and a real reset email through completion in development mode, on desktop and mobile web. Expected invalid credentials and expired tokens remain negative cases, not implementation defects.
 
-
 ### Native state automation and device checklist (Task 13)
 
 Run `npm run test:auth --workspace=@starter/mobile`. The `jest-expo/ios` suite renders the real app and mocks API, link, and platform boundaries. It covers anonymous validation, sign-in rejection and confirmation, persisted-session lookup, sign-out, foreground revalidation after API failure or expiry, and cold verification/reset links. It does not prove Keychain persistence or real email-client handoff. CI's quality job runs this suite; the isolated auth integration job runs desktop/mobile-web browser tests. Remote CI execution must be checked on the corresponding pushed workflow run.
@@ -202,3 +200,7 @@ These unchecked device checks are not implied by passing mocked component tests.
 **Additional iOS evidence (2026-11-15):** Registered a disposable local account, opened its actual Mailpit verification link in simulator Safari, accepted the system app handoff, and observed verified state. Signed in through the native form and signed out through its visible action. Requested reset through the native form and opened the actual reset email URL in Safari; accepting the system handoff displayed the native replacement-password form. The user completed native reset submission; the simulator displayed “Your password has been updated. Sign in with your new password.” A subsequent API check rejected the old password (401), accepted the new password, and signed out the verification session. No passwords were included in the evidence output. This verifies the browser-to-app handoff, not an installed mail client. VoiceOver/autofill/keyboard and mail-client-specific checks remain unverified. The repository has no Git remote, so remote CI cannot be executed or inspected from this checkout; local suite results and workflow configuration are the available evidence.
 
 **Keyboard follow-up:** Inspection found that fields advertised Next without moving focus. The native form now forwards refs and advances name → email → password → confirmation where applicable; Done submits. Seven iOS component tests pass, including keyboard submission validation and password-visibility accessibility labels. The simulator accessibility tree exposes labeled fields and actions in form order. A full VoiceOver/autofill pass and reliable physical keyboard focus verification remain unchecked; component tests do not claim these runtime results.
+
+### Setup recipe tests
+
+Run `node --test scripts/tests/auth-recipe.test.mjs` for disposable-copy selection, rerun, and tamper checks. Run `AUTH_TEST_DATABASE_URL="postgresql://<user>:<password>@localhost:<port>/starter_auth_test" node scripts/verify-auth-recipes.mjs` from the reference checkout for clean install, isolated migrations, workspace gates, and auth/browser/native suites. This requires local PostgreSQL, Mailpit, and installed Playwright Chromium. See the [recipe workflow](../auth-recipe.md) for prerequisites and no-auth commands. CI and staging runs are deferred under the local-only scope.
