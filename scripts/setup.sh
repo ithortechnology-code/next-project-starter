@@ -40,6 +40,19 @@ if ! docker compose version >/dev/null 2>&1; then
   exit 1
 fi
 
+# Resolve the recipe before dependency installation or environment provisioning.
+if [[ -f .starter/auth-selection.json ]]; then
+  selected_auth="$(node -p 'JSON.parse(require("node:fs").readFileSync(".starter/auth-selection.json", "utf8")).choice')"
+else
+  selected_auth="${AUTH_RECIPE:-}"
+  if [[ -z "$selected_auth" && -t 0 ]]; then
+    read -r -p "Include Better Auth lifecycle? [y/N] " auth_answer
+    case "$auth_answer" in y|Y|yes|YES) selected_auth="better-auth" ;; *) selected_auth="none" ;; esac
+  fi
+  selected_auth="${selected_auth:-none}"
+fi
+node scripts/scaffold-auth.mjs "${AUTH_RECIPE:-$selected_auth}"
+
 if [[ ! -f .env ]]; then
   cp .env.example .env
   echo "Created .env from .env.example. Change the local password before use outside a dev machine."
@@ -64,7 +77,7 @@ read_setting() {
   printf '%s' "$value"
 }
 
-if [[ -z "$(read_setting .env BETTER_AUTH_SECRET '')" ]]; then
+if [[ "$selected_auth" == "better-auth" && -z "$(read_setting .env BETTER_AUTH_SECRET '')" ]]; then
   auth_secret="$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("base64"))')"
   auth_env_tmp="$(mktemp "$ROOT_DIR/.env.XXXXXX")"
   trap '[[ ! -f "$auth_env_tmp" ]] || rm -f "$auth_env_tmp"' EXIT
@@ -151,7 +164,10 @@ print_local_services() {
   print_credential_row 'Mailpit SMTP' 'no authentication' 'no authentication'
 }
 
-npm ci
+npm install
+if [[ "$selected_auth" == "none" ]]; then
+  npx prettier --write apps/api/src/app.ts apps/api/src/email.ts apps/web/app/page.tsx apps/web/app/layout.tsx apps/mobile/App.tsx apps/mobile/app.json packages/shared/src/index.ts
+fi
 # Reconcile optional profiles so a disabled service from an earlier setup does not keep running.
 docker compose --profile email --profile observability --profile seaweedfs stop mailpit openobserve otel-collector seaweedfs
 docker compose up -d --wait

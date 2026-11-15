@@ -1,0 +1,93 @@
+{
+  "files": {
+    "apps/api/src/auth.ts": "1e1407975276b37d233bedce5418e8ddf6c2da4a59b3fb065e57e8280b1d2d62",
+    "apps/api/src/auth.integration.test.ts": "9b2cb3715dc4c24028dfb59389281e58ceb9d036a1bb16470ea469786fc2f83f",
+    "apps/api/src/provision-auth-user.ts": "39b429b98c2e66da1884ee1e76f6f8887acc8f9a44db34ddf900cdecc6ec9944",
+    "apps/api/src/migrations/0002_create_better_auth_tables.ts": "744b3fab099f8d3b7521b3bdf770ef8636116109b58ad7d5fc73c4037f148f87",
+    "apps/api/src/email.test.ts": "0654d2a7809c0752ccc96976aa6090af42de41f9c68a12c1f26923f3cdc97300",
+    "apps/web/components/auth/auth-form.tsx": "f3600fc8facaa826783cad503c9f347dc78ff7acdca0fb568203cfde154462c1",
+    "apps/web/components/auth/auth-shell.tsx": "7da241620c6e8eaab99798e91974fac8d7993b585e23b7b201ebca2127f5cefd",
+    "apps/web/components/auth/auth-status.tsx": "21eff591507c70244ba20a6f0eedd3cc1670f635dd5fe37eaa0fd68aea10f297",
+    "apps/web/components/auth/session-area.tsx": "f48f7217a9b64db269db69294b0513310bcd4e8cf7d03dbeb4051a8d7f348baa",
+    "apps/web/components/ui/button.tsx": "8e0676e26f3585ba470c41bd29812946be5ee2d05b5f41156035272bd2dc79fa",
+    "apps/web/lib/auth-client.ts": "3e090cf2983a66e3eba3f3a3aa46e2a03eb451c01fcbc93f6ad2dda9fab47db8",
+    "apps/web/lib/auth-server.ts": "008d150ac52eb8783e884434ef5a90fc3b331ec12cd9852a59fe0057515b7d8a",
+    "apps/web/app/api/auth/[...path]/route.ts": "bff15251e4bd3cae20f91c7a4ed4f3028b1dd8996539597fb69d16ba56be738f",
+    "apps/web/app/app/page.tsx": "42c4cf70c27d0d9ae336ff941a74cbdbd18f7909e0a30031f080ef1289809a9e",
+    "apps/web/app/sign-in/page.tsx": "f0f23519f6973ef25777541987707ae02680376132fd9e357fb86578ebcc62d3",
+    "apps/web/app/sign-up/page.tsx": "a7108108583bf38c637493dd5928d8c4a17b4c1ef20f7b30880009d8738af6fb",
+    "apps/web/app/verify-email/page.tsx": "eb3d1a22e6aec9a23acd26505f1e641ef7430c10fd02f033d53017a32f887d0f",
+    "apps/web/app/forgot-password/page.tsx": "faff7a91a80db3d5593e6792907f948efaa0639fa421fbcdcec0ff6fd0c13c6d",
+    "apps/web/app/reset-password/page.tsx": "4de3b55a1090cfbf306290726c9f9356bd48ea9764e63182d848696b6270229c",
+    "apps/web/tests/auth.spec.ts": "3e8ca55a6dd911d39d88204a1dce6578c378d59c526352b171ac6823d99207e2",
+    "apps/web/playwright.config.ts": "f3d4dd0a208ae48d0a4d05e0cedda71886994daade5eb3ff97498807e14a29d4",
+    "apps/mobile/lib/auth-client.ts": "144c4bec010b2b6c02eb0dcbcd2b54f1695523133d19fc6505f9b16918e02b55",
+    "apps/mobile/components/auth-button.tsx": "a082b8318844d6e776422277d7c9fe0e1b426fc98ee6c2909b388fe23217cdfb",
+    "apps/mobile/components/auth-field.tsx": "5fae4535ae02723cc223d95690df0e8d4dbef3de15fa20cf20b8433dad63aa31",
+    "apps/mobile/tests/auth.test.tsx": "fd8a9a9ecb05dd1ff270622c8384209f4d8710b1f1a30783263ae886b796fe0f",
+    "apps/mobile/tests/style-mock.cjs": "8222b8169ee86f25cdccd84d340340060ae3f0cff55e2ea9d344d7c332733b71",
+    "apps/mobile/jest.config.cjs": "d96912da28ccfef47ff5d9a303c612414eb1666242ae2a6a0a6b8742a151eaef",
+    "apps/api/src/app.ts": "94e70dcc88cc0d621d6c8517cc4cf7bbc5553c1fdba2b97fb0746a61f62191c9",
+    "packages/shared/src/index.ts": "f487c25609963d41b96134ffee0347a63cff9da65217ff4635bf520b476ef478",
+    ".env.example": "e7b22795cf0a1e73fbb7e0c7bab95aee9a14a55be25c8cc791d8328ac0fcbbf8",
+    ".github/workflows/ci.yml": "d9691ac47ca45801df2d4ffbbff1bae9ae5620008347687fda15fa7295171abe",
+    "apps/api/src/email.ts": "e65b1a50887d10474023d188fd4f79a45de1a9561536e64aee340b2b677d4aee",
+    "apps/api/package.json": "2d2308181b9cbda31b0cc4df2e7b5eb29a1791d14a577bd8a7c77b078a8d9c91",
+    "apps/web/package.json": "3d4c2448aeb72a109ee99dd3050a97a9f4bd682b7f812e16ee73810af5e4d5be",
+    "apps/mobile/package.json": "847fca1265a4d6c6ac96a048e0203df81a80db361b22d21f24e444d670f7bcf8",
+    "apps/mobile/app.json": "1662c522a32d0063dd5fe6dc81410dccfd75e48869f3e7c556a429d5a9eb9e37",
+    "apps/web/app/page.tsx": "069a95a529cbdabcc00fd505de1e55035c1cec5206119e87992755fcd9d01be3",
+    "apps/web/app/layout.tsx": "665720c37ac33ccc58457096e9b379f228a67fdfc48b65ecb530c915c0d0b527",
+    "apps/mobile/App.tsx": "5f3a2d4508aacd277186ff6734b882cc5c6f2f7b367291b7cd697c047f764809",
+    "apps/api/src/auth-cli.config.ts": "f2bdb83e3ee60420832ea387e420ca813c149a10d639c78c098bbc8cd5fc0482"
+  },
+  "remove": [
+    "apps/api/src/auth.ts",
+    "apps/api/src/auth.integration.test.ts",
+    "apps/api/src/provision-auth-user.ts",
+    "apps/api/src/migrations/0002_create_better_auth_tables.ts",
+    "apps/api/src/email.test.ts",
+    "apps/web/components",
+    "apps/web/lib/auth-client.ts",
+    "apps/web/lib/auth-server.ts",
+    "apps/web/app/api",
+    "apps/web/app/app",
+    "apps/web/app/sign-in",
+    "apps/web/app/sign-up",
+    "apps/web/app/verify-email",
+    "apps/web/app/forgot-password",
+    "apps/web/app/reset-password",
+    "apps/web/tests",
+    "apps/web/playwright.config.ts",
+    "apps/mobile/lib",
+    "apps/mobile/components",
+    "apps/mobile/tests",
+    "apps/mobile/jest.config.cjs",
+    "apps/api/src/auth-cli.config.ts"
+  ],
+  "strip": [
+    "apps/api/src/app.ts",
+    "packages/shared/src/index.ts"
+  ],
+  "dependencies": {
+    "api": [
+      "better-auth",
+      "@better-auth/expo",
+      "auth"
+    ],
+    "web": [
+      "better-auth",
+      "@playwright/test"
+    ],
+    "mobile": [
+      "@better-auth/expo",
+      "expo-linking",
+      "expo-network",
+      "expo-secure-store",
+      "jest",
+      "jest-expo",
+      "@types/jest",
+      "@testing-library/react-native"
+    ]
+  }
+}

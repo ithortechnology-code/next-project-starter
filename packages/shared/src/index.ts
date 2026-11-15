@@ -8,6 +8,7 @@ export const healthResponseSchema = z.object({
 
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
 
+// auth-recipe:start
 export const authEmailSchema = z.email().trim();
 export const authPasswordSchema = z.string().min(8).max(128);
 
@@ -58,5 +59,7 @@ export const authSessionResponseSchema = z
   .passthrough();
 
 export type AuthSessionResponse = z.infer<typeof authSessionResponseSchema>;
+
+// auth-recipe:end
 
 export const HEALTH_PATH = "/health";

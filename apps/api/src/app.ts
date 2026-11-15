@@ -6,7 +6,9 @@ import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest }
 import { healthResponseSchema, HEALTH_PATH } from "@starter/shared";
 import { z } from "zod";
 import { checkDatabaseConnection, createDatabase } from "./database.js";
+// auth-recipe:start
 import { createAuth, readAuthTrustedOrigins } from "./auth.js";
+// auth-recipe:end
 import { createJobQueue, enqueueExampleJob, EXAMPLE_JOB } from "./jobs.js";
 import { createConfiguredStorage, type FileStorage } from "@starter/storage";
 import { metrics } from "@opentelemetry/api";
@@ -64,12 +66,15 @@ async function measureStorageOperation<T>(
 declare module "fastify" {
   interface FastifyInstance {
     storage: FileStorage;
+    // auth-recipe:start
     auth: ReturnType<typeof createAuth> | null;
+    // auth-recipe:end
   }
 }
 
 const healthJsonSchema = z.toJSONSchema(healthResponseSchema, { target: "openapi-3.0" });
 
+// auth-recipe:start
 async function handleAuthRequest(
   request: FastifyRequest,
   reply: FastifyReply,
@@ -92,6 +97,7 @@ async function handleAuthRequest(
   return reply.code(response.status).send(Buffer.from(await response.arrayBuffer()));
 }
 
+// auth-recipe:end
 export function redactSensitiveRequestUrl(url: string): string {
   return url
     .replace(/(\/api\/auth\/reset-password\/)[^/?]+/gi, "$1[REDACTED]")
@@ -116,6 +122,7 @@ export function createApp() {
     },
   });
   const database = process.env.DATABASE_URL ? createDatabase() : undefined;
+  // auth-recipe:start
   if (process.env.NODE_ENV === "production" && !database) {
     throw new Error(
       "DATABASE_URL is required to start the authentication-enabled API in production.",
@@ -130,10 +137,13 @@ export function createApp() {
           ),
       })
     : null;
+  // auth-recipe:end
   const boss = process.env.DATABASE_URL ? createJobQueue() : undefined;
   const storage = createConfiguredStorage();
   app.decorate("storage", storage);
+  // auth-recipe:start
   app.decorate("auth", auth);
+  // auth-recipe:end
 
   const errorsLogged = new WeakSet<FastifyRequest>();
   app.addHook("onError", (request, reply, error, done) => {
@@ -191,11 +201,13 @@ export function createApp() {
     (_request, body, done) => done(null, body),
   );
 
+  // auth-recipe:start
   const corsOrigins = auth
     ? readAuthTrustedOrigins()
     : (process.env.WEB_ORIGIN?.split(",")
         .map((origin) => origin.trim())
         .filter(Boolean) ?? (process.env.NODE_ENV === "production" ? [] : true));
+  // auth-recipe:end
   if (process.env.NODE_ENV === "production" && corsOrigins === true) {
     throw new Error("WEB_ORIGIN or AUTH_TRUSTED_ORIGINS must be configured in production.");
   }
@@ -214,6 +226,7 @@ export function createApp() {
     },
   });
 
+  // auth-recipe:start
   if (auth) {
     app.route({
       method: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -227,6 +240,7 @@ export function createApp() {
     });
   }
 
+  // auth-recipe:end
   app.register(async function registerRoutes(routes) {
     routes.get(
       HEALTH_PATH,

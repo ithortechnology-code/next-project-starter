@@ -160,3 +160,54 @@ test("button pressed/disabled states expose semantics and prevent duplicate acti
   await fireEvent.press(screen.getByRole("button", { name: "Probe" }));
   expect(press).not.toHaveBeenCalled();
 });
+
+test("registration transitions to verification and supports resend", async () => {
+  const signup = authClient.signUp.email as unknown as ReturnType<
+    typeof jest.fn<(payload: unknown) => Promise<unknown>>
+  >;
+  const resend = authClient.sendVerificationEmail as unknown as ReturnType<
+    typeof jest.fn<() => Promise<unknown>>
+  >;
+  signup.mockResolvedValue({ error: null });
+  resend.mockResolvedValue({ error: null });
+  await render(<App />);
+  await waitFor(() => expect(screen.getByLabelText("Email")).toBeTruthy());
+  await fireEvent.press(screen.getByRole("button", { name: "Create an account" }));
+  await fireEvent.changeText(screen.getByLabelText("Name"), "Native Test");
+  await fireEvent.changeText(screen.getByLabelText("Email"), "native@example.test");
+  await fireEvent.changeText(screen.getByLabelText("Password"), "Native-test-2026!");
+  await fireEvent.changeText(screen.getByLabelText("Confirm password"), "Native-test-2026!");
+  await fireEvent.press(screen.getByRole("button", { name: "Create account" }));
+  await waitFor(() => expect(screen.getByText("Check your email")).toBeTruthy());
+  expect(signup).toHaveBeenCalledWith(
+    expect.objectContaining({ callbackURL: "projectstarter://verify-email?verified=1" }),
+  );
+  await fireEvent.press(screen.getByRole("button", { name: "Resend verification link" }));
+  await fireEvent.press(screen.getByRole("button", { name: "Send verification link" }));
+  expect(resend).toHaveBeenCalledTimes(1);
+});
+
+test("reset completion clears the token and returns to sign-in", async () => {
+  const reset = authClient.resetPassword as unknown as ReturnType<
+    typeof jest.fn<(payload: unknown) => Promise<unknown>>
+  >;
+  reset.mockResolvedValue({ error: null });
+  jest
+    .mocked(Linking.getInitialURL)
+    .mockResolvedValue("projectstarter://reset-password?token=disposable-test-token");
+  await render(<App />);
+  await waitFor(() => expect(screen.getByLabelText("Confirm password")).toBeTruthy());
+  await fireEvent.changeText(screen.getByLabelText("Password"), "Native-replacement-2026!");
+  await fireEvent.changeText(screen.getByLabelText("Confirm password"), "Native-replacement-2026!");
+  await fireEvent.press(screen.getByRole("button", { name: "Update password" }));
+  await waitFor(() =>
+    expect(
+      screen.getByText("Your password has been updated. Sign in with your new password."),
+    ).toBeTruthy(),
+  );
+  expect(reset).toHaveBeenCalledWith({
+    token: "disposable-test-token",
+    newPassword: "Native-replacement-2026!",
+  });
+  expect(screen.queryByLabelText("Confirm password")).toBeNull();
+});
