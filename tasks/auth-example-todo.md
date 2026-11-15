@@ -297,11 +297,11 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] A single editable source of truth exists for each scaffolded file; duplicated hand-maintained copies are avoided.
-- [ ] The model can install auth dependencies and migration only when selected and has a clear no-auth default.
-- [ ] Setup reruns preserve user edits and avoid deleting unrelated files.
+- [x] A single editable source of truth exists for each scaffolded file; duplicated hand-maintained copies are avoided.
+- [x] The model can install auth dependencies and migration only when selected and has a clear no-auth default.
+- [x] Setup reruns preserve user edits and avoid deleting unrelated files.
 
-**Verification:** Review a small representative scaffold in a disposable copy and confirm selected/unselected outputs and rerun behavior.
+**Verification:** `node --test scripts/tests/auth-recipe.test.mjs` passes all 3 disposable-copy tests: both choices, preserved edits on rerun, rejected switching, and rejection of changed input before mutation. The single-source model and one-time selection contract are recorded in `docs/decisions/auth-scaffold.md`.
 
 **Dependencies:** Tasks 7–14.
 
