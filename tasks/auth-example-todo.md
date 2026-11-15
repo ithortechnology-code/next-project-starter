@@ -77,17 +77,17 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Estimated scope:** Medium.
 
-### Task 5: Establish the mobile styling foundation
+### Task 5: Establish the mobile styling foundation — Complete
 
 **Description:** Use the installed NativeWind 4 foundation and complete component-level behavior checks as the auth UI is implemented.
 
 **Acceptance criteria:**
 
 - [x] Expo SDK 58 remains pinned.
-- [ ] Expo's dependency compatibility check completes reliably against package metadata; the recorded offline check warned that its validation was unreliable.
+- [x] Expo’s online dependency compatibility check passes: `npm exec --workspace=@starter/mobile -- expo install --check` reports “Dependencies are up to date” without the earlier offline warning (2026-11-15).
 - [x] Styling configuration is documented and mobile components remain platform-local.
 - [x] Existing iOS and Android exports continue to work; the compatibility note records a successful export for both platforms.
-- [ ] During auth UI implementation, verify component colors, pressed and disabled states, accessibility behavior, and keyboard/focus behavior on iOS. Android runtime review is optional unless a change is Android-specific.
+- [x] iOS runtime review confirms colors, labeled form/action order, password visibility, and Email → Password keyboard focus. Component tests verify pressed opacity, disabled/busy semantics, prevention of disabled actions, and keyboard submission. Full VoiceOver/autofill and mail-client checks remain separate Task 13 device checks; Android runtime review is optional.
 
 **Verification:** Run mobile lint, typecheck, iOS/Android export, and the runtime probe on iOS. Android runtime review is optional under the default quick-check scope.
 
@@ -99,9 +99,9 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 ## Checkpoint: Design and mobile foundation
 
-- [ ] Tasks 1–5 complete with Expo SDK 58 unchanged.
-- [ ] Contributor-facing Epic, design, and test documents agree on the complete email/password lifecycle and rolling-session policy.
-- [ ] Mobile styling decision is backed by iOS runtime evidence and iOS/Android export evidence.
+- [x] Tasks 1–5 complete with Expo SDK 58 unchanged.
+- [x] Contributor-facing Epic, design, and test documents agree on the complete email/password lifecycle and rolling-session policy.
+- [x] Mobile styling decision is backed by iOS runtime evidence and iOS/Android export evidence.
 
 ## Phase 2: Better Auth API foundation
 

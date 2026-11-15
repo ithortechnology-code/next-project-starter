@@ -37,3 +37,10 @@ The official NativeWind v4.2.7 installation guide explicitly adds Expo SDK 57 su
 A root `npm install` was needed after Expo dependency installation to reconcile Tailwind v3 (mobile) and v4 (web). Before reconciliation the web build failed with an undefined `All` error from Tailwind. The web Webpack build compiles successfully after reconciliation; default Turbopack remains blocked by the environment port-binding restriction.
 
 Android startup initially failed while ADB was offline and the package service was still booting. Waiting for `sys.boot_completed=1` resolved this. Expo then replaced the emulator’s Expo Go 54.0.7 with 58.0.5. Opening Metro through `10.0.2.2:8100` launched the probe. The API still used localhost:4000 and displayed its connection error; Android API requests need the host bridge address or a reachable LAN URL.
+
+
+## Task 5 foundation verification (2026-11-15)
+
+The online `npm exec --workspace=@starter/mobile -- expo install --check` completed with “Dependencies are up to date” and no offline-validation warning. Expo remains 58.0.25. Both iOS and Android exports passed after the keyboard focus fix (`ad5406a`). Eight iOS component tests and mobile typecheck pass, including pressed opacity, disabled/busy accessibility semantics, disabled-action suppression, password visibility, and keyboard submission. These checks validate the app-local native components, which use StyleSheet for their visual states; they do not establish every NativeWind utility's compatibility.
+
+On the iOS 26.5 simulator, sign-in/sign-up colors and visible actions were reviewed. The accessibility tree exposes labeled fields and buttons in form order. Raising the Simulator window, focusing Email, and pressing Return moved the caret to Password; typing a test-only string and revealing it confirmed the focus transition. Keyboard input previously failed while Simulator was not the active window. Task 5 and the design/mobile-foundation checkpoint are complete on this evidence. Full VoiceOver/autofill, installed mail-client handoff, and remote CI verification remain separate Task 13 checks, not claimed here.

@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor, act, cleanup } from "@testing-libra
 import { AppState, type AppStateStatus } from "react-native";
 import * as Linking from "expo-linking";
 import App from "../App";
+import { AuthButton } from "../components/auth-button";
 import { authClient } from "../lib/auth-client";
 
 jest.mock("../lib/auth-client", () => ({
@@ -140,4 +141,22 @@ test("password keyboard submit validates and visibility toggle has accessible st
   await fireEvent.press(screen.getByRole("button", { name: "Show password" }));
   expect(screen.getByLabelText("Password").props.secureTextEntry).toBe(false);
   expect(screen.getByRole("button", { name: "Hide password" })).toBeTruthy();
+});
+
+test("button pressed/disabled states expose semantics and prevent duplicate actions", async () => {
+  const press = jest.fn();
+  const view = await render(<AuthButton label="Probe" onPress={press} />);
+  const button = screen.getByRole("button", { name: "Probe" });
+  await fireEvent(button, "pressIn");
+  expect(button.props.style).toEqual(
+    expect.arrayContaining([expect.objectContaining({ opacity: 0.82 })]),
+  );
+  await fireEvent(button, "pressOut");
+  await view.rerender(<AuthButton label="Probe" onPress={press} disabled loading />);
+  expect(screen.getByRole("button", { name: "Probe" }).props.accessibilityState).toEqual({
+    disabled: true,
+    busy: true,
+  });
+  await fireEvent.press(screen.getByRole("button", { name: "Probe" }));
+  expect(press).not.toHaveBeenCalled();
 });
