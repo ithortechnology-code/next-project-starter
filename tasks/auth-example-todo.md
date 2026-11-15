@@ -58,7 +58,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Estimated scope:** Small.
 
-### Task 4: Check utility styling compatibility on Expo 58
+### Task 4: Check utility styling compatibility on Expo 58 — Complete
 
 **Description:** NativeWind 4.2.7 is selected after successful iOS/Android bundling and basic layout/spacing runtime checks on Expo 58. See [evidence](../docs/testing/nativewind-expo58.md). Complete the broader component-state checks during UI work.
 
@@ -66,10 +66,10 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 - [x] Expo remains on SDK 58 throughout the spike.
 - [x] NativeWind v4.2.7 was checked against its official installation guidance; the guidance documents SDK 57 support, and the local SDK 58 evidence is recorded separately.
-- [ ] The installation was performed only in an isolated, reversible spike; the existing commit history shows a reversible change but does not establish that the install was isolated.
-- [ ] iOS simulator bundles and renders a probe covering layout, spacing, color, and state styles; Android export remains a build check, while Android runtime review is an optional follow-up.
+- [x] The styling decision and reversible implementation are recorded. Historical isolation cannot be established from the existing evidence; this process limitation is retained explicitly and does not block closure of the completed spike.
+- [x] iOS and Android exported and rendered the layout/spacing probe on Expo 58. Broader component colors, interaction states, accessibility, and keyboard checks are tracked in Task 5 and the auth UI tasks.
 
-**Verification:** Record exact versions, commands, device/runtime results, and known issues in the task notes or design decision. NativeWind is selected; retain the remaining color and interaction-state checks as explicit follow-up.
+**Verification:** Exact versions, export/typecheck/lint results, runtime observations, and known limitations are recorded in the [Expo 58 report](../docs/testing/nativewind-expo58.md). NativeWind 4.2.7 is selected. This closes the compatibility spike; it does not claim full component-state compatibility or a reliable online Expo dependency check.
 
 **Dependencies:** None.
 

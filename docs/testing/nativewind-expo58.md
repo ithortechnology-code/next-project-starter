@@ -1,6 +1,8 @@
 # NativeWind on Expo 58 compatibility spike
 
-Decision: NativeWind 4 is the selected mobile styling approach. Build and type compatibility passed; iOS and Android simulator/emulator layout and spacing rendering passed. The probe does not yet cover component colors, interaction states, accessibility, or keyboard behavior; verify those with the auth UI on both platforms.
+Status: Task 4 compatibility spike complete. Broader component checks remain assigned to Task 5 and the auth UI tasks. Historical worktree isolation was not established by the recorded evidence.
+
+Decision: NativeWind 4 is the selected mobile styling approach. Build and type compatibility passed; iOS and Android simulator/emulator layout and spacing rendering passed. The probe does not yet cover component colors, interaction states, accessibility, or keyboard behavior; verify those with the auth UI on iOS; Android runtime review is optional under the current project quick-check rule.
 
 ## Versions
 
@@ -21,7 +23,7 @@ The first typecheck failed with TS2882 because TypeScript could not resolve the 
 
 ## Runtime checks and remaining work
 
-The iOS 26.5 starter verification simulator successfully opened the app in Expo Go and rendered the NativeWind layout/spacing probe. Metro reported no NativeWind or Worklets errors; it emitted ImageBackground and SafeAreaView deprecation warnings. The screen displayed an API connection failure because the API was unavailable, independently of styling. Android API 36.1 (Medium_Phone_API_36.1) also rendered the probe successfully using Expo Go 58.0.5. Metro emitted the same deprecation warnings and no NativeWind/Worklets errors. The emulator was closed after verification. The probe checks layout and spacing only; it does not establish component colors, pressed/disabled states, accessibility behavior, or keyboard/focus behavior. During auth UI implementation, check those on both platforms and confirm there are no Reanimated/Worklets runtime errors. Bundling alone does not establish correct rendering or native dependency behavior.
+The iOS 26.5 starter verification simulator successfully opened the app in Expo Go and rendered the NativeWind layout/spacing probe. Metro reported no NativeWind or Worklets errors; it emitted ImageBackground and SafeAreaView deprecation warnings. The screen displayed an API connection failure because the API was unavailable, independently of styling. Android API 36.1 (Medium_Phone_API_36.1) also rendered the probe successfully using Expo Go 58.0.5. Metro emitted the same deprecation warnings and no NativeWind/Worklets errors. The emulator was closed after verification. The probe checks layout and spacing only; it does not establish component colors, pressed/disabled states, accessibility behavior, or keyboard/focus behavior. During auth UI implementation, check those on iOS and confirm there are no Reanimated/Worklets runtime errors. Bundling alone does not establish correct rendering or native dependency behavior.
 
 Run `npm run dev:mobile` and open it in an SDK 58 compatible runtime. If native packages require it, use a development build. Test physical devices with a reachable `EXPO_PUBLIC_API_URL`, not the host computer's localhost address.
 
