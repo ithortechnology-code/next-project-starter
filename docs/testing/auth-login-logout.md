@@ -204,3 +204,7 @@ These unchecked device checks are not implied by passing mocked component tests.
 ### Setup recipe tests
 
 Run `node --test scripts/tests/auth-recipe.test.mjs` for disposable-copy selection, rerun, and tamper checks. Run `AUTH_TEST_DATABASE_URL="postgresql://<user>:<password>@localhost:<port>/starter_auth_test" node scripts/verify-auth-recipes.mjs` from the reference checkout for clean install, isolated migrations, workspace gates, and auth/browser/native suites. This requires local PostgreSQL, Mailpit, and installed Playwright Chromium. See the [recipe workflow](../auth-recipe.md) for prerequisites and no-auth commands. CI and staging runs are deferred under the local-only scope.
+
+### Final local observability checks
+
+Run `npm run test:telemetry --workspace=@starter/api` for real OTLP log/metric/trace export and sentinel-secret regression tests. See the [observability guide](../auth-observability.md) and [failure runbook](../runbooks/auth-failures.md). Current focused totals are API auth 11, email 5, telemetry 2, native component 10, browser 12, and recipe selection/rerun 3. Clean no-auth and auth-selected verifier runs also pass installation, fresh migrations, workspace gates, and both Expo exports. These totals describe local verification; CI/staging and extended device checks remain explicitly outside the verified evidence.

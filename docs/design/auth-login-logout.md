@@ -95,15 +95,17 @@ For a simulator, `EXPO_PUBLIC_API_URL` can point to the host API origin. Android
 
 Use [project design guidelines](../design-guidelines.md) for responsive behavior, interaction targets, contrast, keyboard, and native differences. Keep the result generic to the starter. Visual direction and tokens are documented separately by the web UI implementation.
 
-- [ ] Registration, verification/resend, sign-in, forgot/reset, authenticated, expired-session, and signed-out-again states are present.
-- [ ] API verification and reset tokens are one-time, expire, and cannot create an authenticated session before email verification.
-- [ ] A valid active session is refreshed according to `expiresAt`/update-age policy; an expired/revoked session is not refreshed. Sign-out and password reset invalidate server sessions.
-- [ ] Public feedback does not disclose account existence.
-- [ ] Protected web content is rendered only after a server session check; API outages are not mistaken for anonymous sessions.
-- [ ] Web flows work at 320 and 360–390 CSS pixels with keyboard access and no page-level horizontal overflow.
-- [ ] Expo uses secure session persistence, reachable API configuration, usable keyboards/navigation, and safe email-link handling on iOS. Android native runtime review is optional for routine tasks; its export remains part of the build check.
-- [ ] Sign-out invalidates the server session and clears local/protected navigation state.
-- [ ] No social sign-in, MFA, role/organization, or account-deletion UI is implied.
+- [x] Registration, verification/resend, sign-in, forgot/reset, authenticated, expired-session, and signed-out-again states are present.
+- [x] API verification and reset tokens are one-time, expire, and cannot create an authenticated session before email verification.
+- [x] A valid active session is refreshed according to `expiresAt`/update-age policy; an expired/revoked session is not refreshed. Sign-out and password reset invalidate server sessions.
+- [x] Public feedback does not disclose account existence.
+- [x] Protected web content is rendered only after a server session check; API outages are not mistaken for anonymous sessions.
+- [x] Web flows work at 320 and 360–390 CSS pixels with keyboard access and no page-level horizontal overflow.
+- [x] Expo uses secure session persistence, reachable API configuration, usable keyboards/navigation, and safe email-link handling on iOS. Android native runtime review is optional for routine tasks; its export remains part of the build check.
+- [x] Sign-out invalidates the server session and clears local/protected navigation state.
+- [x] No social sign-in, MFA, role/organization, or account-deletion UI is implied.
+
+Local review is backed by the task checklist and test guide. Full VoiceOver/autofill and installed-mail-client checks remain explicit coverage limits; CI and staging are deferred.
 
 ## Technical references
 

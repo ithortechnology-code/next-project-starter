@@ -56,6 +56,7 @@ if (choice === "none") {
       delete pkg.devDependencies?.[name];
     }
     delete pkg.scripts["test:auth"];
+    delete pkg.scripts["test:telemetry"];
     delete pkg.scripts["auth:provision-user"];
     if (workspace === "mobile") pkg.scripts.lint = "prettier --check App.tsx app.json";
     if (workspace === "web")

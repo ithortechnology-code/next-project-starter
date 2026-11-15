@@ -156,3 +156,32 @@ test("email service rejection is recoverable", async ({ page }) => {
   await expect(page.getByRole("main").getByRole("alert")).toContainText("couldn’t process");
   await expect(page.getByRole("button", { name: "Send reset link" })).toBeEnabled();
 });
+
+test("proxy failures expose correlation without leaking upstream errors", async () => {
+  const { GET } = await import("../app/api/auth/[...path]/route");
+  const originalFetch = globalThis.fetch;
+  const originalError = console.error;
+  const events: string[] = [];
+  try {
+    globalThis.fetch = async () => {
+      throw new Error("PROXY_SECRET_SENTINEL");
+    };
+    console.error = (message: string) => events.push(message);
+    const response = await GET(
+      new Request("http://localhost:3100/api/auth/get-session?token=PROXY_SECRET_SENTINEL"),
+    );
+    expect(response.status).toBe(503);
+    expect(response.headers.get("x-request-id")).toBeTruthy();
+    expect(await response.text()).not.toContain("PROXY_SECRET_SENTINEL");
+    expect(events).toHaveLength(1);
+    expect(events.join("")).not.toContain("PROXY_SECRET_SENTINEL");
+    expect(JSON.parse(events[0]!)).toMatchObject({
+      event: "auth.proxy.failed",
+      entryPoint: "web_auth_proxy",
+      requestId: response.headers.get("x-request-id"),
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    console.error = originalError;
+  }
+});

@@ -1,3 +1,4 @@
+import { logs, SeverityNumber } from "@opentelemetry/api";
 import pino from "pino";
 
 const logger = pino({
@@ -14,4 +15,15 @@ export function emitStructuredLog(
   attributes: EventAttributes,
 ): void {
   logger[severity]({ event: eventName, ...attributes }, eventName);
+  logs.getLogger("starter-api").emit({
+    severityNumber:
+      severity === "error"
+        ? SeverityNumber.ERROR
+        : severity === "warn"
+          ? SeverityNumber.WARN
+          : SeverityNumber.INFO,
+    severityText: severity.toUpperCase(),
+    body: eventName,
+    attributes: { event: eventName, ...attributes },
+  });
 }

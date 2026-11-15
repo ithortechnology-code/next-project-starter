@@ -1,3 +1,4 @@
+import { recordAuthLibraryLog, recordAuthOperation } from "./auth-observability.js";
 import { betterAuth } from "better-auth";
 import { expo } from "@better-auth/expo";
 import type { Kysely } from "kysely";
@@ -13,7 +14,8 @@ export interface AuthConfig {
 export interface AuthOptions {
   allowSignUp?: boolean;
   autoSignIn?: boolean;
-  onEmailDeliveryFailure?: (purpose: AuthEmailPurpose) => void;
+  onEmailDeliveryFailure?: (purpose: AuthEmailPurpose, seconds: number) => void;
+  onEmailDeliverySuccess?: (purpose: AuthEmailPurpose, seconds: number) => void;
 }
 
 export function readAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig {
@@ -75,7 +77,9 @@ export function readAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig
         throw new Error();
       }
     } catch {
-      throw new Error(`Invalid auth trusted origin: ${origin}`);
+      throw new Error(
+        "Invalid AUTH_TRUSTED_ORIGINS entry; use explicit origins without credentials, paths, or wildcards.",
+      );
     }
   }
 
@@ -90,10 +94,14 @@ export function createAuth(
   const config = readAuthConfig(env);
   const authEmail = createAuthEmailCallbacks(
     createEmailClient(env),
-    options.onEmailDeliveryFailure,
+    options.onEmailDeliveryFailure ??
+      ((purpose, seconds) => recordAuthOperation(`email_${purpose}`, "failure", seconds)),
+    options.onEmailDeliverySuccess ??
+      ((purpose, seconds) => recordAuthOperation(`email_${purpose}`, "delivered", seconds)),
   );
   return betterAuth({
     appName: "Project Starter",
+    logger: { log: (level) => recordAuthLibraryLog(level) },
     baseURL: config.baseURL,
     basePath: "/api/auth",
     secret: config.secret,

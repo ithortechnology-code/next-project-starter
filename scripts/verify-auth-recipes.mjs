@@ -60,6 +60,7 @@ for (const choice of requested ? [requested] : ["none", "better-auth"]) {
     if (choice === "better-auth") {
       run("npm", ["run", "test:auth", "--workspace=@starter/mobile"]);
       run("npm", ["run", "test:email", "--workspace=@starter/api"]);
+      run("npm", ["run", "test:telemetry", "--workspace=@starter/api"]);
       if (process.env.AUTH_TEST_DATABASE_URL) {
         run("npm", ["run", "test:auth", "--workspace=@starter/api"], {
           AUTH_TEST_DATABASE_URL: isolatedDatabaseUrl,

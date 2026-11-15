@@ -1,3 +1,4 @@
+import { privateSpan } from "./telemetry-privacy.js";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
 import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
@@ -9,8 +10,14 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 export async function startTelemetry(): Promise<(() => Promise<void>) | undefined> {
   if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT) return undefined;
 
+  const traceExporter = new OTLPTraceExporter();
   const sdk = new NodeSDK({
-    traceExporter: new OTLPTraceExporter(),
+    autoDetectResources: false,
+    serviceName: process.env.OTEL_SERVICE_NAME ?? "starter-api",
+    traceExporter: {
+      export: (spans, callback) => traceExporter.export(spans.map(privateSpan), callback),
+      shutdown: () => traceExporter.shutdown(),
+    },
     metricReaders: [
       new PeriodicExportingMetricReader({
         exporter: new OTLPMetricExporter(),

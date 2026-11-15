@@ -1,3 +1,4 @@
+import { trace, SpanStatusCode } from "@opentelemetry/api";
 import nodemailer from "nodemailer";
 
 export interface EmailMessage {
@@ -107,19 +108,33 @@ export function createAuthEmailContent(purpose: AuthEmailPurpose, url: string) {
 
 export function createAuthEmailCallbacks(
   email: ReturnType<typeof createEmailClient>,
-  onDeliveryFailure: (purpose: AuthEmailPurpose) => void = () => {},
+  onDeliveryFailure: (purpose: AuthEmailPurpose, seconds: number) => void = () => {},
+  onDeliverySuccess: (purpose: AuthEmailPurpose, seconds: number) => void = () => {},
 ) {
   function send(purpose: AuthEmailPurpose, to: string, url: string): void {
     const content = createAuthEmailContent(purpose, url);
-    void Promise.resolve()
-      .then(() => email.send({ to, ...content }))
-      .catch(() => {
-        try {
-          onDeliveryFailure(purpose);
-        } catch {
-          // A logging failure must not change the auth endpoint response.
-        }
-      });
+    const started = performance.now();
+    void trace
+      .getTracer("starter-auth")
+      .startActiveSpan(
+        "auth.email",
+        { attributes: { "auth.email.purpose": purpose } },
+        async (span) => {
+          try {
+            await email.send({ to, ...content });
+            try {
+              onDeliverySuccess(purpose, (performance.now() - started) / 1000);
+            } catch {}
+          } catch {
+            span.setStatus({ code: SpanStatusCode.ERROR });
+            try {
+              onDeliveryFailure(purpose, (performance.now() - started) / 1000);
+            } catch {}
+          } finally {
+            span.end();
+          }
+        },
+      );
   }
 
   return {

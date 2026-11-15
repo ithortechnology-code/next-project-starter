@@ -22,3 +22,7 @@
 - [x] VPS Compose configuration renders; deploy shell scripts parse; `git diff --check` passes.
 - [ ] npm audit could not reach registry.npmjs.org in this environment.
 - [ ] No live VPS, DNS, Cloudflare, or GitHub credentials were used; deployment configuration remains to be applied during environment setup.
+
+## API documentation coverage
+
+- [ ] Merge individual Better Auth endpoint definitions into the project OpenAPI document and provide an interactive API documentation UI. Verify every public endpoint’s requests, responses/errors, and security requirements. The existing `/openapi.json` and catch-all auth routes do not meet the full repository rule yet.

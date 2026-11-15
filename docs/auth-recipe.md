@@ -47,7 +47,7 @@ npm run typecheck
 npm run build
 ```
 
-For auth-selected output, also run API email/auth tests, web browser tests, and native component tests using the commands in the [test guide](testing/auth-login-logout.md). The no-auth output removes auth-only test scripts. Expected invalid credentials, expired links, and unknown-account reset requests are negative cases, not implementation defects.
+For auth-selected output, also run API email/auth/telemetry tests, web browser tests, and native component tests using the commands in the [test guide](testing/auth-login-logout.md). The no-auth output removes auth-only test scripts. Expected invalid credentials, expired links, and unknown-account reset requests are negative cases, not implementation defects.
 
 Recipe-generator tests run only in the reference checkout (`node --test scripts/tests/auth-recipe.test.mjs`), where the canonical inputs still exist.
 

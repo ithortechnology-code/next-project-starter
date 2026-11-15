@@ -92,3 +92,5 @@ If authenticated requests return `AccessDenied`, verify that the running Seaweed
 ## Optional auth recipe
 
 Choose auth or the no-auth baseline before editing a fresh fork. See the [recipe workflow](auth-recipe.md), [auth epic](epics/auth-login-logout.md), [design specification](design/auth-login-logout.md), and [test guide](testing/auth-login-logout.md). CI and staging execution are currently deferred; local verification does not imply deployment readiness.
+
+Auth lifecycle telemetry, funnel limits, privacy controls, and local export tests are documented in the [auth observability guide](auth-observability.md).

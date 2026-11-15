@@ -29,13 +29,25 @@ async function proxyAuthRequest(request: Request): Promise<Response> {
   }
 
   const method = request.method.toUpperCase();
-  const upstream = await fetch(upstreamUrl, {
-    method,
-    headers,
-    ...(method === "GET" || method === "HEAD" ? {} : { body: await request.arrayBuffer() }),
-    cache: "no-store",
-    redirect: "manual",
-  });
+  let upstream: Response;
+  try {
+    upstream = await fetch(upstreamUrl, {
+      method,
+      headers,
+      ...(method === "GET" || method === "HEAD" ? {} : { body: await request.arrayBuffer() }),
+      cache: "no-store",
+      redirect: "manual",
+    });
+  } catch {
+    const requestId = crypto.randomUUID();
+    console.error(
+      JSON.stringify({ event: "auth.proxy.failed", entryPoint: "web_auth_proxy", requestId }),
+    );
+    return Response.json(
+      { message: "Auth service unavailable" },
+      { status: 503, headers: { "x-request-id": requestId } },
+    );
+  }
   const responseHeaders = new Headers();
 
   upstream.headers.forEach((value, name) => {

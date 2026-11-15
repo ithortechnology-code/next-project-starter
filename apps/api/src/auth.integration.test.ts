@@ -335,11 +335,11 @@ test("request logs redact verification query tokens and reset path tokens", () =
     redactSensitiveRequestUrl(
       "/api/auth/verify-email?token=verification-secret&callbackURL=%2Fhome",
     ),
-    "/api/auth/verify-email?token=[REDACTED]&callbackURL=%2Fhome",
+    "/api/auth/verify-email?token=[REDACTED]&callbackURL=[REDACTED]",
   );
   assert.equal(
     redactSensitiveRequestUrl("/api/auth/reset-password/password-secret?callbackURL=%2Freset"),
-    "/api/auth/reset-password/[REDACTED]?callbackURL=%2Freset",
+    "/api/auth/reset-password/[REDACTED]?callbackURL=[REDACTED]",
   );
 });
 

@@ -15,12 +15,14 @@
     "migrate": "node dist/migrate.js",
     "build": "tsup --config tsup.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "prettier --check src"
+    "lint": "prettier --check src",
+    "test:telemetry": "node --import=tsx --test src/telemetry-privacy.test.ts"
   },
   "dependencies": {
     "@better-auth/expo": "1.7.24",
     "@fastify/cors": "^11.1.0",
     "@fastify/swagger": "9.9.2",
+    "@opentelemetry/api": "1.10.0",
     "@opentelemetry/auto-instrumentations-node": "0.83.1",
     "@opentelemetry/exporter-logs-otlp-http": "0.301.2",
     "@opentelemetry/exporter-metrics-otlp-http": "0.301.2",

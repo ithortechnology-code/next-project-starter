@@ -257,7 +257,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Verification:** Run focused suites locally and in CI; capture artifacts only when they are useful and redact credentials/session data.
 
-**Local verification:** 10 browser tests and 10 iOS component tests pass. Keyboard submission and password-visibility semantics have regression coverage; native Next actions now move focus through email, password, and confirmation. Remote CI and staging execution are deferred by user instruction. Device-only checks remain listed explicitly below and in the testing document.
+**Local verification:** 12 browser tests and 10 iOS component tests pass. Keyboard submission and password-visibility semantics have regression coverage; native Next actions now move focus through email, password, and confirmation. Remote CI and staging execution are deferred by user instruction. Device-only checks remain listed explicitly below and in the testing document.
 
 **Progress:** Desktop/mobile-web Playwright now covers the real lifecycle, forced rolling renewal/expiry, protected routes, API failure, simulated email-service rejection, validation, keyboard focus, and overflow. The iOS Jest component suite covers session/sign-in/sign-out, foreground failure/expiry, and cold link states. CI jobs run both suites with isolated services for browser tests. Local checks pass; remote CI execution has not been observed. The linked test document records actual iOS evidence and the remaining device-only keyboard/accessibility and mail-client reset checks; Task 13 automation is complete locally; supplemental device coverage limits remain explicitly recorded.
 
@@ -415,12 +415,12 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 ## Final checkpoint
 
-- [ ] Final epic review, remaining device coverage limits, and the dedicated observability task are reconciled. CI/staging execution is deferred.
+- [x] Final local epic review and the dedicated observability task are complete. Remaining device coverage limits are explicit in the test guide; CI/staging execution is deferred.
 - [x] Expo remains SDK 58 and the selected mobile styling decision is verified.
 - [x] Auth-selected and no-auth setup paths both work from clean copies.
 - [x] Workspace lint, typecheck, build, API tests, web browser tests, and mobile checks pass.
 
-### Auth observability follow-up: lifecycle outcomes and privacy
+### Auth observability follow-up: lifecycle outcomes and privacy — Complete locally
 
 **Description:** Complete auth instrumentation using the observability-and-instrumentation skill while preserving the existing session architecture.
 
@@ -428,13 +428,13 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Acceptance criteria:**
 
-- [ ] Define bounded lifecycle operation/outcome events and counters for registration, verification/resend, sign-in/out, recovery/reset, and session checks; distinguish actual server outcomes from privacy-preserving public responses.
-- [ ] Correlate API and email outcomes with request/trace IDs and explicit entry points. Log expected rejection separately from operational failure; avoid noisy success logs for periodic session checks.
-- [ ] Document aggregate funnel limitations: request counts are not unique-user conversion. Any client funnel instrumentation must use allowlisted fields and an explicit privacy/retention policy.
-- [ ] Review every logging and tracing sink, including Better Auth library logs, HTTP URL attributes, SMTP errors, and client errors. Exclude passwords, cookies, authorization headers, tokens, email addresses, full bodies, raw deep links, and database/SMTP credentials; sanitize query and path tokens consistently.
-- [ ] Add meaningful regression checks with sentinel secrets for actual logs and exported spans. Verify counters and duration histograms use bounded operation/outcome labels.
-- [ ] Record observed success/failure telemetry and local collector evidence; add actionable runbooks for auth/API or email failures. Production alert destinations and thresholds depend on the fork's hosting/SLO configuration.
+- [x] Define bounded lifecycle operation/outcome events and counters for registration, verification/resend, sign-in/out, recovery/reset, and session checks; distinguish actual server outcomes from privacy-preserving public responses.
+- [x] Correlate API and email outcomes with request/trace IDs and explicit entry points. Log expected rejection separately from operational failure; avoid noisy success logs for periodic session checks.
+- [x] Document aggregate funnel limitations: request counts are not unique-user conversion. Any client funnel instrumentation must use allowlisted fields and an explicit privacy/retention policy.
+- [x] Review every logging and tracing sink, including Better Auth library logs, HTTP URL attributes, SMTP errors, and client errors. Exclude passwords, cookies, authorization headers, tokens, email addresses, full bodies, raw deep links, and database/SMTP credentials; sanitize query and path tokens consistently.
+- [x] Add meaningful regression checks with sentinel secrets for actual logs and exported spans. Verify counters and duration histograms use bounded operation/outcome labels.
+- [x] Record observed success/failure telemetry and local collector evidence; add actionable runbooks for auth/API or email failures. Production alert destinations and thresholds depend on the fork's hosting/SLO configuration.
 
-**Current evidence:** API HTTP counters and duration histograms, OpenTelemetry auto-instrumentation, structured HTTP error/slow logs, and an auth email-delivery failure event exist. Request logging redacts verification query tokens and reset path tokens. HTTP tracing currently explicitly redacts the `token` query parameter; broader sink and path-token coverage needs verification. Auth lifecycle events and cross-client funnels have not been verified or completed.
+**Completion evidence (2026-11-15):** Reviewed Tasks 1–20 using the observability skill; the mapping is recorded in `docs/auth-observability.md`. Added bounded auth/email counters and duration histograms, correlated structured events with entry points, privacy-safe library diagnostics, strict trace export filtering, explicit OTLP log export, safe request/error serialization, and web request/proxy logging protections. Two real-export tests pass against a local OTLP receiver, including logs/metrics/traces, active trace correlation, an induced email failure, and sentinel-secret absence. API auth 11/email 5/native 10/browser 12 tests and clean selected/unselected recipe verification pass. Workspace quality gates pass. A runbook documents symptoms and first checks; CI/staging, alert delivery, and deployed collector/dashboard verification are deferred, not claimed as passed.
 
 **Verification:** Exercise successful and rejected sign-in, email-delivery failure, session expiry/revocation, and verification/reset links against isolated services. Inspect emitted logs, metrics, and traces for correlation, bounded labels, and absence of sentinel secrets.

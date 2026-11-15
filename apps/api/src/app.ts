@@ -2,12 +2,18 @@ import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
-import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
+import Fastify, {
+  LogController,
+  type FastifyInstance,
+  type FastifyReply,
+  type FastifyRequest,
+} from "fastify";
 import { healthResponseSchema, HEALTH_PATH } from "@starter/shared";
 import { z } from "zod";
 import { checkDatabaseConnection, createDatabase } from "./database.js";
 // auth-recipe:start
 import { createAuth, readAuthTrustedOrigins } from "./auth.js";
+import { authOperation, recordAuthOperation, withAuthRequest } from "./auth-observability.js";
 // auth-recipe:end
 import { createJobQueue, enqueueExampleJob, EXAMPLE_JOB } from "./jobs.js";
 import { createConfiguredStorage, type FileStorage } from "@starter/storage";
@@ -86,40 +92,76 @@ async function handleAuthRequest(
       : typeof request.body === "string"
         ? request.body
         : JSON.stringify(request.body);
-  const response = await auth.handler(
-    new Request(`${request.protocol}://${request.headers.host}${request.url}`, {
-      method: request.method,
-      headers: request.headers as HeadersInit,
-      ...(body === undefined ? {} : { body }),
-    }),
-  );
-  response.headers.forEach((value, key) => reply.header(key, value));
-  return reply.code(response.status).send(Buffer.from(await response.arrayBuffer()));
+  const started = performance.now();
+  return withAuthRequest(request.id, async () => {
+    const operation = authOperation(request.url);
+    let response: Response;
+    try {
+      response = await auth.handler(
+        new Request(`${request.protocol}://${request.headers.host}${request.url}`, {
+          method: request.method,
+          headers: request.headers as HeadersInit,
+          ...(body === undefined ? {} : { body }),
+        }),
+      );
+    } catch (error) {
+      if (operation)
+        recordAuthOperation(operation, "failure", (performance.now() - started) / 1000);
+      throw error;
+    }
+    if (operation) {
+      let outcome =
+        response.status >= 500 ? "failure" : response.status >= 400 ? "rejected" : "accepted";
+      if (operation === "session_check" && response.ok) {
+        const session = await response.clone().json();
+        outcome = session === null ? "anonymous" : "authenticated";
+      }
+      const location = response.headers.get("location");
+      if (location && new URL(location, "http://local.invalid").searchParams.has("error"))
+        outcome = "rejected";
+      recordAuthOperation(operation, outcome, (performance.now() - started) / 1000);
+    }
+    response.headers.forEach((value, key) => reply.header(key, value));
+    return reply.code(response.status).send(Buffer.from(await response.arrayBuffer()));
+  });
 }
 
 // auth-recipe:end
 export function redactSensitiveRequestUrl(url: string): string {
   return url
     .replace(/(\/api\/auth\/reset-password\/)[^/?]+/gi, "$1[REDACTED]")
-    .replace(/([?&]token=)[^&]+/gi, "$1[REDACTED]");
+    .replace(/([?&][^=&#]+)=([^&#]*)/g, "$1=[REDACTED]");
 }
 
 export function createApp() {
   const app = Fastify({
+    logController: new LogController({ requestIdLogLabel: "requestId" }),
     logger: {
+      base: { serviceName: process.env.OTEL_SERVICE_NAME ?? "starter-api", entryPoint: "api_http" },
+      redact: [
+        "req.headers.authorization",
+        "req.headers.cookie",
+        "res.headers.set-cookie",
+        "password",
+        "token",
+        "secret",
+      ],
       serializers: {
+        err(error) {
+          return { type: error?.name ?? "Error", message: "[REDACTED]", stack: "[REDACTED]" };
+        },
         req(request) {
-          const url = request.url ?? "";
           return {
             method: request.method,
-            url: redactSensitiveRequestUrl(url),
-            hostname: request.hostname,
-            remoteAddress: request.ip,
-            ...(request.socket.remotePort ? { remotePort: request.socket.remotePort } : {}),
+            route: request.routeOptions?.url ?? "unmatched",
           };
         },
       },
     },
+  });
+  app.setNotFoundHandler((_request, reply) => reply.code(404).send({ message: "Route not found" }));
+  app.addHook("onRequest", async (request, reply) => {
+    reply.header("x-request-id", request.id);
   });
   const database = process.env.DATABASE_URL ? createDatabase() : undefined;
   // auth-recipe:start
@@ -130,11 +172,10 @@ export function createApp() {
   }
   const auth = database
     ? createAuth(database.db, process.env, {
-        onEmailDeliveryFailure: (purpose) =>
-          app.log.error(
-            { event: "auth.email.delivery_failed", purpose },
-            "Authentication email delivery failed.",
-          ),
+        onEmailDeliveryFailure: (purpose, seconds) =>
+          recordAuthOperation(`email_${purpose}`, "failure", seconds),
+        onEmailDeliverySuccess: (purpose, seconds) =>
+          recordAuthOperation(`email_${purpose}`, "delivered", seconds),
       })
     : null;
   // auth-recipe:end
@@ -152,6 +193,7 @@ export function createApp() {
     if (statusCode >= 500 || errorStatusCode >= 500) {
       errorsLogged.add(request);
       emitStructuredLog("http.request.failed", "error", {
+        entryPoint: "api_http",
         requestId: request.id,
         method: request.method,
         route: request.routeOptions.url ?? "unmatched",
@@ -178,6 +220,7 @@ export function createApp() {
 
     if (statusCode >= 500 && !errorsLogged.has(request)) {
       emitStructuredLog("http.request.failed", "error", {
+        entryPoint: "api_http",
         requestId: request.id,
         method: request.method,
         route,
@@ -185,6 +228,7 @@ export function createApp() {
       });
     } else if (reply.elapsedTime >= 1000) {
       emitStructuredLog("http.request.slow", "warn", {
+        entryPoint: "api_http",
         requestId: request.id,
         method: request.method,
         route,
@@ -467,6 +511,7 @@ export function createApp() {
             );
           } catch (error) {
             emitStructuredLog("profile_image.storage_failed", "error", {
+              entryPoint: "api_http",
               requestId: request.id,
               fileId,
               contentType,
@@ -476,6 +521,7 @@ export function createApp() {
             throw error;
           }
           emitStructuredLog("profile_image.uploaded", "info", {
+            entryPoint: "api_http",
             requestId: request.id,
             fileId,
             contentType,

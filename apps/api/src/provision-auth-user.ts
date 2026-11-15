@@ -1,5 +1,11 @@
+import { randomUUID } from "node:crypto";
+import { withAuthRequest } from "./auth-observability.js";
+import { emitStructuredLog } from "./telemetry-signals.js";
 import { createAuth } from "./auth.js";
 import { createDatabase } from "./database.js";
+
+const requestId = randomUUID();
+const entryPoint = "auth_provision_cli";
 
 async function main() {
   if (process.env.NODE_ENV === "production") {
@@ -32,18 +38,20 @@ async function main() {
   const { db, close } = createDatabase();
   try {
     const auth = createAuth(db, process.env, { allowSignUp: true, autoSignIn: false });
-    const result = await auth.api.signUpEmail({
+    await auth.api.signUpEmail({
       body: { email, password, name, callbackURL: process.env.WEB_ORIGIN },
     });
-    console.info(`Provisioned local/test auth user ${result.user.email}.`);
+    emitStructuredLog("auth.provision.completed", "info", { requestId, entryPoint });
   } finally {
     await close();
   }
 }
 
-main().catch(() => {
-  console.error(
-    "Could not provision the local/test auth user. Check the database and auth settings, and confirm this email is not already in use.",
-  );
+withAuthRequest(requestId, main, entryPoint).catch(() => {
+  emitStructuredLog("auth.provision.failed", "error", {
+    requestId,
+    entryPoint,
+    reason: "Check database, local provisioning opt-in, and auth settings.",
+  });
   process.exitCode = 1;
 });
