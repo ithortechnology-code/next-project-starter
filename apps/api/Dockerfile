@@ -28,6 +28,7 @@ FROM node:24-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production API_PORT=4000 HOST=0.0.0.0
 COPY --from=runtime-dependencies --chown=node:node /app/node_modules ./node_modules
+COPY --from=runtime-dependencies --chown=node:node /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build --chown=node:node /repo/apps/api/package.json ./apps/api/package.json
 COPY --from=build --chown=node:node /repo/apps/api/dist ./apps/api/dist
 USER node

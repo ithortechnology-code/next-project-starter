@@ -41,6 +41,18 @@ if ! compose "$DEPLOY_TAG" pull; then
   exit 1
 fi
 
+[[ -s seaweedfs-s3-config.json ]] || { echo "Missing deploy/seaweedfs-s3-config.json." >&2; exit 1; }
+SEAWEEDFS_UID="$(docker run --rm --entrypoint sh chrislusf/seaweedfs:4.53 -c 'id -u seaweed')"
+SEAWEEDFS_GID="$(docker run --rm --entrypoint sh chrislusf/seaweedfs:4.53 -c 'id -g seaweed')"
+[[ "$SEAWEEDFS_UID" =~ ^[0-9]+$ && "$SEAWEEDFS_GID" =~ ^[0-9]+$ ]] || {
+  echo "Could not determine the SeaweedFS container user." >&2
+  exit 1
+}
+docker run --rm --user 0:0 \
+  --volume "$PWD/seaweedfs-s3-config.json:/s3-config.json" \
+  --entrypoint sh chrislusf/seaweedfs:4.53 \
+  -c "chown '$SEAWEEDFS_UID:$SEAWEEDFS_GID' /s3-config.json && chmod 600 /s3-config.json"
+
 if ! compose "$DEPLOY_TAG" up -d --wait --wait-timeout 180 db; then
   echo "PostgreSQL did not become healthy; application rollout was not started." >&2
   exit 1
