@@ -14,20 +14,20 @@ You can create a project using GitHub’s **Use this template** button when the 
 
 ## What you get
 
-| Area                        | Technology and purpose                                                                                                     |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Workspace                   | npm workspaces and TypeScript; Node.js 24 default, Node.js 26 also supported                                               |
-| API                         | Fastify; JSON endpoints and OpenAPI route schemas                                                                          |
-| Web                         | Next.js and React; Tailwind CSS 4 and shadcn/ui                                                                            |
-| Mobile                      | Expo SDK 58 and React Native; NativeWind 4/Tailwind CSS 3 foundation with app-local native components                      |
-| Shared contracts            | Zod schemas and pure shared logic in `packages/shared`                                                                     |
-| Database                    | PostgreSQL 18, Kysely, and ordered migrations                                                                              |
-| Authentication, if selected | Better Auth, SMTP verification/reset emails, database sessions, Expo SecureStore                                           |
-| Background jobs             | pg-boss and a separate worker using PostgreSQL                                                                             |
-| Storage                     | Filesystem and S3-compatible adapters; local SeaweedFS service                                                             |
-| Email                       | Provider-neutral SMTP; Mailpit captures local messages                                                                     |
-| Observability               | Pino, OpenTelemetry, Collector, and OpenObserve; auth outcomes, durations, correlation IDs, and redaction                  |
-| Verification                | Node integration tests, Playwright browser tests, and iOS-preset native component tests                                    |
+| Area                        | Technology and purpose                                                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Workspace                   | npm workspaces and TypeScript; Node.js 24 default, Node.js 26 also supported                                                        |
+| API                         | Fastify; JSON endpoints and OpenAPI route schemas                                                                                   |
+| Web                         | Next.js and React; Tailwind CSS 4 and shadcn/ui                                                                                     |
+| Mobile                      | Expo SDK 58 and React Native; NativeWind 4/Tailwind CSS 3 foundation with app-local native components                               |
+| Shared contracts            | Zod schemas and pure shared logic in `packages/shared`                                                                              |
+| Database                    | PostgreSQL 18, Kysely, and ordered migrations                                                                                       |
+| Authentication, if selected | Better Auth, SMTP verification/reset emails, database sessions, Expo SecureStore                                                    |
+| Background jobs             | pg-boss and a separate worker using PostgreSQL                                                                                      |
+| Storage                     | Filesystem and S3-compatible adapters; local SeaweedFS service                                                                      |
+| Email                       | Provider-neutral SMTP; Mailpit captures local messages                                                                              |
+| Observability               | Pino, OpenTelemetry, Collector, and OpenObserve; auth outcomes, durations, correlation IDs, and redaction                           |
+| Verification                | Node integration tests, Playwright browser tests, and iOS-preset native component tests                                             |
 | Deployment files            | Dockerfiles, GitHub Actions, and a two-environment VPS/Cloudflare/Caddy example; one staging rollout is verified, production is not |
 
 The generated project keeps these boundaries:

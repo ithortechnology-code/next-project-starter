@@ -93,7 +93,7 @@ Create GitHub Environments named `staging` and `production`. Add the following s
 | `VPS_DEPLOY_PATH`     | Absolute writable directory, e.g. `/home/deploy/starter`                                                        |
 | `VPS_SSH_PRIVATE_KEY` | Private key accepted by that VPS deploy account                                                                 |
 | `VPS_SSH_KNOWN_HOSTS` | Pinned SSH host-key line for the VPS                                                                            |
-| `VPS_SSH_PORT`        | SSH TCP port (optional; defaults to `22`)                                                                        |
+| `VPS_SSH_PORT`        | SSH TCP port (optional; defaults to `22`)                                                                       |
 | `GHCR_PULL_USERNAME`  | GitHub username or machine account with package read access                                                     |
 | `GHCR_PULL_TOKEN`     | Read-only GHCR token for the API/web packages                                                                   |
 
