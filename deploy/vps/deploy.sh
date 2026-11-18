@@ -93,6 +93,7 @@ else
   cat .env > .env.tmp
   printf '\nIMAGE_TAG=%s\n' "$DEPLOY_TAG" >> .env.tmp
 fi
+chmod 600 .env.tmp
 mv .env.tmp .env
 
 echo "Deployed $DEPLOY_TAG successfully to https://${WEB_DOMAIN}, https://${API_DOMAIN}, and https://${OBSERVE_DOMAIN}."
