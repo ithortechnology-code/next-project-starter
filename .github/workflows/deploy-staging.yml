@@ -33,6 +33,7 @@ jobs:
           VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
           VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT || '22' }}
           GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
           GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
         run: ./deploy/vps/remote-deploy.sh "$DEPLOY_TAG"
