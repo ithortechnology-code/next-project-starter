@@ -6,4 +6,4 @@
 
 **Recovery:** Restore the dependency and retry a disposable account flow. Registration/recovery `accepted` responses deliberately preserve account privacy and do not prove delivery; look for `delivered` or `failure` email events. Review latency histograms by bounded operation/outcome for p95/p99 changes.
 
-**Escalation:** In a fork, assign the owning API/email operator before deployment. Page destinations and thresholds require that fork's SLO and hosting configuration. CI, staging failure injection, production alert delivery and staging trace-UI review are deferred; no alerts are created or claimed tested by this local example.
+**Escalation:** In a fork, assign the owning API/email operator before deployment. Page destinations and thresholds require that fork's SLO and hosting configuration. CI and basic staging deployment smoke checks pass in the reference repository. Staging failure injection, trace-UI review, and production alert delivery remain unverified; this example does not create or test alert destinations.

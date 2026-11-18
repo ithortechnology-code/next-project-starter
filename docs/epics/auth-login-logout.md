@@ -55,7 +55,7 @@ This remains a template example. It demonstrates integration patterns without ad
 
 ## Acceptance criteria (local scope)
 
-Local completion is backed by clean recipe verification, API/email/browser/native/telemetry tests, and documented iOS runtime evidence. CI/staging execution is deferred by user instruction. Full VoiceOver/autofill and installed mail-client checks remain coverage limits in the test guide; the available simulator has no Mail app. Android runtime checks remain optional; both exports pass.
+Local completion is backed by clean recipe verification, API/email/browser/native/telemetry tests, and documented iOS runtime evidence. At epic completion, remote CI and staging had not run; the reference CI and basic staging deployment smoke checks subsequently passed (see [`tasks/todo.md`](../../tasks/todo.md)). The complete staging account lifecycle is still pending. Full VoiceOver/autofill and installed mail-client checks remain coverage limits in the test guide; the available simulator has no Mail app. Android runtime checks remain optional; both exports pass.
 
 - [x] A contributor can follow the linked design and test documents without relying on conversation context.
 - [x] API tests cover registration, verification, verified and unverified sign-in, rolling session refresh and expiry, sign-out invalidation, reset request/completion and session revocation, expired/reused tokens, safe feedback, and rejected origins against isolated PostgreSQL.

@@ -17,6 +17,20 @@ Publishing and deployment are disabled by default. Only after configuring hostin
 3. The staging workflow deploys that exact tag to the staging VPS over SSH. The deploy starts PostgreSQL, runs the versioned Kysely migrations once, then starts API, worker, and web. Migration failure stops rollout. Compose waits for service health, then public HTTPS checks run; on failure, the previous application image is restored when one exists. Migrations must remain backward-compatible.
 4. After staging review, run **Promote image to production VPS** manually and supply the same 40-character commit SHA (the suffix of the `sha-<commit>` image tag). The workflow checks out that commit's deployment script and deploys its already-published image. Configure the GitHub `production` Environment with required reviewers before using this workflow.
 
+## Staging acceptance checklist
+
+For reference commit `aea9aaa` on 2026-11-18, CI passed on Node 24 and 26, GHCR image publishing completed, and the staging deploy completed its migration, container health, and public HTTPS smoke checks. The web hostname reached the sign-in flow, the API health endpoint returned HTTP 200, and OpenObserve redirected to its web UI over valid HTTPS. A database count found zero registered accounts at that time. These checks show the stack deployed and is reachable; they do not exercise the full product flows.
+
+Before promoting a fork to production, complete and record these staging checks:
+
+- [ ] Use a controlled test inbox to sign up, receive and follow the verification email, sign in, sign out, request a password reset, and complete the reset. Confirm the configured SMTP sender and links use the intended public HTTPS hostnames.
+- [ ] Through the application, upload and download a test object and follow its signed URL. The reference deployment only confirmed that the app S3 credentials could access the bucket; it did not verify this end-to-end flow.
+- [ ] Generate API and worker activity, then confirm expected logs, traces, and metrics reach OpenObserve. Inspect representative events for credential, email, token, and request-body leakage. The reference OpenObserve UI was reachable; signal ingestion and privacy review remain unverified.
+- [ ] Verify an encrypted off-server PostgreSQL backup and SeaweedFS object backup by restoring to an isolated target. Rehearse application rollback against staging while retaining the database and object volumes. A successful deploy health check does not test recovery.
+- [ ] Review staging DNS proxying, Full (strict) TLS, HTTP-to-HTTPS redirects, origin firewall rules, SSH key/host-key pinning, and secret file permissions.
+
+Do not use real customer data for these checks. Keep the disposable account and uploaded object clearly identifiable and remove them after the checks. Track remaining project-wide release work in [`tasks/todo.md`](../tasks/todo.md).
+
 The staging and production VPSes do not share databases, volumes, or deploy secrets. CI runs on GitHub-hosted runners; no Actions runner is installed on either server.
 
 Cloudflare proxying hides the origin address from visitors using proxied hostnames, but the address is not secret if another DNS record, service, or historical record reveals it. Restrict inbound TCP 443 at the VPS firewall to [Cloudflare's published IP ranges](https://www.cloudflare.com/ips/); do not publish port 80. The Caddy container publishes only 443 and serves the mounted Origin CA certificate. Browsers should reach the origin only through Cloudflare; a direct-origin connection will not trust Origin CA. The simple GitHub-hosted CI deployment still needs public SSH with key-only authentication. Cloudflare Tunnel plus Access can remove that inbound SSH port, but adds identity and CI connection setup. Track Origin CA expiry yourself because Cloudflare does not send expiry notices.

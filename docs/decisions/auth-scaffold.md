@@ -8,6 +8,6 @@ The auth-selected path retains the tested reference sources. The no-auth path re
 
 The tracked dependency lock starts with the reference implementation. Selection changes manifests; setup reconciles the lock with npm before installing. Generated output has its own lock. The generator and its manifest remain in a generated fork for provenance, but cannot restore removed auth sources. To add auth later, start from the reference implementation and integrate deliberately.
 
-Verification uses disposable copies for selected/unselected generation, rerun preservation, tamper rejection, dependency installation, migration lists, and workspace quality gates. CI and staging execution are deferred by the current local-only instruction; local test evidence is recorded in the task checklist.
+Verification uses disposable copies for selected/unselected generation, rerun preservation, tamper rejection, dependency installation, migration lists, and workspace quality gates. At the time this decision was recorded, CI and staging had not run; subsequent reference CI and basic staging deployment smoke results are recorded in [`tasks/todo.md`](../../tasks/todo.md). Forks still need to verify their own staging account, storage, telemetry, and recovery flows.
 
 When changing a canonical recipe input, run `node scripts/update-auth-recipe-manifest.mjs` after reviewing the change, then run `node --test scripts/tests/auth-recipe.test.mjs`. Add new recipe-owned files to the manifest and removal list explicitly. The fingerprint is an edit-preservation guard, not a security boundary.

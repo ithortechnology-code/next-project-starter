@@ -2,7 +2,7 @@
 
 This checklist is tracked separately from `tasks/todo.md`, which retains the existing starter infrastructure follow-ups.
 
-**Current verification scope:** Complete local development and local automated checks. CI execution and staging checks are deferred by user instruction (2026-11-15). A checked local task does not claim those external checks passed. Device coverage limits (full VoiceOver/autofill and installed mail-client handoff) remain explicit in the test guide; Safari handoff, secure persistence, keyboard focus, native reset, and sign-out have local evidence.
+**Current verification scope (2026-11-18):** Local development and automated checks are complete. Remote CI passed on Node 24 and 26, and the reference staging deployment passed its deployment health checks and public HTTPS smoke checks; see [`tasks/todo.md`](todo.md) and [`docs/deploy-vps.md`](../docs/deploy-vps.md). The full account lifecycle has not yet been exercised against staging SMTP, and staging telemetry visibility and failure injection remain open. Device coverage limits (full VoiceOver/autofill and installed mail-client handoff) remain explicit in the test guide; Safari handoff, secure persistence, keyboard focus, native reset, and sign-out have local evidence.
 
 ## Phase 1: Plan, design, and verify mobile styling
 
@@ -253,13 +253,13 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 - [x] Browser suite covers registration/verification, sign-in, reset, email/API failure, protected routes, refresh/expiry, sign-out, keyboard reachability, and horizontal overflow.
 - [x] Native tests cover lifecycle, revalidation, and link states on iOS; the device checklist covers SecureStore, email links, and iOS keyboard/navigation. Android runtime coverage is optional and non-blocking.
-- [x] Local automated suites pass against isolated services with no external credentials; CI is configured, with execution deferred under the current local-only scope.
+- [x] Local automated suites pass against isolated services with no external credentials; CI runs these checks on Node 24 and 26 (latest verified run: `aea9aaa`).
 
 **Verification:** Run focused suites locally and in CI; capture artifacts only when they are useful and redact credentials/session data.
 
-**Local verification:** 12 browser tests and 10 iOS component tests pass. Keyboard submission and password-visibility semantics have regression coverage; native Next actions now move focus through email, password, and confirmation. Remote CI and staging execution are deferred by user instruction. Device-only checks remain listed explicitly below and in the testing document.
+**Local verification:** 12 browser tests and 10 iOS component tests pass. Keyboard submission and password-visibility semantics have regression coverage; native Next actions now move focus through email, password, and confirmation. Remote CI passed on Node 24 and 26; the reference staging deploy passed smoke checks. The full staging account lifecycle and device-only checks remain listed explicitly below and in the testing document.
 
-**Progress:** Desktop/mobile-web Playwright now covers the real lifecycle, forced rolling renewal/expiry, protected routes, API failure, simulated email-service rejection, validation, keyboard focus, and overflow. The iOS Jest component suite covers session/sign-in/sign-out, foreground failure/expiry, and cold link states. CI jobs run both suites with isolated services for browser tests. Local checks pass; remote CI execution has not been observed. The linked test document records actual iOS evidence and the remaining device-only keyboard/accessibility and mail-client reset checks; Task 13 automation is complete locally; supplemental device coverage limits remain explicitly recorded.
+**Progress:** Desktop/mobile-web Playwright now covers the real lifecycle, forced rolling renewal/expiry, protected routes, API failure, simulated email-service rejection, validation, keyboard focus, and overflow. The iOS Jest component suite covers session/sign-in/sign-out, foreground failure/expiry, and cold link states. CI jobs run both suites with isolated services for browser tests. Local checks and remote CI pass; the staging deploy's public smoke checks pass. The linked test document records actual iOS evidence and the remaining device-only keyboard/accessibility and mail-client reset checks; Task 13 automation is complete; supplemental device coverage limits remain explicitly recorded.
 
 **Dependencies:** Tasks 10–12.
 
@@ -381,7 +381,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 - [x] Both paths work from clean copies; the no-auth path has no stale auth dependency, file, migration, or generated state.
 - [x] Setup output and errors identify next corrective actions and do not leak secrets.
-- [x] Local clean-copy verification exercises both modes using isolated PostgreSQL and no external credentials. CI/staging execution is deferred; no remote result is claimed.
+- [x] Local clean-copy verification exercises both modes using isolated PostgreSQL and no external credentials. CI and the reference staging deployment have since passed; the staging deployment does not replace fork-specific verification.
 
 **Verification:** Run setup, migrations, API tests, web browser tests, Expo checks, workspace lint/typecheck/build for each selected path.
 
@@ -391,7 +391,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 **Estimated scope:** Medium.
 
-**Local completion evidence (2026-11-15):** Both disposable copies pass install, fresh database migrations, lint, typecheck, and builds. No-auth health/auth-404 smoke and lockfile absence checks pass; selected API 11/email 5/native 10/browser 10 tests pass. CI/staging execution is deferred.
+**Local completion evidence (2026-11-15):** Both disposable copies pass install, fresh database migrations, lint, typecheck, and builds. No-auth health/auth-404 smoke and lockfile absence checks pass; selected API 11/email 5/native 10/browser 10 tests pass. At that time CI/staging had not run; subsequent CI and reference staging results are recorded above and in `tasks/todo.md`.
 
 ### Task 20: Document the selected auth recipe workflow
 
@@ -415,7 +415,7 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 
 ## Final checkpoint
 
-- [x] Final local epic review and the dedicated observability task are complete. Remaining device coverage limits are explicit in the test guide; CI/staging execution is deferred.
+- [x] Final local epic review and the dedicated observability task are complete. Remaining device coverage limits are explicit in the test guide; remote CI and staging smoke checks have since passed.
 - [x] Expo remains SDK 58 and the selected mobile styling decision is verified.
 - [x] Auth-selected and no-auth setup paths both work from clean copies.
 - [x] Workspace lint, typecheck, build, API tests, web browser tests, and mobile checks pass.
@@ -435,6 +435,6 @@ This checklist is tracked separately from `tasks/todo.md`, which retains the exi
 - [x] Add meaningful regression checks with sentinel secrets for actual logs and exported spans. Verify counters and duration histograms use bounded operation/outcome labels.
 - [x] Record observed success/failure telemetry and local collector evidence; add actionable runbooks for auth/API or email failures. Production alert destinations and thresholds depend on the fork's hosting/SLO configuration.
 
-**Completion evidence (2026-11-15):** Reviewed Tasks 1–20 using the observability skill; the mapping is recorded in `docs/auth-observability.md`. Added bounded auth/email counters and duration histograms, correlated structured events with entry points, privacy-safe library diagnostics, strict trace export filtering, explicit OTLP log export, safe request/error serialization, and web request/proxy logging protections. Two real-export tests pass against a local OTLP receiver, including logs/metrics/traces, active trace correlation, an induced email failure, and sentinel-secret absence. API auth 11/email 5/native 10/browser 12 tests and clean selected/unselected recipe verification pass. Workspace quality gates pass. A runbook documents symptoms and first checks; CI/staging, alert delivery, and deployed collector/dashboard verification are deferred, not claimed as passed.
+**Completion evidence (2026-11-15):** Reviewed Tasks 1–20 using the observability skill; the mapping is recorded in `docs/auth-observability.md`. Added bounded auth/email counters and duration histograms, correlated structured events with entry points, privacy-safe library diagnostics, strict trace export filtering, explicit OTLP log export, safe request/error serialization, and web request/proxy logging protections. Two real-export tests pass against a local OTLP receiver, including logs/metrics/traces, active trace correlation, an induced email failure, and sentinel-secret absence. API auth 11/email 5/native 10/browser 12 tests and clean selected/unselected recipe verification pass. Workspace quality gates pass. A runbook documents symptoms and first checks. At that time CI/staging, alert delivery, and deployed collector/dashboard verification had not been checked; CI and basic staging deployment smoke checks subsequently passed, while staging telemetry inspection and failure injection remain open.
 
 **Verification:** Exercise successful and rejected sign-in, email-delivery failure, session expiry/revocation, and verification/reset links against isolated services. Inspect emitted logs, metrics, and traces for correlation, bounded labels, and absence of sentinel secrets.

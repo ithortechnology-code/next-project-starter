@@ -25,7 +25,7 @@ Before OTLP trace export, an explicit attribute allowlist retains HTTP method/st
 
 Run `npm run test:telemetry --workspace=@starter/api`, API email/auth tests, and workspace checks. The telemetry test launches a child process with real SDK/exporters and a local OTLP receiver. It verifies exported trace/metric traffic, correlated structured events, an induced email failure, and absence of sentinel credentials in logs and exports. The auth integration suite exercises real success/rejection, rolling expiry, reset/sign-out revocation and token redaction against isolated PostgreSQL/Mailpit.
 
-See the [runbook](runbooks/auth-failures.md). This local receiver fixture verifies emitted OTLP data; it is not a claim that OpenObserve dashboards, staging traces, alerts, or production delivery have been verified. Those external checks are deferred under the local-only scope.
+See the [runbook](runbooks/auth-failures.md). The reference staging OpenObserve HTTPS UI is reachable, but deployed trace/log/metric ingestion, dashboards, alerts, and production delivery have not been verified. Exercise staging requests and inspect the resulting signals before relying on this observability setup; alert destinations and thresholds depend on each fork's SLO and hosting configuration.
 
 ## Task-by-task review
 
@@ -39,4 +39,4 @@ See the [runbook](runbooks/auth-failures.md). This local receiver fixture verifi
 | 13–14: tests and troubleshooting        | Sentinel export/log tests, real API/email suites, browser/native state tests, and failure/runbook documentation provide regression evidence.                                                                                                             |
 | 15–20: optional recipe                  | No-auth generation removes auth-only telemetry and tests while preserving generic HTTP instrumentation and privacy export filtering. Clean recipe verification covers both outputs.                                                                      |
 
-Local OTLP receiver checks include logs, traces, metrics, trace-ID correlation, and a deliberately failed email send. This completes the local instrumentation review; external staging/alert/dashboard verification remains deferred.
+Local OTLP receiver checks include logs, traces, metrics, trace-ID correlation, and a deliberately failed email send. The reference staging UI is reachable, but external signal ingestion, alert delivery, and dashboard verification remain open.

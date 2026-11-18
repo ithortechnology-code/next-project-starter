@@ -28,7 +28,7 @@ You can create a project using GitHub’s **Use this template** button when the 
 | Email                       | Provider-neutral SMTP; Mailpit captures local messages                                                                     |
 | Observability               | Pino, OpenTelemetry, Collector, and OpenObserve; auth outcomes, durations, correlation IDs, and redaction                  |
 | Verification                | Node integration tests, Playwright browser tests, and iOS-preset native component tests                                    |
-| Deployment files            | Dockerfiles, GitHub Actions, and a two-environment VPS/Cloudflare/Caddy example; external execution remains to be verified |
+| Deployment files            | Dockerfiles, GitHub Actions, and a two-environment VPS/Cloudflare/Caddy example; one staging rollout is verified, production is not |
 
 The generated project keeps these boundaries:
 
@@ -63,7 +63,7 @@ OpenAPI coverage is **partial**: `/openapi.json` exists, but individual Better A
 | macOS + Xcode, command-line tools, an installed iOS Simulator runtime, and CocoaPods for native dependencies | Native iOS build/runtime checks                                           |
 | Android Studio/emulator or an Android device                                                                 | Android runtime development, if you choose to do it                       |
 
-With nvm, run `nvm install` then `nvm use` inside the repository. Another version manager can select Node 24 instead. Node 26 is accepted by the scripts; remote CI execution on either version is not claimed verified in this checkout.
+With nvm, run `nvm install` then `nvm use` inside the repository. Another version manager can select Node 24 instead. Node 26 is also supported; CI passed on Node 24 and 26 for commit `aea9aaa`.
 
 The local workflow was exercised on macOS. Windows users need an appropriate Bash environment, typically WSL2 with Docker integration; Windows/WSL end-to-end setup has not been verified here. You can run web/API work without Xcode or an Android emulator.
 
@@ -191,7 +191,7 @@ Impeccable’s committed launcher can obtain a pinned engine on first use; downl
 
 ## Tests and actual verification status
 
-These are **local results**, not evidence that remote CI, staging or production has passed:
+These are local test results. Remote CI and one staging deployment have also passed for this repository; production and recovery drills have not been verified. See the [deployment guide](docs/deploy-vps.md) for scope and setup details.
 
 | Layer                  | Verified locally                                                                                                                                             |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -241,20 +241,20 @@ The full verifier creates and drops its own test databases and needs a role allo
 
 Stop local services with `docker compose down`; this keeps named data volumes. `docker compose down -v` deletes those volumes and their data.
 
-## Staging, VPS testing, and release: next steps
+## Staging, VPS testing, and release
 
-Deployment files are supplied as a starting point. **Remote CI, VPS rollout, staging acceptance, rollback drills, and release publishing have not been verified in this local epic.** Expo exports are JavaScript/assets bundles, not signed `.ipa`/`.aab` files or App Store/Play Store submissions.
+Deployment files are supplied as a starting point, not an automatically provisioned hosting service. CI and one VPS staging deployment are verified for this repository. Production deployment, backup restoration, rollback drills, and mobile store releases have not been verified. Expo exports are JavaScript/assets bundles, not signed `.ipa`/`.aab` files or App Store/Play Store submissions.
 
 Follow the [VPS guide](docs/deploy-vps.md) in this order:
 
-1. Connect your own GitHub repository and review workflow triggers before pushing. CI runs on pushes to `main`. Image publishing is disabled until the repository variable `ENABLE_IMAGE_PUBLISHING=true` is set. VPS workflows also require repository variables `DEPLOYMENT_PROVIDER=vps` and `ENABLE_VPS_DEPLOYMENTS=true`. Configure protected GitHub Environments, hosting and secrets before opting in.
-2. Run and inspect CI and validate the Docker image builds in that repository. The current quality matrix targets Node 24/26; remote results are still to follow. Do not put cloud credentials in workflow files.
-3. Provision an isolated staging VPS, domains, TLS, SMTP, storage, database credentials, backups and environment secrets. Test the actual web/API/native URLs, email links, migrations and telemetry there.
+1. Create your own repository from this template and review workflow triggers before pushing. CI runs on pushes to `main` and pull requests. Image publishing and VPS deployment are opt-in through repository variables; see the [VPS guide](docs/deploy-vps.md) for the exact variable names and required GitHub Environments. Configure protected environments, hosting, and secrets before enabling them. Never put cloud credentials in workflow files.
+2. For VPS deployment, provision one isolated VPS per environment and configure the web, API, and OpenObserve hostnames, TLS, SMTP, storage, database credentials, backups, GitHub Environments, and secrets. This Compose example runs Postgres and SeaweedFS on the same VPS as the app; splitting them onto another host requires additional configuration.
+3. Review the staging deployment and test the URLs, sign-up/email flows, migrations, object storage, and telemetry using your own domains and provider accounts. The reference repository's staging checks establish that the example deployment works; they do not verify your fork's configuration or data recovery process.
 4. Verify backup restoration, application rollback and database migration compatibility. Treat existing PostgreSQL version upgrades as separate maintenance work.
 5. After staging acceptance, promote the **same tested immutable image SHA** to a separate production VPS through its protected environment. Choose and tag a release version and write a changelog; there is no published scaffold-package release yet.
 6. Configure mobile signing, app identifiers, app/universal links and store accounts separately. Build and test native release binaries on devices before distributing them. Android runtime coverage remains work for a fork that ships Android.
 
-The VPS example uses Ubuntu, Docker Compose, GHCR, Caddy, and Cloudflare DNS/TLS. It is not an automatically provisioned or certified production service. Do not apply its example credentials to staging or production.
+The VPS example uses Ubuntu, Docker Compose, GHCR, Caddy, and Cloudflare DNS/TLS. It is not an automatically provisioned or certified production service. Replace all example values and credentials with unique values for each environment. The reference staging deployment had zero registered users when checked on 2026-11-18; that is a point-in-time check, not a promise about later staging data.
 
 ## Further reading
 

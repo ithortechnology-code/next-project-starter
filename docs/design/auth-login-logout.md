@@ -105,7 +105,7 @@ Use [project design guidelines](../design-guidelines.md) for responsive behavior
 - [x] Sign-out invalidates the server session and clears local/protected navigation state.
 - [x] No social sign-in, MFA, role/organization, or account-deletion UI is implied.
 
-Local review is backed by the task checklist and test guide. Full VoiceOver/autofill and installed-mail-client checks remain explicit coverage limits; CI and staging are deferred.
+Local review is backed by the task checklist and test guide. Full VoiceOver/autofill and installed-mail-client checks remain explicit coverage limits. CI and basic staging deployment smoke checks have since passed in the reference repository; full staging account and telemetry checks remain open.
 
 ## Technical references
 
