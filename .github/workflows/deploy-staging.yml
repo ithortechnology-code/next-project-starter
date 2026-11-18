@@ -16,13 +16,13 @@ concurrency:
 jobs:
   deploy:
     if: vars.DEPLOYMENT_PROVIDER == 'vps' && vars.ENABLE_VPS_DEPLOYMENTS == 'true' && github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: staging
     permissions:
       contents: read
       packages: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
       - name: Deploy image to staging VPS

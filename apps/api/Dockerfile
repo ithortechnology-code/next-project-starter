@@ -2,6 +2,7 @@ FROM node:24-alpine AS build
 WORKDIR /repo
 
 COPY package.json package-lock.json ./
+COPY tsconfig.base.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY apps/mobile/package.json apps/mobile/package.json

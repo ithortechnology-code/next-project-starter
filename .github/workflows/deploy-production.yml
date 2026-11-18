@@ -18,14 +18,14 @@ concurrency:
 jobs:
   deploy:
     if: vars.DEPLOYMENT_PROVIDER == 'vps' && vars.ENABLE_VPS_DEPLOYMENTS == 'true' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: production
     permissions:
       contents: read
       packages: read
       actions: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
@@ -43,7 +43,7 @@ jobs:
             echo "No successful main CI run was found for $COMMIT_SHA." >&2
             exit 1
           }
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Deploy approved image to production VPS
