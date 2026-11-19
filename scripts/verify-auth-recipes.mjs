@@ -76,7 +76,20 @@ for (const choice of requested ? [requested] : ["none", "better-auth"]) {
           "--import=tsx",
           "--input-type=module",
           "-e",
-          `const {createApp}=await import('./apps/api/src/app.ts');const app=createApp(); const health=await app.inject({url:'/health'}); const auth=await app.inject({url:'/api/auth/get-session'});if(health.statusCode!==200||auth.statusCode!==404)throw Error('No-auth route smoke failed');await app.close();`,
+          `import assert from "node:assert/strict";
+          const { createApp } = await import("./apps/api/src/app.ts");
+          const app = createApp();
+          try {
+            assert.equal((await app.inject("/health")).statusCode, 200);
+            assert.equal((await app.inject("/api/auth/get-session")).statusCode, 404);
+            assert.match((await app.inject("/docs/")).body, /swagger-ui/);
+            const spec = (await app.inject("/openapi.json")).json();
+            assert.ok(spec.paths["/health"].get);
+            assert.ok(Object.keys(spec.paths).every(path => !path.startsWith("/api/auth")));
+            assert.deepEqual((await app.inject("/docs/json")).json(), spec);
+          } finally {
+            await app.close();
+          }`,
         ],
         { NODE_ENV: "production", DATABASE_URL: "", WEB_ORIGIN: "http://localhost:3000" },
       );

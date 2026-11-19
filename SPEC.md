@@ -10,7 +10,7 @@ Create a root-level, reusable starter repository that can be copied or generated
 - Use Node.js with Fastify for the API, Next.js for web, Expo/React Native for mobile, and a shared TypeScript package.
 - Use PostgreSQL as the always-on local database. Docker Compose profiles control optional local Mailpit, OpenObserve/Collector, and SeaweedFS services; the default profile list enables all three. Each agent workspace gets a unique Compose project, port block, and isolated data volumes.
 - Use Kysely as the PostgreSQL query layer. Keep one ordered, append-only Kysely migration history per application/database; deployment must run migrations once before starting the new application version.
-- Use REST APIs with OpenAPI generated from the Fastify route schemas; do not maintain a separate hand-written API schema.
+- Generate a single OpenAPI contract from Fastify route schemas and the configured Better Auth integration. Serve the contract at `/openapi.json` and the interactive reference at `/docs/`.
 - Use pg-boss for PostgreSQL-backed durable jobs. Run job handlers in a separate Node.js worker process/container; do not introduce Redis as a requirement by default.
 - Operate file storage in the project: the filesystem adapter is always available locally and SeaweedFS S3-compatible storage runs by default for local use or self-hosted deployments, behind one application storage interface. `STORAGE_DRIVER` selects the adapter used by one API process. Example profile-image routes issue short-lived API-signed upload/download URLs and work with either adapter.
 - Use provider-neutral SMTP configuration for sending email. Local and agent environments route mail to Mailpit; each product chooses its own real SMTP provider for staging and production.
@@ -104,7 +104,7 @@ export const healthResponseSchema = z.object({
 - Docker runs PostgreSQL and selected local services with health checks where supported.
 - API and web starter apps run and demonstrate an end-to-end web-to-API request; Expo app launches with starter UI.
 - PostgreSQL access uses Kysely and one migration history; a deployment runs migrations once before application rollout.
-- REST route schemas generate the OpenAPI document.
+- The OpenAPI document includes starter routes and the configured Better Auth operations used by both web and Expo. The Swagger UI reference displays the same contract and can execute requests against the API.
 - File-storage callers use one interface with local filesystem and SeaweedFS S3-compatible adapters, both available in the default local setup. `STORAGE_DRIVER` selects which adapter the API uses. Example profile-image routes validate image type, size, signature, and short-lived signed URL scope.
 - pg-boss is the selected PostgreSQL-backed durable-job integration; handlers use idempotency because jobs may be delivered more than once.
 - Local and agent email sends are captured by Mailpit; staging and production use product-selected SMTP providers configured outside source control.

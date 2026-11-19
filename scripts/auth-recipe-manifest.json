@@ -1,7 +1,7 @@
 {
   "files": {
-    "apps/api/src/auth.ts": "5c227d75f5d0c48070c82f7f76c7d301cf39cc91326a6e3d58c787c57fd0953e",
-    "apps/api/src/auth.integration.test.ts": "36f8583fc6c24a888e16fdc081296179b78f8a962fd79c87da3b76157828f5b5",
+    "apps/api/src/auth.ts": "1fecf14b4fc574f038f522068751c7efa9f4238b3d86ac4d8c28e265f2a0901b",
+    "apps/api/src/auth.integration.test.ts": "14c8631bd251adb781fc0718a211262ba76f0bb7a42346b55ad769c35c10ce61",
     "apps/api/src/provision-auth-user.ts": "b7883a84ce35d5066694e2c1d0588f1236dbb5376e0f4e4902b9707272b3e044",
     "apps/api/src/migrations/0002_create_better_auth_tables.ts": "744b3fab099f8d3b7521b3bdf770ef8636116109b58ad7d5fc73c4037f148f87",
     "apps/api/src/email.test.ts": "0654d2a7809c0752ccc96976aa6090af42de41f9c68a12c1f26923f3cdc97300",
@@ -27,12 +27,12 @@
     "apps/mobile/tests/auth.test.tsx": "fd8a9a9ecb05dd1ff270622c8384209f4d8710b1f1a30783263ae886b796fe0f",
     "apps/mobile/tests/style-mock.cjs": "8222b8169ee86f25cdccd84d340340060ae3f0cff55e2ea9d344d7c332733b71",
     "apps/mobile/jest.config.cjs": "d96912da28ccfef47ff5d9a303c612414eb1666242ae2a6a0a6b8742a151eaef",
-    "apps/api/src/app.ts": "fec5a3bf43d65e12dd51dbe73a4079623a0602a2252037d8ac3466137e72e663",
+    "apps/api/src/app.ts": "166deb158d72a5784b1284283ecd1aa7f3042162945d8c14fef39d8d41916595",
     "packages/shared/src/index.ts": "f487c25609963d41b96134ffee0347a63cff9da65217ff4635bf520b476ef478",
     ".env.example": "e7b22795cf0a1e73fbb7e0c7bab95aee9a14a55be25c8cc791d8328ac0fcbbf8",
-    ".github/workflows/ci.yml": "9f44f208ee50dc655a28ed4e4d391fae80f4e8bcfcd9a27c5d3993b7411357b2",
+    ".github/workflows/ci.yml": "77b10208dd3dd6e831bb8921cba83f95d10e7b301dd476eeedb3270d2c155027",
     "apps/api/src/email.ts": "fde93c1005e4100c7b7c33b1b89e47df8edeade5731ad935074598befd2abe1a",
-    "apps/api/package.json": "4616544b24bd1d0d279c043c1c62dd85e5d8e21d119751d46315733a74b30d83",
+    "apps/api/package.json": "1cba493b080717da0048293eea15875a2832ed5b3d23f96c24fa85cafad542fa",
     "apps/web/package.json": "3d4c2448aeb72a109ee99dd3050a97a9f4bd682b7f812e16ee73810af5e4d5be",
     "apps/mobile/package.json": "847fca1265a4d6c6ac96a048e0203df81a80db361b22d21f24e444d670f7bcf8",
     "apps/mobile/app.json": "1662c522a32d0063dd5fe6dc81410dccfd75e48869f3e7c556a429d5a9eb9e37",
@@ -41,7 +41,8 @@
     "apps/mobile/App.tsx": "5f3a2d4508aacd277186ff6734b882cc5c6f2f7b367291b7cd697c047f764809",
     "apps/api/src/auth-cli.config.ts": "f2bdb83e3ee60420832ea387e420ca813c149a10d639c78c098bbc8cd5fc0482",
     "apps/api/src/auth-observability.ts": "eb81feb013ca602392f834882efda60fdee9ef3393be2e94cdf589d52c1be502",
-    "apps/api/src/telemetry-privacy.test.ts": "cb09ce901c971a435328fe72fb917e6f9dbacc4f581088bb7a49ebe2a3735d38"
+    "apps/api/src/telemetry-privacy.test.ts": "cb09ce901c971a435328fe72fb917e6f9dbacc4f581088bb7a49ebe2a3735d38",
+    "apps/api/src/auth-openapi.ts": "8b785d117a7175c23a262aeb57c230f86af60881d769eca3691fe965c02ec202"
   },
   "remove": [
     "apps/api/src/auth.ts",
@@ -67,7 +68,8 @@
     "apps/mobile/jest.config.cjs",
     "apps/api/src/auth-cli.config.ts",
     "apps/api/src/auth-observability.ts",
-    "apps/api/src/telemetry-privacy.test.ts"
+    "apps/api/src/telemetry-privacy.test.ts",
+    "apps/api/src/auth-openapi.ts"
   ],
   "strip": [
     "apps/api/src/app.ts",

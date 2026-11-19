@@ -22,6 +22,7 @@
     "@better-auth/expo": "1.7.24",
     "@fastify/cors": "^11.1.0",
     "@fastify/swagger": "9.9.2",
+    "@fastify/swagger-ui": "6.1.4",
     "@opentelemetry/api": "1.10.0",
     "@opentelemetry/auto-instrumentations-node": "0.83.1",
     "@opentelemetry/exporter-logs-otlp-http": "0.301.2",

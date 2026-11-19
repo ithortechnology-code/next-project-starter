@@ -1,5 +1,6 @@
 import cors from "@fastify/cors";
-import swagger from "@fastify/swagger";
+import swagger, { type FastifyDynamicSwaggerOptions } from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
 import Fastify, {
@@ -12,6 +13,7 @@ import { healthResponseSchema, HEALTH_PATH } from "@starter/shared";
 import { z } from "zod";
 import { checkDatabaseConnection, createDatabase } from "./database.js";
 // auth-recipe:start
+import { generateAuthOpenApi } from "./auth-openapi.js";
 import { createAuth, readAuthTrustedOrigins } from "./auth.js";
 import { authOperation, recordAuthOperation, withAuthRequest } from "./auth-observability.js";
 // auth-recipe:end
@@ -78,7 +80,67 @@ declare module "fastify" {
   }
 }
 
-const healthJsonSchema = z.toJSONSchema(healthResponseSchema, { target: "openapi-3.0" });
+function documentStarterOperations(
+  paths: NonNullable<FastifyDynamicSwaggerOptions["openapi"]>["paths"],
+) {
+  const file = paths?.["/files/{fileId}"];
+  const binaryImage = { schema: { type: "string" as const, format: "binary" } };
+  const imageContent = Object.fromEntries(
+    PROFILE_IMAGE_CONTENT_TYPES.map((contentType) => [contentType, binaryImage]),
+  );
+
+  if (file?.put) {
+    file.put.requestBody = {
+      required: true,
+      description: "Image bytes, up to 5 MiB. The media type must match the signed URL.",
+      content: imageContent,
+    };
+    file.put.security = [{ signedFileUrl: [] }];
+    file.put.responses ??= {};
+    file.put.responses["413"] = { description: "Request body exceeds the upload limit" };
+  }
+  if (file?.get) {
+    file.get.security = [{ signedFileUrl: [] }];
+    file.get.responses ??= {};
+    file.get.responses["200"] = {
+      description: "Image file bytes",
+      content: { ...imageContent, "application/octet-stream": binaryImage },
+    };
+  }
+
+  // Describe framework errors without changing Fastify's response serialization.
+  const errorSchema = {
+    type: "object" as const,
+    required: ["statusCode", "error", "message"],
+    properties: {
+      statusCode: { type: "integer" as const },
+      code: { type: "string" as const },
+      error: { type: "string" as const },
+      message: { type: "string" as const },
+    },
+  };
+  for (const item of Object.values(paths ?? {})) {
+    for (const operation of [item?.get, item?.post, item?.put]) {
+      if (!operation) continue;
+      operation.security ??= [];
+      operation.responses ??= {};
+      for (const [status, description] of [
+        ["400", "Invalid parameters or request body"],
+        ["415", "Unsupported media type"],
+        ["500", "Internal server error"],
+      ] as const) {
+        if (status !== "500" && !operation.requestBody && !operation.parameters?.length) continue;
+        if (status === "415" && !operation.requestBody) continue;
+        operation.responses[status] ??= {
+          description,
+          content: { "application/json": { schema: errorSchema } },
+        };
+      }
+    }
+  }
+}
+
+const healthJsonSchema = z.toJSONSchema(healthResponseSchema, { target: "draft-2020-12" });
 
 // auth-recipe:start
 async function handleAuthRequest(
@@ -263,10 +325,70 @@ export function createApp() {
     },
     credentials: true,
   });
+  // auth-recipe:start
+  let authOpenApi: Awaited<ReturnType<typeof generateAuthOpenApi>> | undefined;
+  app.addHook("onReady", async () => {
+    if (auth) authOpenApi = await generateAuthOpenApi(auth);
+  });
+  // auth-recipe:end
   app.register(swagger, {
+    stripBasePath: false,
     openapi: {
+      openapi: "3.1.1",
       info: { title: process.env.API_TITLE ?? "Project Starter API", version: "0.1.0" },
-      servers: [{ url: process.env.API_PUBLIC_URL ?? "http://localhost:4000" }],
+      servers: [{ url: "/", description: "Current API origin" }],
+      components: {
+        securitySchemes: {
+          signedFileUrl: {
+            type: "apiKey",
+            in: "query",
+            name: "token",
+            description: "Expiring token from the upload or download URL for this file.",
+          },
+        },
+      },
+    },
+    transformObject(document) {
+      if (!("openapiObject" in document)) return document.swaggerObject;
+      const { openapiObject } = document;
+      documentStarterOperations(openapiObject.paths);
+      // auth-recipe:start
+      if (authOpenApi) {
+        Object.assign((openapiObject.paths ??= {}), authOpenApi.paths);
+        openapiObject.components ??= {};
+        Object.assign((openapiObject.components.schemas ??= {}), authOpenApi.components.schemas);
+        Object.assign(
+          (openapiObject.components.securitySchemes ??= {}),
+          authOpenApi.components.securitySchemes,
+        );
+      }
+      // auth-recipe:end
+      return openapiObject;
+    },
+  });
+  app.register(swaggerUi, {
+    routePrefix: "/docs",
+    staticCSP: true,
+    theme: {
+      css: [
+        {
+          filename: "api-docs.css",
+          content: `
+            .swagger-ui .opblock.opblock-get .opblock-summary-method { background: #175a9b; }
+            .swagger-ui .opblock.opblock-post .opblock-summary-method { background: #176b42; }
+            .swagger-ui .opblock.opblock-put .opblock-summary-method { background: #8f500d; }
+            .swagger-ui .btn.authorize { color: #176b42; border-color: currentColor; }
+            .swagger-ui .btn.authorize svg { fill: currentColor; }
+            .swagger-ui .opblock-summary-path { overflow-wrap: anywhere; }
+          `,
+        },
+      ],
+    },
+    uiConfig: {
+      layout: "BaseLayout",
+      docExpansion: "list",
+      filter: true,
+      persistAuthorization: false,
     },
   });
 
@@ -275,11 +397,13 @@ export function createApp() {
     app.route({
       method: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       url: "/api/auth",
+      schema: { hide: true },
       handler: (request, reply) => handleAuthRequest(request, reply, auth),
     });
     app.route({
       method: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       url: "/api/auth/*",
+      schema: { hide: true },
       handler: (request, reply) => handleAuthRequest(request, reply, auth),
     });
   }
@@ -290,7 +414,7 @@ export function createApp() {
       HEALTH_PATH,
       {
         schema: {
-          tags: ["system"],
+          tags: ["System"],
           response: { 200: healthJsonSchema, 503: healthJsonSchema },
         },
       },
@@ -321,7 +445,7 @@ export function createApp() {
         "/jobs/example",
         {
           schema: {
-            tags: ["jobs"],
+            tags: ["Jobs"],
             body: {
               type: "object",
               additionalProperties: false,
@@ -384,7 +508,7 @@ export function createApp() {
         "/files/upload-url",
         {
           schema: {
-            tags: ["files"],
+            tags: ["Files"],
             body: {
               type: "object",
               additionalProperties: false,
@@ -425,7 +549,7 @@ export function createApp() {
         "/files/:fileId/download-url",
         {
           schema: {
-            tags: ["files"],
+            tags: ["Files"],
             params: {
               type: "object",
               required: ["fileId"],
@@ -454,7 +578,7 @@ export function createApp() {
         "/files/:fileId",
         {
           schema: {
-            tags: ["files"],
+            tags: ["Files"],
             params: {
               type: "object",
               required: ["fileId"],
@@ -536,7 +660,7 @@ export function createApp() {
         "/files/:fileId",
         {
           schema: {
-            tags: ["files"],
+            tags: ["Files"],
             params: {
               type: "object",
               required: ["fileId"],

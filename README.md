@@ -49,7 +49,9 @@ docs/              Design, development, testing, and deployment guides
 
 **Auth omitted:** web and mobile show starter health screens. Auth-only clients, UI, API sources, CLI tooling, dependency chain, environment-template keys, and auth migration are removed. Generic API, database, jobs, email infrastructure, storage, and telemetry remain. The reference repository intentionally contains the working auth example before generation.
 
-OpenAPI coverage is **partial**: `/openapi.json` exists, but individual Better Auth operations and an interactive documentation dashboard are still an [open task](tasks/todo.md). Do not assume the full API explorer is available yet.
+Open [API Docs](http://localhost:4000/docs/) after starting the API. Swagger UI lets you filter operations, inspect parameters and schemas, and execute requests against the API serving the page. Try `GET /health` first. The same OpenAPI document is available at [`/openapi.json`](http://localhost:4000/openapi.json). Auth operations appear when Better Auth is configured. To try a session-protected operation in the browser, establish a session on the API origin with `POST /api/auth/sign-in/email` using a verified local test account. Signed file operations require the token from the corresponding upload or download URL.
+
+Web and Expo share the operations under **Authentication**. The **Expo authentication** group contains the native OAuth redirect helper. Use `/docs/` for the interactive explorer. The `/docs/json` link in Swagger UI opens the raw contract.
 
 ## Required tools
 
@@ -118,14 +120,15 @@ npm run dev:mobile   # Separate terminal
 
 Default URLs, unless `.env` changes their ports:
 
-| Service                   | Address                                            |
-| ------------------------- | -------------------------------------------------- |
-| Web                       | http://localhost:3000                              |
-| API health                | http://localhost:4000/health                       |
-| Existing OpenAPI document | http://localhost:4000/openapi.json                 |
-| Mailpit inbox             | http://localhost:8025                              |
-| OpenObserve               | http://localhost:5080                              |
-| Expo/Metro                | Port 8081; follow the terminal/device instructions |
+| Service              | Address                                            |
+| -------------------- | -------------------------------------------------- |
+| Web                  | http://localhost:3000                              |
+| API health           | http://localhost:4000/health                       |
+| Interactive API docs | http://localhost:4000/docs/                        |
+| OpenAPI document     | http://localhost:4000/openapi.json                 |
+| Mailpit inbox        | http://localhost:8025                              |
+| OpenObserve          | http://localhost:5080                              |
+| Expo/Metro           | Port 8081; follow the terminal/device instructions |
 
 Setup prints the configured service addresses. Local example credentials are in `.env.example`; use your `.env` values if you changed them. They are development defaults, not production credentials.
 
@@ -263,7 +266,7 @@ The VPS example uses Ubuntu, Docker Compose, GHCR, Caddy, and Cloudflare DNS/TLS
 - [Optional auth recipe](docs/auth-recipe.md), [auth epic](docs/epics/auth-login-logout.md), and [task/evidence checklist](tasks/auth-example-todo.md)
 - [Test guide](docs/testing/auth-login-logout.md), [auth observability](docs/auth-observability.md), and [failure runbook](docs/runbooks/auth-failures.md)
 - [Design guidelines](docs/design-guidelines.md), [PostgreSQL upgrades](docs/postgresql-18-upgrade.md), and [VPS deployment](docs/deploy-vps.md)
-- [Open work](tasks/todo.md), including complete OpenAPI coverage and an interactive API docs UI
+- [Open work](tasks/todo.md), including staging acceptance and production readiness
 
 ## License
 

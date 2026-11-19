@@ -88,6 +88,27 @@ after(async () => {
   }
 });
 
+test("the interactive reference uses the combined starter and auth contract", async () => {
+  const response = await app.inject("/openapi.json");
+  assert.equal(response.statusCode, 200);
+  const document = response.json();
+  assert.equal(document.openapi, "3.1.1");
+  assert.ok(document.paths["/health"].get);
+  assert.ok(document.paths["/api/auth/sign-up/email"].post.requestBody.required);
+  assert.deepEqual(document.paths["/api/auth/sign-in/email"].post.security, []);
+  assert.deepEqual(document.paths["/api/auth/list-sessions"].get.security, [{ authSession: [] }]);
+  assert.ok(document.paths["/api/auth/reset-password/{token}"].get.responses["302"]);
+  assert.ok(document.paths["/api/auth/expo-authorization-proxy"].get);
+  assert.equal(document.paths["/api/auth/*"], undefined);
+  assert.ok(document.paths["/files/{fileId}"].put.requestBody.content["image/png"]);
+  assert.deepEqual(document.paths["/files/{fileId}"].get.security, [{ signedFileUrl: [] }]);
+  const ui = await app.inject("/docs/");
+  assert.equal(ui.statusCode, 200);
+  assert.match(ui.body, /swagger-ui/);
+  assert.deepEqual((await app.inject("/docs/json")).json(), document);
+  assert.equal((await app.inject("/api/auth/open-api/generate-schema")).statusCode, 404);
+});
+
 test("public registration requires verification before sign-in and sends a verification link", async () => {
   const response = await app.inject({
     method: "POST",

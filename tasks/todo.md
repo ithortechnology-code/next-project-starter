@@ -23,7 +23,7 @@
 - [x] The reference staging VPS deployed commit `aea9aaa`; migrations and container health checks passed, and public HTTPS smoke checks passed for web, API health, and OpenObserve.
 - [x] The staging database contained zero registered users when checked on 2026-11-18.
 - [x] VPS Compose configuration renders; deploy shell scripts parse; `git diff --check` passes.
-- [ ] npm audit could not reach registry.npmjs.org in this environment.
+- [x] The npm registry audit completed. The production dependency audit reported zero vulnerabilities at the API documentation checkpoint.
 - [ ] Run a controlled staging account lifecycle using a test inbox: sign up, verify email, sign in/out, request a password reset, and complete it.
 - [ ] Exercise an application-level S3 upload/download and signed URL against the staging SeaweedFS bucket; current verification only confirmed bucket access with the app credentials.
 - [ ] Generate a staging request and confirm its trace/log/metric appears in OpenObserve with no credential or personal-data leakage.
@@ -32,4 +32,5 @@
 
 ## API documentation coverage
 
-- [ ] Merge individual Better Auth endpoint definitions into the project OpenAPI document and provide an interactive API documentation UI. Verify every public endpoint’s requests, responses/errors, and security requirements. The existing `/openapi.json` and catch-all auth routes do not meet the full repository rule yet.
+- [x] Generate individual Better Auth operations and combine them with the Fastify contract at `/openapi.json`. Serve interactive Swagger UI at `/docs/` with the same document.
+- [ ] Recheck upstream-generated Better Auth response details when upgrading Better Auth, particularly provider-dependent errors and response payloads. The starter has no configured social providers, so provider-specific success flows were not exercised locally.

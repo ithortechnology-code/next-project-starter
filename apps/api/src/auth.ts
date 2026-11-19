@@ -1,5 +1,6 @@
 import { recordAuthLibraryLog, recordAuthOperation } from "./auth-observability.js";
 import { betterAuth } from "better-auth";
+import { openAPI } from "better-auth/plugins";
 import { expo } from "@better-auth/expo";
 import type { Kysely } from "kysely";
 import type { Database } from "./database.js";
@@ -119,7 +120,9 @@ export function createAuth(
       sendOnSignUp: true,
       sendVerificationEmail: authEmail.sendVerificationEmail,
     },
-    plugins: [expo()],
+    plugins: [expo(), openAPI({ disableDefaultReference: true })],
+    disabledPaths: ["/open-api/generate-schema", "/reference"],
+    user: { deleteUser: { enabled: false }, changeEmail: { enabled: false } },
     session: {
       expiresIn: 7 * 24 * 60 * 60,
       updateAge: 24 * 60 * 60,
