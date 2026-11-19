@@ -16,7 +16,7 @@
     "build": "tsup --config tsup.config.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "prettier --check src",
-    "test:telemetry": "node --import=tsx --test src/telemetry-privacy.test.ts"
+    "test:telemetry": "node --import=tsx --test src/telemetry-privacy.test.ts src/client-telemetry.test.ts"
   },
   "dependencies": {
     "@better-auth/expo": "1.7.24",

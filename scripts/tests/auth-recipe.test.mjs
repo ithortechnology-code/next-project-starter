@@ -42,6 +42,9 @@ for (const choice of ["none", "better-auth"])
       if (choice === "none") {
         const generatedApi = await readFile(resolve(dir, "apps/api/src/app.ts"), "utf8");
         assert.match(generatedApi, /requestCount.add/);
+        assert.match(generatedApi, /registerClientTelemetry/);
+        await access(resolve(dir, "apps/web/app/api/telemetry/client/route.ts"));
+        await access(resolve(dir, "apps/mobile/lib/client-telemetry.ts"));
         assert.match(generatedApi, /app.addContentTypeParser/);
         await assert.rejects(
           access(resolve(dir, "apps/api/src/migrations/0002_create_better_auth_tables.ts")),

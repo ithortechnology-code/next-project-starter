@@ -18,6 +18,7 @@ processors:
 exporters:
   otlp_http/openobserve:
     endpoint: http://openobserve:5080/api/default
+    compression: gzip
     auth:
       authenticator: basicauth/openobserve
 

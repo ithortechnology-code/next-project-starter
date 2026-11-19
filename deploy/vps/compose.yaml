@@ -62,7 +62,7 @@ services:
       WEB_ORIGIN: https://${WEB_DOMAIN:?Set WEB_DOMAIN in .env}
       OTEL_SERVICE_NAME: starter-api
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
-      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/json
       OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=${DEPLOYMENT_ENVIRONMENT:?Set DEPLOYMENT_ENVIRONMENT in .env}
       SMTP_HOST: ${SMTP_HOST:?Set SMTP_HOST in .env}
       SMTP_PORT: ${SMTP_PORT:?Set SMTP_PORT in .env}
@@ -116,7 +116,7 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:?Set EMAIL_FROM in .env}
       OTEL_SERVICE_NAME: starter-worker
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
-      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/json
       OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=${DEPLOYMENT_ENVIRONMENT:?Set DEPLOYMENT_ENVIRONMENT in .env}
     depends_on:
       db:

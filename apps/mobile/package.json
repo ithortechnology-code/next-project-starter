@@ -9,7 +9,7 @@
     "ios": "node --import=../../scripts/load-env.mjs ../../node_modules/expo/bin/cli start --ios --port ${EXPO_PORT:-8081}",
     "build": "node ../../node_modules/expo/bin/cli export --platform all",
     "typecheck": "tsc --noEmit",
-    "lint": "prettier --check App.tsx 'components/**/*.tsx' 'lib/**/*.ts' app.json",
+    "lint": "prettier --check index.js App.tsx 'components/**/*.tsx' 'lib/**/*.ts' app.json",
     "test:auth": "jest --runInBand"
   },
   "dependencies": {

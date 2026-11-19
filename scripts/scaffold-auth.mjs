@@ -56,12 +56,15 @@ if (choice === "none") {
       delete pkg.devDependencies?.[name];
     }
     delete pkg.scripts["test:auth"];
-    delete pkg.scripts["test:telemetry"];
+    if (workspace === "api") {
+      pkg.scripts["test:telemetry"] = "node --import=tsx --test src/client-telemetry.test.ts";
+    }
     delete pkg.scripts["auth:provision-user"];
-    if (workspace === "mobile") pkg.scripts.lint = "prettier --check App.tsx app.json";
+    if (workspace === "mobile")
+      pkg.scripts.lint = "prettier --check index.js App.tsx lib/client-telemetry.ts app.json";
     if (workspace === "web")
       pkg.scripts.lint =
-        "prettier --check app lib next.config.ts postcss.config.mjs tsconfig.json components.json";
+        "prettier --check app lib instrumentation-client.ts next.config.ts postcss.config.mjs tsconfig.json components.json";
     updates.set(file, JSON.stringify(pkg, null, 2) + "\n");
   }
   updates.set(

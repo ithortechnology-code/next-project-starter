@@ -28,6 +28,7 @@ import {
   verifyFileToken,
   type ProfileImageContentType,
 } from "./signed-files.js";
+import { registerClientTelemetry } from "./client-telemetry.js";
 import { emitStructuredLog } from "./telemetry-signals.js";
 
 const apiMeter = metrics.getMeter("starter-api");
@@ -277,8 +278,10 @@ export function createApp() {
       "http.route": route,
       "http.response.status_class": statusClass,
     };
-    requestCount.add(1, attributes);
-    requestDuration.record(reply.elapsedTime / 1000, attributes);
+    if (route !== HEALTH_PATH || statusCode >= 400) {
+      requestCount.add(1, attributes);
+      requestDuration.record(reply.elapsedTime / 1000, attributes);
+    }
 
     if (statusCode >= 500 && !errorsLogged.has(request)) {
       emitStructuredLog("http.request.failed", "error", {
@@ -410,9 +413,11 @@ export function createApp() {
 
   // auth-recipe:end
   app.register(async function registerRoutes(routes) {
+    registerClientTelemetry(routes);
     routes.get(
       HEALTH_PATH,
       {
+        logLevel: "warn",
         schema: {
           tags: ["System"],
           response: { 200: healthJsonSchema, 503: healthJsonSchema },

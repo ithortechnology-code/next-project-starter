@@ -2,11 +2,11 @@ import { createAuthClient } from "better-auth/react";
 import { expoClient } from "@better-auth/expo/client";
 import * as SecureStore from "expo-secure-store";
 
-const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
-const apiBaseUrl = configuredApiUrl || "http://localhost:4000";
+import { apiBaseUrl, mobileTelemetry } from "./client-telemetry";
 
 export const authClient = createAuthClient({
-  baseURL: `${apiBaseUrl.replace(/\/$/, "")}/api/auth`,
+  baseURL: `${apiBaseUrl}/api/auth`,
+  fetchOptions: { customFetchImpl: mobileTelemetry.trackedFetch },
   plugins: [
     expoClient({
       scheme: "projectstarter",
@@ -21,4 +21,4 @@ export const authClient = createAuthClient({
   },
 });
 
-export const authApiBaseUrl = apiBaseUrl.replace(/\/$/, "");
+export const authApiBaseUrl = apiBaseUrl;

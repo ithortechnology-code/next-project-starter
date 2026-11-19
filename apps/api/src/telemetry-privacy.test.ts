@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
+import { gunzipSync } from "node:zlib";
 import { safeTelemetryAttributes } from "./telemetry-privacy.js";
 
 test("trace attribute allowlist excludes credentials and account identifiers", () => {
@@ -19,11 +20,17 @@ test("trace attribute allowlist excludes credentials and account identifiers", (
 });
 
 test("actual OTLP export and structured auth logs contain no sentinel secrets", async () => {
-  const received: { path: string; body: Buffer }[] = [];
+  const received: { path: string; body: Buffer; encoding: string | undefined }[] = [];
   const receiver = createServer(async (request, response) => {
     const chunks: Buffer[] = [];
     for await (const chunk of request) chunks.push(Buffer.from(chunk));
-    received.push({ path: request.url ?? "", body: Buffer.concat(chunks) });
+    const encoding = request.headers["content-encoding"];
+    const body = Buffer.concat(chunks);
+    received.push({
+      path: request.url ?? "",
+      encoding,
+      body: encoding === "gzip" ? gunzipSync(body) : body,
+    });
     response.setHeader("content-type", "application/json");
     response.end("{}");
   });
@@ -32,6 +39,9 @@ test("actual OTLP export and structured auth logs contain no sentinel secrets", 
   if (!address || typeof address === "string") throw Error("Receiver unavailable");
   try {
     const code = `
+      for (const name of Object.keys(process.env)) {
+        if (name.startsWith('OTEL_EXPORTER_OTLP_') && name.endsWith('_COMPRESSION')) delete process.env[name];
+      }
       const {startTelemetry}=await import('./src/telemetry.ts'); const stop=await startTelemetry();
       const {trace,context}=await import('@opentelemetry/api');
       const {withAuthRequest,recordAuthOperation,recordAuthLibraryLog}=await import('./src/auth-observability.ts');
@@ -44,7 +54,19 @@ test("actual OTLP export and structured auth logs contain no sentinel secrets", 
       await new Promise(resolve=>setImmediate(resolve));
       process.env.DATABASE_URL='';process.env.FILE_URL_SIGNING_SECRET='privacy-test-file-signing-secret-32-bytes';process.env.NODE_ENV='test';
       const {createApp}=await import('./src/app.ts');const app=createApp();
-      await app.inject({url:'/unknown/SECRET_SENTINEL?token=SECRET_SENTINEL'});await app.close();
+      app.addHook('onRequest', async (request, reply) => {
+        if (request.headers['x-test-health-failure']) return reply.code(503).send();
+      });
+      const base=await app.listen({host:'127.0.0.1',port:0});
+      const send=(path, options)=>fetch(base+path,options);
+      await send('/health?token=SECRET_SENTINEL');
+      await send('/health',{headers:{'x-test-health-failure':'1'}});
+      await send('/unknown/SECRET_SENTINEL?token=SECRET_SENTINEL');
+      await send('/api/telemetry/client',{
+        method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({surface:'web',event:'js_error'}),
+      });
+      await app.close();
       await stop();
     `;
     const child = spawn(process.execPath, ["--import=tsx", "--input-type=module", "-e", code], {
@@ -70,8 +92,51 @@ test("actual OTLP export and structured auth logs contain no sentinel secrets", 
     assert.ok(received.some((item) => item.path === "/v1/traces"));
     assert.ok(received.some((item) => item.path === "/v1/metrics"));
     assert.ok(received.some((item) => item.path === "/v1/logs"));
-    for (const item of received)
-      assert.equal(item.body.includes(Buffer.from("SECRET_SENTINEL")), false);
+    for (const item of received) {
+      assert.equal(item.encoding, "gzip");
+      assert.doesNotMatch(item.body.toString(), /SECRET_SENTINEL/);
+    }
+    const signals = (path: string) =>
+      received.filter((item) => item.path === path).map((item) => JSON.parse(item.body.toString()));
+    const metrics = signals("/v1/metrics").flatMap((data) =>
+      data.resourceMetrics.flatMap((resource: any) =>
+        resource.scopeMetrics.flatMap((scope: any) => scope.metrics),
+      ),
+    );
+    assert.ok(metrics.some((metric) => metric.name === "starter.client.event.count"));
+    assert.ok(metrics.some((metric) => metric.name === "starter.http.server.request.duration"));
+    assert.ok(
+      !metrics.some((metric) => /^http\.server\.|^nodejs\.eventloop\.delay\./.test(metric.name)),
+    );
+    const requestMetric = metrics.find(
+      (metric) => metric.name === "starter.http.server.request.count",
+    );
+    const healthPoints = requestMetric.sum.dataPoints.filter((point: any) =>
+      point.attributes.some(
+        (attr: any) => attr.key === "http.route" && attr.value.stringValue === "/health",
+      ),
+    );
+    assert.equal(healthPoints.length, 1);
+    assert.ok(healthPoints[0].attributes.some((attr: any) => attr.value.stringValue === "5xx"));
+    const httpSpans = signals("/v1/traces").flatMap((data) =>
+      data.resourceSpans.flatMap((resource: any) =>
+        resource.scopeSpans
+          .filter((scope: any) => scope.scope.name === "@opentelemetry/instrumentation-http")
+          .flatMap((scope: any) => scope.spans),
+      ),
+    );
+    assert.equal(httpSpans.length, 1);
+    assert.ok(
+      httpSpans[0].attributes.some(
+        (attr: any) =>
+          ["http.status_code", "http.response.status_code"].includes(attr.key) &&
+          Number(attr.value.intValue) === 404,
+      ),
+    );
+    const logs = JSON.stringify(signals("/v1/logs"));
+    assert.match(logs, /http.request.failed/);
+    assert.match(logs, /client.error/);
+    assert.doesNotMatch(output, /"route":"\/health"[^\n]+"msg":"incoming request"/);
   } finally {
     await new Promise<void>((resolve, reject) =>
       receiver.close((error) => (error ? reject(error) : resolve())),
